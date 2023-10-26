@@ -105,6 +105,8 @@ $(pkg-config --libs --cflags libavformat) \
 $(pkg-config --libs --cflags libavcodec) \
 $(pkg-config --libs --cflags libv4l2) \
 $(pkg-config --libs --cflags xcb) \
+$(pkg-config --libs --cflags xcb-shm) \
+$(pkg-config --libs --cflags libswscale) \
 -lpthread \
 -lm \
 -shared \

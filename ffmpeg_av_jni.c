@@ -27,6 +27,7 @@
 #include <libavutil/avutil.h>
 #include <libavutil/imgutils.h>
 #include <libavutil/time.h>
+#include <libswscale/swscale.h>
 
 #ifdef __APPLE__
 #include <mach/clock.h>
@@ -35,6 +36,10 @@
 
 #ifndef OS_WIN32
 #include <sys/time.h>
+#endif
+
+#ifdef __linux__
+#include <X11/Xlib.h>
 #endif
 
 #include <jni.h>
@@ -181,15 +186,43 @@ JNIEnv *jni_getenv()
     return env_this;
 }
 
+int java_find_class_global(char *name, jclass *ret)
+{
+    JNIEnv *jnienv2;
+    jnienv2 = jni_getenv();
+    *ret = (*jnienv2)->FindClass(jnienv2, name);
+
+    if(!*ret)
+    {
+        return 0;
+    }
+
+    *ret = (*jnienv2)->NewGlobalRef(jnienv2, *ret);
+    return 1;
+}
+
+
+jclass AVActivity = NULL;
+jmethodID callback_video_capture_frame_pts_cb_method = NULL;
+
 // --------- AV VARS ---------
 // --------- AV VARS ---------
 // --------- AV VARS ---------
 AVInputFormat *inputFormat = NULL;
 AVFormatContext *formatContext = NULL;
+AVCodecContext *global_video_codec_ctx = NULL;
 AVDictionary *options = NULL;
-int videoStreamIndex = -1;
+int video_stream_index = -1;
+AVCodec *video_codec = NULL;
 bool global_video_in_capture_running = false;
 static pthread_t ffmpeg_thread_video_in_capture;
+AVRational time_base_video = (AVRational) {0, 0};
+
+#define DEFAULT_SCREEN_CAPTURE_FPS "30" // 30 fps desktop screen capture
+char* global_desktop_display_num_str = NULL;
+int sws_scale_algo = SWS_SINC; // SWS_SINC SWS_LANCZOS
+int output_width = 640;
+int output_height = 480;
 
 uint8_t *video_buffer_1 = NULL;
 uint8_t *video_buffer_1_u = NULL;
@@ -224,7 +257,7 @@ static void reset_video_in_values()
     inputFormat = NULL;
     formatContext = NULL;
     options = NULL;
-    videoStreamIndex = -1;
+    video_stream_index = -1;
 }
 
 /**
@@ -239,10 +272,123 @@ static void yieldcpu(uint32_t ms)
 
 static void *ffmpeg_thread_video_in_capture_func(void *data)
 {
+    AVPacket packet;
+    AVFrame *frame = NULL;
+    int ret = 0;
+
+    // Allocate a frame for decoding
+    frame = av_frame_alloc();
+    if (!frame) {
+        fprintf(stderr, "Could not allocate frame\n");
+        printf("ffmpeg Video Capture Thread:ERROR:001:thread exit!\n");
+        return NULL;
+    }
+
+
+    // Allocate a buffer for the YUV data
+    int yuv_buffer_bytes_size = av_image_get_buffer_size(AV_PIX_FMT_YUV420P, output_width, output_height, 1);
+    uint8_t *yuv_buffer = (uint8_t *)av_malloc(yuv_buffer_bytes_size);
+    if (yuv_buffer == NULL) {
+        fprintf(stderr, "Error: could not allocate YUV buffer\n");
+        printf("ffmpeg Video Capture Thread:ERROR:002:thread exit!\n");
+        av_frame_free(&frame);
+        return NULL;
+    }
+
+    uint8_t *dst_yuv_buffer[3];
+    dst_yuv_buffer[0] = yuv_buffer;
+    dst_yuv_buffer[1] = yuv_buffer + (output_width * output_height);
+    dst_yuv_buffer[2] = dst_yuv_buffer[1] + ((output_width * output_height) / 4);
+
+    if (global_video_codec_ctx->pix_fmt < 0 || global_video_codec_ctx->pix_fmt >= AV_PIX_FMT_NB)
+    {
+        printf("pxfmt BAD!!!!!! fmt:%d maxfmt: %d\n", global_video_codec_ctx->pix_fmt, AV_PIX_FMT_NB);
+    }
+    else
+    {
+        AVPixFmtDescriptor pixfmt_desc = *av_pix_fmt_desc_get(global_video_codec_ctx->pix_fmt);
+        printf("pxfmt OK fmt: %d fmtname: %s\n", global_video_codec_ctx->pix_fmt, pixfmt_desc.name);
+    }
+
+    // Create a scaler context to convert the video to YUV
+    struct SwsContext *scaler_ctx = sws_getContext(
+            global_video_codec_ctx->width,
+            global_video_codec_ctx->height,
+            global_video_codec_ctx->pix_fmt, output_width, output_height,
+            AV_PIX_FMT_YUV420P, sws_scale_algo, NULL, NULL, NULL);
+    if (scaler_ctx == NULL) {
+        fprintf(stderr, "Error: could not create scaler context\n");
+        printf("ffmpeg Video Capture Thread:ERROR:003:thread exit!\n");
+        return NULL;
+    }
+
+    fprintf(stderr, "SwsContext: %dx%d -> %dx%d\n",
+        global_video_codec_ctx->width, global_video_codec_ctx->height, output_width, output_height);
+
     while (global_video_in_capture_running == true)
     {
-        yieldcpu(1000);
+        if (av_read_frame(formatContext, &packet) >= 0)
+        {
+            if (packet.stream_index == video_stream_index)
+            {
+                // Decode video packet
+                ret = avcodec_send_packet(global_video_codec_ctx, &packet);
+                if (ret < 0)
+                {
+                    fprintf(stderr, "Error sending video packet for decoding\n");
+                    break;
+                }
+                
+                while (ret >= 0)
+                {
+                    ret = avcodec_receive_frame(global_video_codec_ctx, frame);
+                    if (ret == AVERROR(EAGAIN) || ret == AVERROR_EOF)
+                    {
+                        break;
+                    }
+                    else if (ret < 0)
+                    {
+                        fprintf(stderr, "Error during video decoding\n");
+                        break;
+                    }
+
+                    // Convert the video frame to YUV
+                    int planes_stride[3];
+                    planes_stride[0] = av_image_get_linesize(AV_PIX_FMT_YUV420P, output_width, 0);
+                    planes_stride[1] = av_image_get_linesize(AV_PIX_FMT_YUV420P, output_width, 1);
+                    planes_stride[2] = av_image_get_linesize(AV_PIX_FMT_YUV420P, output_width, 2);
+                    fprintf(stderr, "VideoFrame:strides:%d %d %d\n",planes_stride[0],planes_stride[1],planes_stride[2]);
+
+                    sws_scale(scaler_ctx, (const uint8_t * const*)frame->data, frame->linesize, 0, global_video_codec_ctx->height,
+                            dst_yuv_buffer, planes_stride);
+
+                    if (yuv_buffer_bytes_size <= video_buffer_2_size)
+                    {
+                        memcpy(video_buffer_2, dst_yuv_buffer, yuv_buffer_bytes_size);
+                        JNIEnv *jnienv2 = jni_getenv();
+                        (*jnienv2)->CallStaticVoidMethod(jnienv2, AVActivity,
+                             callback_video_capture_frame_pts_cb_method,
+                             (jlong)output_width,
+                             (jlong)output_height,
+                             (jlong)0
+                            );
+                    }
+                    else
+                    {
+                        fprintf(stderr, "video buffer to small for video frame data\n");
+                    }
+                }
+            }
+            av_packet_unref(&packet);
+        }
+
+        yieldcpu(100);
     }
+
+
+    av_frame_free(&frame);
+    av_free(yuv_buffer);
+    sws_freeContext(scaler_ctx);
 
     printf("ffmpeg Video Capture Thread:Clean thread exit!\n");
     return NULL;
@@ -265,6 +411,20 @@ Java_com_zoffcc_applications_ffmpegav_AVActivity_init(JNIEnv *env, jobject thiz)
 #endif
     // avformat_network_init();
     avdevice_register_all();
+
+    jclass cls_local = (*env)->GetObjectClass(env, thiz);
+// android
+//    AVActivity = (*env)->NewGlobalRef(env, cls_local);
+// JAVA_LINUX
+    java_find_class_global("com/zoffcc/applications/ffmpegav/AVActivity", &AVActivity);
+
+    printf("cls_local=%p\n", cls_local);
+    printf("AVActivity=%p\n", AVActivity);
+
+    callback_video_capture_frame_pts_cb_method = (*env)->GetStaticMethodID(env, AVActivity,
+            "callback_video_capture_frame_pts_cb_method", "(JJJ)V");
+
+    printf("callback_video_capture_frame_pts_cb_method=%p\n", callback_video_capture_frame_pts_cb_method);
 
     // HINT: add error handling
     return 0;
@@ -295,22 +455,146 @@ Java_com_zoffcc_applications_ffmpegav_AVActivity_get_1video_1in_1devices(JNIEnv 
     return result;
 }
 
+/**
+ * @brief Prints video codec parameters
+ *
+ * @param codecpar AVCodecParameters pointer to the video codec parameters
+ * @param text_prefix Prefix to add to the printed text
+ */
+static void print_codec_parameters_video(AVCodecParameters *codecpar, const char* text_prefix) {
+    AVCodecContext *codec = avcodec_alloc_context3(NULL);
+    if (codec == NULL)
+    {
+        return;
+    }
+    printf("%s===================================\n", text_prefix);
+    int res = avcodec_parameters_to_context(codec, codecpar);
+    if (res >= 0)
+    {
+        printf("%sCodec Type: %s\n", text_prefix, avcodec_get_name(codec->codec_id));
+        if ((codec->codec != NULL) && (av_get_profile_name(codec->codec, codec->profile) != NULL))
+        {
+            printf("%sCodec Profile: %s\n", text_prefix, av_get_profile_name(codec->codec, codec->profile));
+        }
+        printf("%sCodec Level: %d\n", text_prefix, codec->level);
+        printf("%sCodec Width: %d\n", text_prefix, codec->width);
+        printf("%sCodec Height: %d\n", text_prefix, codec->height);
+        printf("%sCodec Bitrate: %ld\n", text_prefix, codec->bit_rate);
+        if (av_get_pix_fmt_name(codec->pix_fmt) != NULL)
+        {
+            printf("%sCodec Format: %s\n", text_prefix, av_get_pix_fmt_name(codec->pix_fmt));
+        }
+    }
+    printf("%s===================================\n", text_prefix);
+    avcodec_free_context(&codec);
+}
+
 JNIEXPORT jint JNICALL
 Java_com_zoffcc_applications_ffmpegav_AVActivity_open_1video_1in_1device(JNIEnv *env, jobject thiz, jstring deviceformat)
 {
+    if (deviceformat == NULL)
+    {
+        return -1;
+    }
     const char *deviceformat_cstr = (*env)->GetStringUTFChars(env, deviceformat, NULL);
+    if (deviceformat_cstr == NULL)
+    {
+        return -1;
+    }
+    printf("wanted_video_in_device=%s\n", deviceformat_cstr);
 
     inputFormat = av_find_input_format(deviceformat_cstr);
-    (*env)->ReleaseStringUTFChars(env, deviceformat, deviceformat_cstr);
     if (!inputFormat) {
         fprintf(stderr, "Could not find input format\n");
         reset_video_in_values();
+        (*env)->ReleaseStringUTFChars(env, deviceformat, deviceformat_cstr);
         return -1;
     }
 
-    if (avformat_open_input(&formatContext, ":0.0", inputFormat, &options) < 0) {
+    if (strncmp((char *)deviceformat_cstr, "x11grab", strlen((char *)"x11grab")) == 0)
+    {
+#ifdef __linux__
+        // capture desktop on X11 Linux
+        Display *display = XOpenDisplay(NULL);
+        if (display == NULL)
+        {
+            fprintf(stderr, "Could not find X11 Display.\n");
+            reset_video_in_values();
+            (*env)->ReleaseStringUTFChars(env, deviceformat, deviceformat_cstr);
+            return -1;
+        }
+        Window root = DefaultRootWindow(display);
+        XWindowAttributes attributes;
+        XGetWindowAttributes(display, root, &attributes);
+        int screen_width = attributes.width;
+        int screen_height = attributes.height;
+        XCloseDisplay(display);
+
+        fprintf(stderr, "Display Screen: %dx%d\n", screen_width, screen_height);
+
+        if ((screen_width < 16) || (screen_width > 10000))
+        {
+            screen_width = 640;
+        }
+
+        if ((screen_height < 16) || (screen_height > 10000))
+        {
+            screen_height = 480;
+        }
+
+        fprintf(stderr, "Display Screen corrected: %dx%d\n", screen_width, screen_height);
+        char *capture_fps = DEFAULT_SCREEN_CAPTURE_FPS;
+        fprintf(stderr, "Display Screen capture FPS: %s\n", capture_fps);
+
+        AVDictionary* options = NULL;
+        // set some options ----------------------
+        //
+        // grabbing frame rate
+        av_dict_set(&options, "framerate", capture_fps, 0);
+        //
+        // TODO: make this an option
+        // do not capture the mouse pointer
+        av_dict_set(&options, "draw_mouse", "0", 0);
+        //
+        // make the grabbed area follow the mouse
+        // av_dict_set(&options, "follow_mouse", "centered", 0);
+        //
+        // set some options ----------------------
+
+        const int resolution_string_len = 1000;
+        char resolution_string[resolution_string_len];
+        memset(resolution_string, 0, resolution_string_len);
+        snprintf(resolution_string, resolution_string_len, "%dx%d", screen_width, screen_height);
+        fprintf(stderr, "Display resolution_string: %s\n", resolution_string);
+        av_dict_set(&options, "video_size", resolution_string, 0);
+        av_dict_set(&options, "probesize", "50M", 0);
+
+        AVInputFormat *ifmt = av_find_input_format("x11grab");
+
+        const int desktop_display_cap_str_len = 1000;
+        char desktop_display_cap_str[desktop_display_cap_str_len];
+        memset(desktop_display_cap_str, 0, desktop_display_cap_str_len);
+        if (global_desktop_display_num_str == NULL)
+        {
+            global_desktop_display_num_str = ":0.0";
+        }
+        snprintf(desktop_display_cap_str, desktop_display_cap_str_len, "%s+0,0", global_desktop_display_num_str);
+        fprintf(stderr, "Display capture_string: %s\n", desktop_display_cap_str);
+#endif
+
+        // example: grab at position 10,20 ":0.0+10,20"
+        if (avformat_open_input(&formatContext, desktop_display_cap_str, ifmt, &options) != 0)
+        {
+            fprintf(stderr, "Could not open desktop as video input stream.\n");
+            reset_video_in_values();
+            (*env)->ReleaseStringUTFChars(env, deviceformat, deviceformat_cstr);
+            return -1;
+        }
+    }
+    else if (avformat_open_input(&formatContext, ":0.0", inputFormat, &options) < 0) {
         fprintf(stderr, "Could not open input\n");
         reset_video_in_values();
+        (*env)->ReleaseStringUTFChars(env, deviceformat, deviceformat_cstr);
         return -1;
     }
 
@@ -319,24 +603,69 @@ Java_com_zoffcc_applications_ffmpegav_AVActivity_open_1video_1in_1device(JNIEnv 
         avformat_close_input(&formatContext);
         av_dict_free(&options);
         reset_video_in_values();
+        (*env)->ReleaseStringUTFChars(env, deviceformat, deviceformat_cstr);
         return -1;
     }
 
     for (int i = 0; i < formatContext->nb_streams; i++) {
-        if (formatContext->streams[i]->codecpar->codec_type == AVMEDIA_TYPE_VIDEO) {
-            videoStreamIndex = i;
+        AVCodecParameters *codec_params = formatContext->streams[i]->codecpar;
+        AVCodecDescriptor *cdesc = avcodec_descriptor_get(codec_params->codec_id);
+        if (cdesc != NULL)
+        {
+            fprintf(stderr, "needed codec: %d name: %s\n", codec_params->codec_id, cdesc->name);
+        }
+        else
+        {
+            fprintf(stderr, "needed codec: %d\n", codec_params->codec_id);
+        }
+        AVCodec *codec = avcodec_find_decoder(codec_params->codec_id);
+        if (!codec)
+        {
+            fprintf(stderr, "Unsupported codec!\n");
+            continue;
+        }
+
+        int ret;
+        if (codec_params->codec_type == AVMEDIA_TYPE_VIDEO && video_stream_index < 0)
+        {
+            AVCodecContext *video_codec_ctx = avcodec_alloc_context3(codec);
+            if (!video_codec_ctx) {
+                fprintf(stderr, "Could not allocate video codec context\n");
+                avcodec_free_context(&video_codec_ctx);
+                break; // AVERROR(ENOMEM);
+            }
+            if ((ret = avcodec_parameters_to_context(video_codec_ctx, codec_params)) < 0) {
+                fprintf(stderr, "Could not copy video codec parameters to context\n");
+                avcodec_free_context(&video_codec_ctx);
+                break; // ret;
+            }
+            if ((ret = avcodec_open2(video_codec_ctx, codec, NULL)) < 0) {
+                fprintf(stderr, "Could not open video codec\n");
+                avcodec_free_context(&video_codec_ctx);
+                break; // ret;
+            }
+            video_stream_index = i;
+            video_codec = codec;
+            print_codec_parameters_video(codec_params, "VIDEO: ");
+            time_base_video = formatContext->streams[i]->time_base;
+            avcodec_free_context(&video_codec_ctx);
+            global_video_codec_ctx = avcodec_alloc_context3(codec);
+            avcodec_parameters_to_context(global_video_codec_ctx, codec_params);
+            avcodec_open2(global_video_codec_ctx, codec, NULL);            
             break;
         }
     }
 
-    if (videoStreamIndex == -1) {
+    if (video_stream_index < 0) {
         fprintf(stderr, "Could not find video stream\n");
         avformat_close_input(&formatContext);
         av_dict_free(&options);
         reset_video_in_values();
+        (*env)->ReleaseStringUTFChars(env, deviceformat, deviceformat_cstr);
         return -1;
     }
 
+    (*env)->ReleaseStringUTFChars(env, deviceformat, deviceformat_cstr);
     return 0;
 }
 
@@ -369,13 +698,14 @@ JNIEXPORT jint JNICALL Java_com_zoffcc_applications_ffmpegav_AVActivity_stop_1vi
 JNIEXPORT jint JNICALL
 Java_com_zoffcc_applications_ffmpegav_AVActivity_close_1video_1in_1device(JNIEnv *env, jobject thiz)
 {
+    avcodec_free_context(&global_video_codec_ctx);
     avformat_close_input(&formatContext);
     av_dict_free(&options);
     return 0;
 }
 
 
-// buffer is for incoming video (call)
+// buffer is for playing video
 JNIEXPORT void JNICALL Java_com_zoffcc_applications_ffmpegav_AVActivity_set_1JNI_1video_1buffer
   (JNIEnv *env, jobject thiz, jobject recv_vbuf, jint frame_width_px, jint frame_height_px)
 {
@@ -393,7 +723,7 @@ JNIEXPORT void JNICALL Java_com_zoffcc_applications_ffmpegav_AVActivity_set_1JNI
     video_buffer_1_v = (uint8_t *)(video_buffer_1 + video_buffer_1_y_size + video_buffer_1_u_size);
 }
 
-// buffer2 is for sending video (call)
+// buffer2 is for capturing video
 JNIEXPORT void JNICALL Java_com_zoffcc_applications_ffmpegav_AVActivity_set_1JNI_1video_1buffer2
   (JNIEnv *env, jobject thiz, jobject send_vbuf, jint frame_width_px, jint frame_height_px)
 {
@@ -404,7 +734,7 @@ JNIEXPORT void JNICALL Java_com_zoffcc_applications_ffmpegav_AVActivity_set_1JNI
     video_buffer_2_size = (long)capacity;
 }
 
-// audio_buffer is for sending audio (group and call)
+// audio_buffer is for playing audio
 JNIEXPORT void JNICALL Java_com_zoffcc_applications_ffmpegav_AVActivity_set_1JNI_1audio_1buffer
   (JNIEnv *env, jobject thiz, jobject send_abuf)
 {
@@ -415,7 +745,7 @@ JNIEXPORT void JNICALL Java_com_zoffcc_applications_ffmpegav_AVActivity_set_1JNI
     audio_buffer_pcm_1_size = (long)capacity;
 }
 
-// audio_buffer2 is for incoming audio (group and call)
+// audio_buffer2 is for capturing audio
 JNIEXPORT void JNICALL Java_com_zoffcc_applications_ffmpegav_AVActivity_set_1JNI_1audio_1buffer2
   (JNIEnv *env, jobject thiz, jobject recv_abuf)
 {

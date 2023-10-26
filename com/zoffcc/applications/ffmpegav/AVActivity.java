@@ -13,15 +13,20 @@ public class AVActivity {
     public static native int stop_video_in_capture();
     public static native int close_video_in_device();
 
-    // buffer is for incoming video (call)
+    // buffer is for playing video
     public static native long set_JNI_video_buffer(java.nio.ByteBuffer buffer, int frame_width_px, int frame_height_px);
-    // buffer2 is for sending video (call)
+    // buffer2 is for capturing video
     public static native void set_JNI_video_buffer2(java.nio.ByteBuffer buffer2, int frame_width_px, int frame_height_px);
-    // audio_buffer is for sending audio (group and call)
+    // audio_buffer is for playing audio
     public static native void set_JNI_audio_buffer(java.nio.ByteBuffer audio_buffer);
-    // audio_buffer2 is for incoming audio (group and call)
+    // audio_buffer2 is for capturing audio
     public static native void set_JNI_audio_buffer2(java.nio.ByteBuffer audio_buffer2);
 
+    public static void callback_video_capture_frame_pts_cb_method(long width, long height, long pts)
+    {
+        // System.out.println("capture video frame w: " + width + " h: " + height + " pts: " + pts);
+        System.out.println("capture video frame");
+    }
 
     public static void main(String[] args) {
         System.out.println("libavutil version: " + libavutil_version());
