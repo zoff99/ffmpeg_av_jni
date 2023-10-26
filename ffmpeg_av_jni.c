@@ -218,9 +218,9 @@ bool global_video_in_capture_running = false;
 static pthread_t ffmpeg_thread_video_in_capture;
 AVRational time_base_video = (AVRational) {0, 0};
 
-#define DEFAULT_SCREEN_CAPTURE_FPS "30" // 30 fps desktop screen capture
+#define DEFAULT_SCREEN_CAPTURE_FPS "20" // 20 fps desktop screen capture
 char* global_desktop_display_num_str = NULL;
-int sws_scale_algo = SWS_SINC; // SWS_SINC SWS_LANCZOS
+int sws_scale_algo = SWS_FAST_BILINEAR; // SWS_FAST_BILINEAR SWS_BILINEAR SWS_BICUBIC SWS_SINC SWS_LANCZOS
 int output_width = 640;
 int output_height = 480;
 
@@ -325,6 +325,20 @@ static void *ffmpeg_thread_video_in_capture_func(void *data)
     fprintf(stderr, "SwsContext: %dx%d -> %dx%d\n",
         global_video_codec_ctx->width, global_video_codec_ctx->height, output_width, output_height);
 
+    JNIEnv *jnienv2;
+    jnienv2 = jni_getenv();
+    if (jnienv2 == NULL)
+    {
+        JavaVMAttachArgs args;
+        args.version = JNI_VERSION_1_6; // choose your JNI version
+        args.name = "t_ff_jvcb"; // you might want to give the java thread a name
+        args.group = NULL; // you might want to assign the java thread to a ThreadGroup
+        if (cachedJVM)
+        {
+            (*cachedJVM)->AttachCurrentThread(cachedJVM, (void **) &jnienv2, &args);
+        }
+    }
+
     while (global_video_in_capture_running == true)
     {
         if (av_read_frame(formatContext, &packet) >= 0)
@@ -365,13 +379,18 @@ static void *ffmpeg_thread_video_in_capture_func(void *data)
                     if (yuv_buffer_bytes_size <= video_buffer_2_size)
                     {
                         memcpy(video_buffer_2, dst_yuv_buffer, yuv_buffer_bytes_size);
-                        JNIEnv *jnienv2 = jni_getenv();
+                        if (jnienv2 != NULL) {
                         (*jnienv2)->CallStaticVoidMethod(jnienv2, AVActivity,
                              callback_video_capture_frame_pts_cb_method,
                              (jlong)output_width,
                              (jlong)output_height,
                              (jlong)0
                             );
+                        }
+                        else
+                        {
+                            fprintf(stderr, "could not attach thread to JVM\n");
+                        }
                     }
                     else
                     {
@@ -381,14 +400,18 @@ static void *ffmpeg_thread_video_in_capture_func(void *data)
             }
             av_packet_unref(&packet);
         }
-
-        yieldcpu(100);
+        // yieldcpu(100);
     }
 
 
     av_frame_free(&frame);
     av_free(yuv_buffer);
     sws_freeContext(scaler_ctx);
+
+    if (cachedJVM)
+    {
+        (*cachedJVM)->DetachCurrentThread(cachedJVM);
+    }
 
     printf("ffmpeg Video Capture Thread:Clean thread exit!\n");
     return NULL;
