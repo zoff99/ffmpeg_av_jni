@@ -24,26 +24,31 @@ public class AVActivity {
 
     public static void ffmpegav_callback_video_capture_frame_pts_cb_method(long width, long height, long pts)
     {
-        // System.out.println("capture video frame w: " + width + " h: " + height + " pts: " + pts);
-        System.out.println("capture video frame");
+        Log.i(TAG, "capture video frame w: " + width + " h: " + height + " pts: " + pts);
     }
 
-    public static void ffmpegav_loadjni() {
+    public static int ffmpegav_loadjni(String jnilib_path) {
+        final String linux_lib_filename = jnilib_path + "/libffmpeg_av_jni.so";
         try
         {
-            System.loadLibrary("ffmpeg_av_jni");
-            Log.i(TAG, "successfully loaded native library");
+            System.load(linux_lib_filename);
+            Log.i(TAG, "successfully loaded native library path: " + linux_lib_filename);
+            return 0;
         }
         catch (java.lang.UnsatisfiedLinkError e)
         {
-            Log.i(TAG, "loadLibrary ffmpeg_av_jni failed!");
+            Log.i(TAG, "loadLibrary ffmpeg_av_jni failed! path: " + linux_lib_filename);
             e.printStackTrace();
-            System.exit(4);
+            return -1;
         }
     }
 
     public static void main(String[] args) {
-        ffmpegav_loadjni();
+        int loadjni_res = -1;
+        try {
+            loadjni_res = ffmpegav_loadjni(new java.io.File(".").getAbsolutePath());
+        } catch (Exception e) {
+        }
         System.out.println("libavutil version: " + ffmpegav_libavutil_version());
         final int res = ffmpegav_init();
         System.out.println("ffmpeg init: " + res);
