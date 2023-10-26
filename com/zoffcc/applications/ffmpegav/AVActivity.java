@@ -16,7 +16,7 @@ public class AVActivity {
     // buffer is for playing video
     public static native long ffmpegav_set_JNI_video_buffer(java.nio.ByteBuffer buffer, int frame_width_px, int frame_height_px);
     // buffer2 is for capturing video
-    public static native void ffmpegav_set_JNI_video_buffer2(java.nio.ByteBuffer buffer2, int frame_width_px, int frame_height_px);
+    public static native void ffmpegav_set_JNI_video_buffer2(java.nio.ByteBuffer send_vbuf_y, java.nio.ByteBuffer send_vbuf_u, java.nio.ByteBuffer send_vbuf_v, int frame_width_px, int frame_height_px);
     // audio_buffer is for playing audio
     public static native void ffmpegav_set_JNI_audio_buffer(java.nio.ByteBuffer audio_buffer);
     // audio_buffer2 is for capturing audio
@@ -61,7 +61,7 @@ public class AVActivity {
                 System.out.println("ffmpeg video in device #"+i+": " + video_in_devices[i]);
                 if (i == 1)
                 {
-                    final int res_vd = ffmpegav_open_video_in_device(video_in_devices[i], (640/2), (480/2), ":0.0", 15);
+                    final int res_vd = ffmpegav_open_video_in_device(video_in_devices[i], 640, 480, ":0.0", 15);
                     System.out.println("ffmpeg open video capture device: " + res_vd);
                 }
             }
@@ -70,14 +70,16 @@ public class AVActivity {
         final int frame_width_px1 = 640;
         final int frame_height_px1 = 480;
         final int buffer_size_in_bytes1 = ((frame_width_px1 * frame_height_px1) * 3) / 2;
-        final java.nio.ByteBuffer video_buffer_1 = java.nio.ByteBuffer.allocateDirect(buffer_size_in_bytes1);
-        ffmpegav_set_JNI_video_buffer(video_buffer_1, frame_width_px1, frame_height_px1);
+        final java.nio.ByteBuffer video_buffer_1_y = java.nio.ByteBuffer.allocateDirect(buffer_size_in_bytes1);
+        ffmpegav_set_JNI_video_buffer(video_buffer_1_y, frame_width_px1, frame_height_px1);
 
         final int frame_width_px2 = 640;
         final int frame_height_px2 = 480;
         final int buffer_size_in_bytes2 = ((frame_width_px2 * frame_height_px2) * 3) / 2;
-        final java.nio.ByteBuffer video_buffer_2 = java.nio.ByteBuffer.allocateDirect(buffer_size_in_bytes2);
-        ffmpegav_set_JNI_video_buffer2(video_buffer_2, frame_width_px2, frame_height_px2);
+        final java.nio.ByteBuffer video_buffer_2_y = java.nio.ByteBuffer.allocateDirect(buffer_size_in_bytes2);
+        final java.nio.ByteBuffer video_buffer_2_u = java.nio.ByteBuffer.allocateDirect(buffer_size_in_bytes2);
+        final java.nio.ByteBuffer video_buffer_2_v = java.nio.ByteBuffer.allocateDirect(buffer_size_in_bytes2);
+        ffmpegav_set_JNI_video_buffer2(video_buffer_2_y, video_buffer_2_u, video_buffer_2_v, frame_width_px2, frame_height_px2);
 
         ffmpegav_start_video_in_capture();
         try

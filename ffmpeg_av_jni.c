@@ -171,7 +171,6 @@ JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM *jvm, void *reserved)
 {
     JNIEnv *env_this;
     cachedJVM = jvm;
-
     if((*jvm)->GetEnv(jvm, (void **) &env_this, JNI_VERSION_1_6))
     {
         return JNI_ERR;
@@ -191,12 +190,10 @@ int java_find_class_global(char *name, jclass *ret)
     JNIEnv *jnienv2;
     jnienv2 = jni_getenv();
     *ret = (*jnienv2)->FindClass(jnienv2, name);
-
     if(!*ret)
     {
         return 0;
     }
-
     *ret = (*jnienv2)->NewGlobalRef(jnienv2, *ret);
     return 1;
 }
@@ -325,8 +322,7 @@ static void *ffmpeg_thread_video_in_capture_func(void *data)
     fprintf(stderr, "SwsContext: %dx%d -> %dx%d\n",
         global_video_codec_ctx->width, global_video_codec_ctx->height, output_width, output_height);
 
-    JNIEnv *jnienv2;
-    jnienv2 = jni_getenv();
+    JNIEnv *jnienv2 = NULL;
     if (jnienv2 == NULL)
     {
         JavaVMAttachArgs args;
@@ -352,7 +348,6 @@ static void *ffmpeg_thread_video_in_capture_func(void *data)
                     fprintf(stderr, "Error sending video packet for decoding\n");
                     break;
                 }
-                
                 while (ret >= 0)
                 {
                     ret = avcodec_receive_frame(global_video_codec_ctx, frame);
@@ -365,7 +360,6 @@ static void *ffmpeg_thread_video_in_capture_func(void *data)
                         fprintf(stderr, "Error during video decoding\n");
                         break;
                     }
-
                     // Convert the video frame to YUV
                     int planes_stride[3];
                     planes_stride[0] = av_image_get_linesize(AV_PIX_FMT_YUV420P, output_width, 0);
@@ -376,9 +370,17 @@ static void *ffmpeg_thread_video_in_capture_func(void *data)
                     sws_scale(scaler_ctx, (const uint8_t * const*)frame->data, frame->linesize, 0, global_video_codec_ctx->height,
                             dst_yuv_buffer, planes_stride);
 
-                    if (yuv_buffer_bytes_size <= video_buffer_2_size)
+                    if (
+                        (video_buffer_2_y_size >= (planes_stride[0] * output_height)) &&
+                        (video_buffer_2_u_size >= (planes_stride[1] * (output_height / 2))) &&
+                        (video_buffer_2_v_size >= (planes_stride[2] * (output_height / 2)))
+                        )
                     {
-                        memcpy(video_buffer_2, dst_yuv_buffer, yuv_buffer_bytes_size);
+
+                        memcpy(video_buffer_2, dst_yuv_buffer[0], planes_stride[0] * output_height);
+                        memcpy(video_buffer_2_u, dst_yuv_buffer[1], planes_stride[1] * (output_height / 2));
+                        memcpy(video_buffer_2_v, dst_yuv_buffer[2], planes_stride[2] * (output_height / 2));
+
                         if (jnienv2 != NULL) {
                         (*jnienv2)->CallStaticVoidMethod(jnienv2, AVActivity,
                              callback_video_capture_frame_pts_cb_method,
@@ -402,7 +404,6 @@ static void *ffmpeg_thread_video_in_capture_func(void *data)
         }
         // yieldcpu(100);
     }
-
 
     av_frame_free(&frame);
     av_free(yuv_buffer);
@@ -754,13 +755,22 @@ JNIEXPORT void JNICALL Java_com_zoffcc_applications_ffmpegav_AVActivity_ffmpegav
 
 // buffer2 is for capturing video
 JNIEXPORT void JNICALL Java_com_zoffcc_applications_ffmpegav_AVActivity_ffmpegav_1set_1JNI_1video_1buffer2
-  (JNIEnv *env, jobject thiz, jobject send_vbuf, jint frame_width_px, jint frame_height_px)
+    (JNIEnv *env, jobject thiz, jobject send_vbuf_y, jobject send_vbuf_u, jobject send_vbuf_v,
+    jint frame_width_px, jint frame_height_px)
 {
     JNIEnv *jnienv2;
     jnienv2 = jni_getenv();
-    video_buffer_2 = (uint8_t *)(*jnienv2)->GetDirectBufferAddress(jnienv2, send_vbuf);
-    jlong capacity = (*jnienv2)->GetDirectBufferCapacity(jnienv2, send_vbuf);
-    video_buffer_2_size = (long)capacity;
+    video_buffer_2 = (uint8_t *)(*jnienv2)->GetDirectBufferAddress(jnienv2, send_vbuf_y);
+    jlong capacity_y = (*jnienv2)->GetDirectBufferCapacity(jnienv2, send_vbuf_y);
+    video_buffer_2_y_size = (long)capacity_y;
+    //
+    video_buffer_2_u = (uint8_t *)(*jnienv2)->GetDirectBufferAddress(jnienv2, send_vbuf_u);
+    jlong capacity_u = (*jnienv2)->GetDirectBufferCapacity(jnienv2, send_vbuf_u);
+    video_buffer_2_u_size = (long)capacity_u;
+    //
+    video_buffer_2_v = (uint8_t *)(*jnienv2)->GetDirectBufferAddress(jnienv2, send_vbuf_v);
+    jlong capacity_v = (*jnienv2)->GetDirectBufferCapacity(jnienv2, send_vbuf_v);
+    video_buffer_2_v_size = (long)capacity_v;
 }
 
 // audio_buffer is for playing audio

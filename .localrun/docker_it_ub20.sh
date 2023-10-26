@@ -84,7 +84,7 @@ export JAVADIR2=$(cat /tmp/xx2)
 echo "JAVADIR1:""$JAVADIR1"
 echo "JAVADIR2:""$JAVADIR2"
 
-export CFLAGS=" -fPIC -std=gnu99 -I$_INST2_/include/ -L$_INST2_/lib -fstack-protector-all "
+export CFLAGS=" -fPIC -g -std=gnu99 -I$_INST2_/include/ -L$_INST2_/lib -fstack-protector-all "
 
 
 gcc $CFLAGS \
