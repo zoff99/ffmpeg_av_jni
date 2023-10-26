@@ -49,69 +49,14 @@ export _INST_=$_HOME_/inst/
 mkdir -p $_SRC_
 mkdir -p $_INST_
 
-export LD_LIBRARY_PATH=$_INST_/lib/
-export PKG_CONFIG_PATH=$_INST_/lib/pkgconfig
+export _INST2_="/workspace2/build/inst/"
+
+export LD_LIBRARY_PATH="$_INST2_"/lib/
+export PKG_CONFIG_PATH="$_INST2_"/lib/pkgconfig
 
 echo "*** compile ***"
 
-cd /workspace2/build/
-cd ./FFmpeg-n6.0/
-
-# ./configure --help
-# ./configure --list-outdevs
-
-  ./configure  \
-              --enable-gpl \
-              --prefix="$_INST_" \
-              --disable-asm \
-              --enable-pic \
-              --disable-swscale \
-              --disable-network \
-              --disable-everything \
-              --disable-debug \
-              --disable-shared \
-              --disable-programs \
-              --disable-protocols \
-              --disable-doc \
-              --disable-sdl2 \
-              --disable-avfilter \
-              --disable-filters \
-              --disable-iconv \
-              --disable-network \
-              --disable-postproc \
-              --disable-swresample \
-              --disable-swscale-alpha \
-              --disable-dct \
-              --disable-dwt \
-              --disable-lsp \
-              --disable-mdct \
-              --disable-rdft \
-              --disable-fft \
-              --disable-faan \
-              --disable-vaapi \
-              --disable-vdpau \
-              --disable-zlib \
-              --disable-bzlib \
-              --disable-lzma \
-              --disable-encoders \
-              --disable-decoders \
-              --disable-demuxers \
-              --disable-parsers \
-              --disable-bsfs \
-              --enable-outdev=alsa \
-              --enable-outdev=pulse \
-              --enable-indev=alsa \
-              --enable-indev=xcbgrab \
-              --enable-indev=pulse \
-              --enable-indev=v4l2 \
-              --enable-libpulse \
-              --enable-libv4l2 \
-              || exit 1
-
-make -j$(nproc) || exit 1
-make install || exit 1
-
-ls -al "$_INST_"/lib/
+ls -al "$_INST2_"/lib/
 
 # libavcodec.a
 # libavdevice.a
@@ -122,7 +67,6 @@ cd /workspace/build/
 gcc --version
 
 ls -al
-
 
 echo "JAVADIR1------------------"
 find /usr -name "jni.h"
@@ -140,25 +84,34 @@ export JAVADIR2=$(cat /tmp/xx2)
 echo "JAVADIR1:""$JAVADIR1"
 echo "JAVADIR2:""$JAVADIR2"
 
-export CFLAGS=" -fPIC -std=gnu99 -I$_INST_/include/ -L$_INST_/lib -fstack-protector-all "
+export CFLAGS=" -fPIC -std=gnu99 -I$_INST2_/include/ -L$_INST2_/lib -fstack-protector-all "
 
 
 gcc $CFLAGS \
 -Wall \
+-Wno-unused-function \
+-Wno-discarded-qualifiers \
+-Wno-unused-const-variable \
 -DJAVA_LINUX \
-$C_FLAGS \
 -D_FILE_OFFSET_BITS=64 -D__USE_GNU=1 \
 -I$JAVADIR1/ \
 -I$JAVADIR2/ \
 ffmpeg_av_jni.c \
-$_INST_/lib/libavcodec.a \
-$_INST_/lib/libavdevice.a \
-$_INST_/lib/libavformat.a \
-$_INST_/lib/libavutil.a \
+$_INST2_/lib/libavcodec.a \
+$_INST2_/lib/libavdevice.a \
+$_INST2_/lib/libavformat.a \
+$_INST2_/lib/libavutil.a \
+$(pkg-config --libs --cflags libavformat) \
+$(pkg-config --libs --cflags libavcodec) \
+$(pkg-config --libs --cflags libv4l2) \
+$(pkg-config --libs --cflags xcb) \
 -lpthread \
 -lm \
 -shared \
 -Wl,-soname,libffmpeg_av_jni.so -o libffmpeg_av_jni.so || exit 1
+
+
+# $(pkg-config --cflags --libs x11 libswresample libavcodec libswscale libavformat libavdevice libavutil) \
 
 
 #Linux:
