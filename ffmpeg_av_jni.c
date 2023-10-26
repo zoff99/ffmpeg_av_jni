@@ -81,7 +81,7 @@ JavaVM *cachedJVM = NULL;
 
 
 // gives a counter value that increaes every millisecond
-static uint64_t ffav_current_time_monotonic_default()
+static uint64_t ffmpegav_current_time_monotonic_default()
 {
     uint64_t time = 0;
 #ifdef OS_WIN32
@@ -129,22 +129,22 @@ static uint64_t ffav_current_time_monotonic_default()
     return time;
 }
 
-static size_t ffav_xnet_pack_u16(uint8_t *bytes, uint16_t v)
+static size_t ffmpegav_xnet_pack_u16(uint8_t *bytes, uint16_t v)
 {
     bytes[0] = (v >> 8) & 0xff;
     bytes[1] = v & 0xff;
     return sizeof(v);
 }
 
-static size_t ffav_xnet_pack_u32(uint8_t *bytes, uint32_t v)
+static size_t ffmpegav_xnet_pack_u32(uint8_t *bytes, uint32_t v)
 {
     uint8_t *p = bytes;
-    p += ffav_xnet_pack_u16(p, (v >> 16) & 0xffff);
-    p += ffav_xnet_pack_u16(p, v & 0xffff);
+    p += ffmpegav_xnet_pack_u16(p, (v >> 16) & 0xffff);
+    p += ffmpegav_xnet_pack_u16(p, v & 0xffff);
     return p - bytes;
 }
 
-static size_t ffav_xnet_unpack_u16(const uint8_t *bytes, uint16_t *v)
+static size_t ffmpegav_xnet_unpack_u16(const uint8_t *bytes, uint16_t *v)
 {
     uint8_t hi = bytes[0];
     uint8_t lo = bytes[1];
@@ -152,13 +152,13 @@ static size_t ffav_xnet_unpack_u16(const uint8_t *bytes, uint16_t *v)
     return sizeof(*v);
 }
 
-static size_t ffav_xnet_unpack_u32(const uint8_t *bytes, uint32_t *v)
+static size_t ffmpegav_xnet_unpack_u32(const uint8_t *bytes, uint32_t *v)
 {
     const uint8_t *p = bytes;
     uint16_t hi;
     uint16_t lo;
-    p += ffav_xnet_unpack_u16(p, &hi);
-    p += ffav_xnet_unpack_u16(p, &lo);
+    p += ffmpegav_xnet_unpack_u16(p, &hi);
+    p += ffmpegav_xnet_unpack_u16(p, &lo);
     *v = ((uint32_t)hi << 16) | lo;
     return p - bytes;
 }
@@ -418,7 +418,7 @@ static void *ffmpeg_thread_video_in_capture_func(void *data)
 }
 
 JNIEXPORT jstring JNICALL
-Java_com_zoffcc_applications_ffmpegav_AVActivity_libavutil_1version(JNIEnv *env, jobject thiz)
+Java_com_zoffcc_applications_ffmpegav_AVActivity_ffmpegav_1libavutil_1version(JNIEnv *env, jobject thiz)
 {
     char libavutil_version_str[2000];
     CLEAR(libavutil_version_str);
@@ -427,7 +427,7 @@ Java_com_zoffcc_applications_ffmpegav_AVActivity_libavutil_1version(JNIEnv *env,
 }
 
 JNIEXPORT jint JNICALL
-Java_com_zoffcc_applications_ffmpegav_AVActivity_init(JNIEnv *env, jobject thiz)
+Java_com_zoffcc_applications_ffmpegav_AVActivity_ffmpegav_1init(JNIEnv *env, jobject thiz)
 {
 #if (LIBAVFORMAT_VERSION_INT < AV_VERSION_INT(58,9,100))
     av_register_all();
@@ -445,16 +445,16 @@ Java_com_zoffcc_applications_ffmpegav_AVActivity_init(JNIEnv *env, jobject thiz)
     printf("AVActivity=%p\n", AVActivity);
 
     callback_video_capture_frame_pts_cb_method = (*env)->GetStaticMethodID(env, AVActivity,
-            "callback_video_capture_frame_pts_cb_method", "(JJJ)V");
+            "ffmpegav_callback_video_capture_frame_pts_cb_method", "(JJJ)V");
 
-    printf("callback_video_capture_frame_pts_cb_method=%p\n", callback_video_capture_frame_pts_cb_method);
+    printf("ffmpegav_callback_video_capture_frame_pts_cb_method=%p\n", callback_video_capture_frame_pts_cb_method);
 
     // HINT: add error handling
     return 0;
 }
 
 JNIEXPORT jobjectArray JNICALL
-Java_com_zoffcc_applications_ffmpegav_AVActivity_get_1video_1in_1devices(JNIEnv *env, jobject thiz)
+Java_com_zoffcc_applications_ffmpegav_AVActivity_ffmpegav_1get_1video_1in_1devices(JNIEnv *env, jobject thiz)
 {
     const uint32_t max_devices = 64;
     jobjectArray result = (*env)->NewObjectArray(env, max_devices, (*env)->FindClass(env, "java/lang/String"), NULL);
@@ -513,7 +513,7 @@ static void print_codec_parameters_video(AVCodecParameters *codecpar, const char
 }
 
 JNIEXPORT jint JNICALL
-Java_com_zoffcc_applications_ffmpegav_AVActivity_open_1video_1in_1device(JNIEnv *env, jobject thiz, jstring deviceformat,
+Java_com_zoffcc_applications_ffmpegav_AVActivity_ffmpegav_1open_1video_1in_1device(JNIEnv *env, jobject thiz, jstring deviceformat,
     jint wanted_width, jint wanted_height, jstring x11_display_num, jint fps)
 {
     if (deviceformat == NULL)
@@ -700,7 +700,7 @@ Java_com_zoffcc_applications_ffmpegav_AVActivity_open_1video_1in_1device(JNIEnv 
     return 0;
 }
 
-JNIEXPORT jint JNICALL Java_com_zoffcc_applications_ffmpegav_AVActivity_start_1video_1in_1capture(JNIEnv *env, jobject thiz)
+JNIEXPORT jint JNICALL Java_com_zoffcc_applications_ffmpegav_AVActivity_ffmpegav_1start_1video_1in_1capture(JNIEnv *env, jobject thiz)
 {
     global_video_in_capture_running = true;
     // start capture thread
@@ -717,7 +717,7 @@ JNIEXPORT jint JNICALL Java_com_zoffcc_applications_ffmpegav_AVActivity_start_1v
     return -1;
 }
 
-JNIEXPORT jint JNICALL Java_com_zoffcc_applications_ffmpegav_AVActivity_stop_1video_1in_1capture(JNIEnv *env, jobject thiz)
+JNIEXPORT jint JNICALL Java_com_zoffcc_applications_ffmpegav_AVActivity_ffmpegav_1stop_1video_1in_1capture(JNIEnv *env, jobject thiz)
 {
     global_video_in_capture_running = false;
     // wait for capture thread to finish
@@ -725,9 +725,8 @@ JNIEXPORT jint JNICALL Java_com_zoffcc_applications_ffmpegav_AVActivity_stop_1vi
     return 0;
 }
 
-
 JNIEXPORT jint JNICALL
-Java_com_zoffcc_applications_ffmpegav_AVActivity_close_1video_1in_1device(JNIEnv *env, jobject thiz)
+Java_com_zoffcc_applications_ffmpegav_AVActivity_ffmpegav_1close_1video_1in_1device(JNIEnv *env, jobject thiz)
 {
     avcodec_free_context(&global_video_codec_ctx);
     avformat_close_input(&formatContext);
@@ -735,9 +734,8 @@ Java_com_zoffcc_applications_ffmpegav_AVActivity_close_1video_1in_1device(JNIEnv
     return 0;
 }
 
-
 // buffer is for playing video
-JNIEXPORT void JNICALL Java_com_zoffcc_applications_ffmpegav_AVActivity_set_1JNI_1video_1buffer
+JNIEXPORT void JNICALL Java_com_zoffcc_applications_ffmpegav_AVActivity_ffmpegav_1set_1JNI_1video_1buffer
   (JNIEnv *env, jobject thiz, jobject recv_vbuf, jint frame_width_px, jint frame_height_px)
 {
     JNIEnv *jnienv2;
@@ -755,7 +753,7 @@ JNIEXPORT void JNICALL Java_com_zoffcc_applications_ffmpegav_AVActivity_set_1JNI
 }
 
 // buffer2 is for capturing video
-JNIEXPORT void JNICALL Java_com_zoffcc_applications_ffmpegav_AVActivity_set_1JNI_1video_1buffer2
+JNIEXPORT void JNICALL Java_com_zoffcc_applications_ffmpegav_AVActivity_ffmpegav_1set_1JNI_1video_1buffer2
   (JNIEnv *env, jobject thiz, jobject send_vbuf, jint frame_width_px, jint frame_height_px)
 {
     JNIEnv *jnienv2;
@@ -766,7 +764,7 @@ JNIEXPORT void JNICALL Java_com_zoffcc_applications_ffmpegav_AVActivity_set_1JNI
 }
 
 // audio_buffer is for playing audio
-JNIEXPORT void JNICALL Java_com_zoffcc_applications_ffmpegav_AVActivity_set_1JNI_1audio_1buffer
+JNIEXPORT void JNICALL Java_com_zoffcc_applications_ffmpegav_AVActivity_ffmpegav_1set_1JNI_1audio_1buffer
   (JNIEnv *env, jobject thiz, jobject send_abuf)
 {
     JNIEnv *jnienv2;
@@ -777,7 +775,7 @@ JNIEXPORT void JNICALL Java_com_zoffcc_applications_ffmpegav_AVActivity_set_1JNI
 }
 
 // audio_buffer2 is for capturing audio
-JNIEXPORT void JNICALL Java_com_zoffcc_applications_ffmpegav_AVActivity_set_1JNI_1audio_1buffer2
+JNIEXPORT void JNICALL Java_com_zoffcc_applications_ffmpegav_AVActivity_ffmpegav_1set_1JNI_1audio_1buffer2
   (JNIEnv *env, jobject thiz, jobject recv_abuf)
 {
     JNIEnv *jnienv2;
