@@ -513,7 +513,8 @@ static void print_codec_parameters_video(AVCodecParameters *codecpar, const char
 }
 
 JNIEXPORT jint JNICALL
-Java_com_zoffcc_applications_ffmpegav_AVActivity_open_1video_1in_1device(JNIEnv *env, jobject thiz, jstring deviceformat)
+Java_com_zoffcc_applications_ffmpegav_AVActivity_open_1video_1in_1device(JNIEnv *env, jobject thiz, jstring deviceformat,
+    jint wanted_width, jint wanted_height, jstring x11_display_num, jint fps)
 {
     if (deviceformat == NULL)
     {
@@ -525,6 +526,10 @@ Java_com_zoffcc_applications_ffmpegav_AVActivity_open_1video_1in_1device(JNIEnv 
         return -1;
     }
     printf("wanted_video_in_device=%s\n", deviceformat_cstr);
+    fprintf(stderr, "wanted_video_capture_resolution: %dx%d\n", wanted_width, wanted_height);
+
+    output_width = wanted_width;
+    output_height = wanted_height;
 
     inputFormat = av_find_input_format(deviceformat_cstr);
     if (!inputFormat) {
@@ -566,7 +571,10 @@ Java_com_zoffcc_applications_ffmpegav_AVActivity_open_1video_1in_1device(JNIEnv 
         }
 
         fprintf(stderr, "Display Screen corrected: %dx%d\n", screen_width, screen_height);
-        char *capture_fps = DEFAULT_SCREEN_CAPTURE_FPS;
+        char fps_str[20];
+        CLEAR(fps_str);
+        snprintf(fps_str, 4, "%d", fps);
+        char *capture_fps = fps_str;
         fprintf(stderr, "Display Screen capture FPS: %s\n", capture_fps);
 
         AVDictionary* options = NULL;

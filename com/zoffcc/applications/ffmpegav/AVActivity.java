@@ -8,7 +8,7 @@ public class AVActivity {
     public static native String libavutil_version();
     public static native int init();
     public static native String[] get_video_in_devices();
-    public static native int open_video_in_device(String deviceformat);
+    public static native int open_video_in_device(String deviceformat, int wanted_width, int wanted_height, String x11_display_num, int fps);
     public static native int start_video_in_capture();
     public static native int stop_video_in_capture();
     public static native int close_video_in_device();
@@ -41,7 +41,7 @@ public class AVActivity {
                 System.out.println("ffmpeg video in device #"+i+": " + video_in_devices[i]);
                 if (i == 1)
                 {
-                    final int res_vd = open_video_in_device(video_in_devices[i]);
+                    final int res_vd = open_video_in_device(video_in_devices[i], (640/2), (480/2), ":0.0", 15);
                     System.out.println("ffmpeg open video capture device: " + res_vd);
                 }
             }
@@ -62,7 +62,7 @@ public class AVActivity {
         start_video_in_capture();
         try
         {
-            Thread.sleep(10 * 1000);
+            Thread.sleep(1 * 1000);
         }
         catch(Exception e)
         {
