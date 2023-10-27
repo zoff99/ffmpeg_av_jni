@@ -84,7 +84,7 @@ export JAVADIR2=$(cat /tmp/xx2)
 echo "JAVADIR1:""$JAVADIR1"
 echo "JAVADIR2:""$JAVADIR2"
 
-export CFLAGS=" -fPIC -g -std=gnu99 -I$_INST2_/include/ -L$_INST2_/lib -fstack-protector-all "
+export CFLAGS=" -fPIC -O3 -g -std=gnu99 -I$_INST2_/include/ -L$_INST2_/lib -fstack-protector-all "
 
 
 gcc $CFLAGS \
@@ -92,6 +92,7 @@ gcc $CFLAGS \
 -Wno-unused-function \
 -Wno-discarded-qualifiers \
 -Wno-unused-const-variable \
+-Wno-deprecated-declarations \
 -DJAVA_LINUX \
 -D_FILE_OFFSET_BITS=64 -D__USE_GNU=1 \
 -I$JAVADIR1/ \
@@ -107,6 +108,9 @@ $(pkg-config --libs --cflags libv4l2) \
 $(pkg-config --libs --cflags xcb) \
 $(pkg-config --libs --cflags xcb-shm) \
 $(pkg-config --libs --cflags libswscale) \
+$(pkg-config --libs --cflags libpulse) \
+$(pkg-config --libs --cflags alsa) \
+$(pkg-config --libs --cflags libswresample) \
 -lpthread \
 -lm \
 -shared \

@@ -55,6 +55,8 @@ RUN cd /workspace2/build/ && mkdir /workspace2/build/inst/ && \
               --enable-indev=xcbgrab \
               --enable-demuxer=rawvideo \
               --enable-decoder=rawvideo \
+              --enable-demuxer=pcm_s16le \
+              --enable-decoder=pcm_s16le \
               --enable-libxcb --enable-libxcb-shm --enable-libxcb-xfixes --enable-libxcb-shape \
               --enable-indev=pulse \
               --enable-indev=v4l2 \
