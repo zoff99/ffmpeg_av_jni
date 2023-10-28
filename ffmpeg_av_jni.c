@@ -1008,7 +1008,6 @@ Java_com_zoffcc_applications_ffmpegav_AVActivity_ffmpegav_1open_1video_1in_1devi
         memset(desktop_display_cap_str, 0, desktop_display_cap_str_len);
         snprintf(desktop_display_cap_str, desktop_display_cap_str_len, "%s+0,0", inputname_cstr);
         fprintf(stderr, "Display capture_string: %s\n", desktop_display_cap_str);
-#endif
 
         // example: grab at position 10,20 ":0.0+10,20"
         if (avformat_open_input(&formatContext_video, desktop_display_cap_str, inputFormat_video, &options) != 0)
@@ -1019,6 +1018,13 @@ Java_com_zoffcc_applications_ffmpegav_AVActivity_ffmpegav_1open_1video_1in_1devi
             (*env)->ReleaseStringUTFChars(env, inputname, inputname_cstr);
             return -1;
         }
+#else
+        fprintf(stderr, "Could not open desktop as video input stream.\n");
+        reset_video_in_values();
+        (*env)->ReleaseStringUTFChars(env, deviceformat, deviceformat_cstr);
+        (*env)->ReleaseStringUTFChars(env, inputname, inputname_cstr);
+        return -1;
+#endif
     }
     else if (avformat_open_input(&formatContext_video, inputname_cstr, inputFormat_video, &options_video) < 0) {
         fprintf(stderr, "Could not open input\n");
@@ -1236,7 +1242,9 @@ JNIEXPORT jint JNICALL Java_com_zoffcc_applications_ffmpegav_AVActivity_ffmpegav
     }
     else
     {
+#ifdef __linux__
         pthread_setname_np(ffmpeg_thread_video_in_capture, "t_ff_vic");
+#endif
         printf("ffmpeg Video Capture Thread successfully created\n");
         return 0;
     }
@@ -1253,7 +1261,9 @@ JNIEXPORT jint JNICALL Java_com_zoffcc_applications_ffmpegav_AVActivity_ffmpegav
     }
     else
     {
+#ifdef __linux__
         pthread_setname_np(ffmpeg_thread_audio_in_capture, "t_ff_aic");
+#endif
         printf("ffmpeg Audio Capture Thread successfully created\n");
         return 0;
     }
