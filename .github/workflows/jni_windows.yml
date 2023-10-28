@@ -1,0 +1,54 @@
+name: windows JNI Lib
+
+on:
+  push:
+    paths-ignore:
+     - 'README.md'
+     - 'CHANGELOG.md'
+  pull_request:
+    paths-ignore:
+     - 'README.md'
+     - 'CHANGELOG.md'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: dummy
+        default: dummy
+
+jobs:
+
+  build-windows-nightly-artifact:
+    name: Nightly Artifact windows Build
+    runs-on: ubuntu-22.04
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: install deps
+        run: |
+          sudo apt-get update && \
+          sudo DEBIAN_FRONTEND=noninteractive \
+          apt-get install -y --no-install-recommends \
+          ca-certificates \
+          openjdk-17-jdk \
+          openjdk-17-jdk-headless \
+          coreutils autoconf libtool pkg-config \
+          gcc-mingw-w64-x86-64 g++-mingw-w64-x86-64 binutils-mingw-w64-x86-64 \
+          mingw-w64-tools pkg-config-mingw-w64-x86-64 win-iconv-mingw-w64-dev \
+          mingw-w64-x86-64-dev
+
+      - name: build deps
+        run:  |
+          ls -al
+          id
+          pwd
+          ./ci_scripts/deps_win.sh
+
+      - name: build jni lib
+        run:  |
+          ls -al
+          id
+          pwd
+          ./ci_scripts/java_jni_lib_win.sh
+
