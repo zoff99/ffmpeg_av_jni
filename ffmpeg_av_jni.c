@@ -305,7 +305,6 @@ static pthread_t ffmpeg_thread_video_in_capture;
 AVRational time_base_video = (AVRational) {0, 0};
 
 #define DEFAULT_SCREEN_CAPTURE_FPS "20" // 20 fps desktop screen capture
-char* global_desktop_display_num_str = NULL;
 int sws_scale_algo = SWS_BILINEAR; // SWS_FAST_BILINEAR SWS_BILINEAR SWS_BICUBIC SWS_SINC SWS_LANCZOS
 int output_width = 640;
 int output_height = 480;
@@ -768,6 +767,56 @@ Java_com_zoffcc_applications_ffmpegav_AVActivity_ffmpegav_1get_1video_1in_1devic
 }
 
 JNIEXPORT jobjectArray JNICALL
+Java_com_zoffcc_applications_ffmpegav_AVActivity_ffmpegav_1get_1in_1sources(JNIEnv *env, jobject thiz, jstring devicename)
+{
+    if (devicename == NULL)
+    {
+        return NULL;
+    }
+    const char *devicename_cstr = (*env)->GetStringUTFChars(env, devicename, NULL);
+    if (devicename_cstr == NULL)
+    {
+        return NULL;
+    }
+    const uint32_t max_sources = 64;
+    jobjectArray result = (*env)->NewObjectArray(env, max_sources, (*env)->FindClass(env, "java/lang/String"), NULL);
+
+    printf("wanted_in_device=%s\n", devicename_cstr);
+    AVInputFormat *inputFormat_search = av_find_input_format(devicename_cstr);
+    AVDeviceInfoList *deviceInfoList = NULL;
+    AVDeviceInfo *deviceInfo = NULL;
+    int i;
+    uint32_t in_source_count = 0;
+
+    int devices_found = avdevice_list_input_sources(inputFormat_search, NULL, NULL, &deviceInfoList);
+    printf("inputs found: %d\n", devices_found);
+    if (devices_found < 1)
+    {
+        avdevice_free_list_devices(&deviceInfoList);
+        (*env)->ReleaseStringUTFChars(env, devicename, devicename_cstr);
+        return NULL;
+    }
+    for (i = 0; i < deviceInfoList->nb_devices; i++) {
+        deviceInfo = deviceInfoList->devices[i];
+        if (deviceInfo->device_name)
+        {
+            printf("input #%d: %s\n", i, deviceInfo->device_name);
+            jstring str = (*env)->NewStringUTF(env, deviceInfo->device_name);
+            (*env)->SetObjectArrayElement(env, result, in_source_count, str);
+            in_source_count++;
+            if (in_source_count >= max_sources)
+            {
+                break;
+            }
+        }
+    }
+
+    avdevice_free_list_devices(&deviceInfoList);
+    (*env)->ReleaseStringUTFChars(env, devicename, devicename_cstr);
+    return result;
+}
+
+JNIEXPORT jobjectArray JNICALL
 Java_com_zoffcc_applications_ffmpegav_AVActivity_ffmpegav_1get_1audio_1in_1devices(JNIEnv *env, jobject thiz)
 {
     const uint32_t max_devices = 64;
@@ -853,10 +902,15 @@ static void print_codec_parameters_audio(AVCodecParameters *codecpar, const char
 }
 
 JNIEXPORT jint JNICALL
-Java_com_zoffcc_applications_ffmpegav_AVActivity_ffmpegav_1open_1video_1in_1device(JNIEnv *env, jobject thiz, jstring deviceformat,
-    jint wanted_width, jint wanted_height, jstring x11_display_num, jint fps)
+Java_com_zoffcc_applications_ffmpegav_AVActivity_ffmpegav_1open_1video_1in_1device(JNIEnv *env, jobject thiz,
+    jstring deviceformat, jstring inputname,
+    jint wanted_width, jint wanted_height, jint fps)
 {
     if (deviceformat == NULL)
+    {
+        return -1;
+    }
+        if (inputname == NULL)
     {
         return -1;
     }
@@ -866,6 +920,13 @@ Java_com_zoffcc_applications_ffmpegav_AVActivity_ffmpegav_1open_1video_1in_1devi
         return -1;
     }
     printf("wanted_video_in_device=%s\n", deviceformat_cstr);
+    const char *inputname_cstr = (*env)->GetStringUTFChars(env, inputname, NULL);
+    if (inputname_cstr == NULL)
+    {
+        return -1;
+    }
+    printf("wanted_video_in_input=%s\n", inputname_cstr);
+
     fprintf(stderr, "wanted_video_capture_resolution: %dx%d\n", wanted_width, wanted_height);
 
     output_width = wanted_width;
@@ -876,6 +937,7 @@ Java_com_zoffcc_applications_ffmpegav_AVActivity_ffmpegav_1open_1video_1in_1devi
         fprintf(stderr, "Could not find input format\n");
         reset_video_in_values();
         (*env)->ReleaseStringUTFChars(env, deviceformat, deviceformat_cstr);
+        (*env)->ReleaseStringUTFChars(env, inputname, inputname_cstr);
         return -1;
     }
 
@@ -889,6 +951,7 @@ Java_com_zoffcc_applications_ffmpegav_AVActivity_ffmpegav_1open_1video_1in_1devi
             fprintf(stderr, "Could not find X11 Display.\n");
             reset_video_in_values();
             (*env)->ReleaseStringUTFChars(env, deviceformat, deviceformat_cstr);
+            (*env)->ReleaseStringUTFChars(env, inputname, inputname_cstr);
             return -1;
         }
         Window root = DefaultRootWindow(display);
@@ -940,32 +1003,28 @@ Java_com_zoffcc_applications_ffmpegav_AVActivity_ffmpegav_1open_1video_1in_1devi
         av_dict_set(&options, "video_size", resolution_string, 0);
         av_dict_set(&options, "probesize", "50M", 0);
 
-        AVInputFormat *ifmt = av_find_input_format("x11grab");
-
         const int desktop_display_cap_str_len = 1000;
         char desktop_display_cap_str[desktop_display_cap_str_len];
         memset(desktop_display_cap_str, 0, desktop_display_cap_str_len);
-        if (global_desktop_display_num_str == NULL)
-        {
-            global_desktop_display_num_str = ":0.0";
-        }
-        snprintf(desktop_display_cap_str, desktop_display_cap_str_len, "%s+0,0", global_desktop_display_num_str);
+        snprintf(desktop_display_cap_str, desktop_display_cap_str_len, "%s+0,0", inputname_cstr);
         fprintf(stderr, "Display capture_string: %s\n", desktop_display_cap_str);
 #endif
 
         // example: grab at position 10,20 ":0.0+10,20"
-        if (avformat_open_input(&formatContext_video, desktop_display_cap_str, ifmt, &options) != 0)
+        if (avformat_open_input(&formatContext_video, desktop_display_cap_str, inputFormat_video, &options) != 0)
         {
             fprintf(stderr, "Could not open desktop as video input stream.\n");
             reset_video_in_values();
             (*env)->ReleaseStringUTFChars(env, deviceformat, deviceformat_cstr);
+            (*env)->ReleaseStringUTFChars(env, inputname, inputname_cstr);
             return -1;
         }
     }
-    else if (avformat_open_input(&formatContext_video, ":0.0", inputFormat_video, &options_video) < 0) {
+    else if (avformat_open_input(&formatContext_video, inputname_cstr, inputFormat_video, &options_video) < 0) {
         fprintf(stderr, "Could not open input\n");
         reset_video_in_values();
         (*env)->ReleaseStringUTFChars(env, deviceformat, deviceformat_cstr);
+        (*env)->ReleaseStringUTFChars(env, inputname, inputname_cstr);
         return -1;
     }
 
@@ -975,6 +1034,7 @@ Java_com_zoffcc_applications_ffmpegav_AVActivity_ffmpegav_1open_1video_1in_1devi
         av_dict_free(&options_video);
         reset_video_in_values();
         (*env)->ReleaseStringUTFChars(env, deviceformat, deviceformat_cstr);
+        (*env)->ReleaseStringUTFChars(env, inputname, inputname_cstr);
         return -1;
     }
 
@@ -1033,17 +1093,24 @@ Java_com_zoffcc_applications_ffmpegav_AVActivity_ffmpegav_1open_1video_1in_1devi
         av_dict_free(&options_video);
         reset_video_in_values();
         (*env)->ReleaseStringUTFChars(env, deviceformat, deviceformat_cstr);
+        (*env)->ReleaseStringUTFChars(env, inputname, inputname_cstr);
         return -1;
     }
 
     (*env)->ReleaseStringUTFChars(env, deviceformat, deviceformat_cstr);
+    (*env)->ReleaseStringUTFChars(env, inputname, inputname_cstr);
     return 0;
 }
 
 JNIEXPORT jint JNICALL
-Java_com_zoffcc_applications_ffmpegav_AVActivity_ffmpegav_1open_1audio_1in_1device(JNIEnv *env, jobject thiz, jstring deviceformat)
+Java_com_zoffcc_applications_ffmpegav_AVActivity_ffmpegav_1open_1audio_1in_1device(JNIEnv *env, jobject thiz,
+    jstring deviceformat, jstring inputname)
 {
     if (deviceformat == NULL)
+    {
+        return -1;
+    }
+    if (inputname == NULL)
     {
         return -1;
     }
@@ -1054,11 +1121,19 @@ Java_com_zoffcc_applications_ffmpegav_AVActivity_ffmpegav_1open_1audio_1in_1devi
     }
     printf("wanted_audio_in_device=%s\n", deviceformat_cstr);
 
+    const char *inputname_cstr = (*env)->GetStringUTFChars(env, inputname, NULL);
+    if (inputname_cstr == NULL)
+    {
+        return -1;
+    }
+    printf("wanted_audio_in_input=%s\n", inputname_cstr);
+
     inputFormat_audio = av_find_input_format(deviceformat_cstr);
     if (!inputFormat_audio) {
         fprintf(stderr, "Could not find input format\n");
         reset_audio_in_values();
         (*env)->ReleaseStringUTFChars(env, deviceformat, deviceformat_cstr);
+        (*env)->ReleaseStringUTFChars(env, inputname, inputname_cstr);
         return -1;
     }
 
@@ -1068,11 +1143,12 @@ Java_com_zoffcc_applications_ffmpegav_AVActivity_ffmpegav_1open_1audio_1in_1devi
 #endif
     }
     else if (avformat_open_input(&formatContext_audio,
-                DEFAULT_SCREEN_CAPTURE_PULSE_DEVICE,
+                inputname_cstr,
                 inputFormat_audio, &options_audio) < 0) {
         fprintf(stderr, "Could not open input\n");
         reset_audio_in_values();
         (*env)->ReleaseStringUTFChars(env, deviceformat, deviceformat_cstr);
+        (*env)->ReleaseStringUTFChars(env, inputname, inputname_cstr);
         return -1;
     }
 
@@ -1082,6 +1158,7 @@ Java_com_zoffcc_applications_ffmpegav_AVActivity_ffmpegav_1open_1audio_1in_1devi
         av_dict_free(&options_audio);
         reset_audio_in_values();
         (*env)->ReleaseStringUTFChars(env, deviceformat, deviceformat_cstr);
+        (*env)->ReleaseStringUTFChars(env, inputname, inputname_cstr);
         return -1;
     }
 
@@ -1140,10 +1217,12 @@ Java_com_zoffcc_applications_ffmpegav_AVActivity_ffmpegav_1open_1audio_1in_1devi
         av_dict_free(&options_audio);
         reset_audio_in_values();
         (*env)->ReleaseStringUTFChars(env, deviceformat, deviceformat_cstr);
+        (*env)->ReleaseStringUTFChars(env, inputname, inputname_cstr);
         return -1;
     }
 
     (*env)->ReleaseStringUTFChars(env, deviceformat, deviceformat_cstr);
+    (*env)->ReleaseStringUTFChars(env, inputname, inputname_cstr);
     return 0;
 }
 
