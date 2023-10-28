@@ -84,11 +84,11 @@ $_INST_/lib/libavutil.a \
 -shared \
 -lpthread \
 -lm \
--o libffmpeg_av_jni.dll || exit 1
+-o ffmpeg_av_jni.dll || exit 1
 
 
-ls -al libffmpeg_av_jni.dll || exit 1
+ls -al ffmpeg_av_jni.dll || exit 1
 pwd
-file libffmpeg_av_jni.dll
+file ffmpeg_av_jni.dll
 
 # -------------- now compile the JNI lib ----------------------

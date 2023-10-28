@@ -53,3 +53,21 @@ jobs:
           pwd
           ./ci_scripts/java_jni_lib_win.sh
 
+      - name: Upload artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: ffmpeg_av_jni.dll
+          path: ffmpeg_av_jni.dll
+      - name: Upload to nightly release
+        uses: ncipollo/release-action@v1
+        if: github.ref == 'refs/heads/master'
+        with:
+          allowUpdates: true
+          tag: nightly
+          omitBodyDuringUpdate: true
+          omitNameDuringUpdate: true
+          prerelease: true
+          replacesArtifacts: true
+          token: ${{ secrets.GITHUB_TOKEN }}
+          artifacts: "ffmpeg_av_jni.dll"
+

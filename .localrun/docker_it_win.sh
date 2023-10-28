@@ -118,14 +118,14 @@ $_INST2_/lib/libavutil.a \
 -shared \
 -lpthread \
 -lm \
--o libffmpeg_av_jni.dll || exit 1
+-o ffmpeg_av_jni.dll || exit 1
 
 
-ls -al libffmpeg_av_jni.dll || exit 1
+ls -al ffmpeg_av_jni.dll || exit 1
 pwd
-file libffmpeg_av_jni.dll
+file ffmpeg_av_jni.dll
 
-cp -av libffmpeg_av_jni.dll /artefacts/
+cp -av ffmpeg_av_jni.dll /artefacts/
 
 chmod a+rw /artefacts/*
 
