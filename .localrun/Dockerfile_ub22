@@ -1,70 +1,25 @@
-#! /bin/bash
+# syntax=docker/dockerfile:1
+FROM ubuntu:20.04
 
-_HOME_="$(pwd)"
-export _HOME_
+RUN export DEBIAN_FRONTEND=noninteractive ; apt update && apt install -y make    yasm curl   wget    git    coreutils    autoconf    libtool    pkg-config    libsodium-dev     nano    vim
+RUN mkdir -p /workspace2/build/
+RUN cd /workspace2/build/;FFMPEG_VERSION=n6.0 ; FFMPEG_FILENAME="$FFMPEG_VERSION.tar.gz" ;rm -f "ffmpeg"*.tar.*;wget "https://github.com/FFmpeg/FFmpeg/archive/refs/tags/$FFMPEG_FILENAME" -O "ffmpeg_""$FFMPEG_FILENAME";tar -xf "ffmpeg_""$FFMPEG_FILENAME";rm -f "ffmpeg"*.tar.*
+RUN export DEBIAN_FRONTEND=noninteractive ; apt install -y yasm \
+          openjdk-17-jdk \
+          openjdk-17-jdk-headless \
+          coreutils autoconf libtool pkg-config \
+          gcc-mingw-w64-x86-64 g++-mingw-w64-x86-64 binutils-mingw-w64-x86-64 \
+          mingw-w64-tools pkg-config-mingw-w64-x86-64 win-iconv-mingw-w64-dev \
+          mingw-w64-x86-64-dev
 
-cd "$_HOME_"
-
-export _SRC_=$_HOME_/src/
-export _INST_=$_HOME_/inst/
-
-mkdir -p $_SRC_
-mkdir -p $_INST_
-
-export LD_LIBRARY_PATH=$_INST_/lib/
-export PKG_CONFIG_PATH=$_INST_/lib/pkgconfig
-
-
-# ----------- config ------------
-ORIGPATH=$PATH
-export ORIGPATH
-NEWPATH=/usr/x86_64-w64-mingw32/bin:$PATH
-export NEWPATH
-export PATH=$NEWPATH
-
-MAKEFLAGS=j$(nproc)
-export MAKEFLAGS
-
-WGET_OPTIONS="--timeout=10"
-export WGET_OPTIONS
-
-ARCH="x86_64"
-export ARCH
-
-export CXXFLAGS_ADDON="-O2 -g -fPIC"
-export CFLAGS_ADDON="-O2 -g -fPIC"
-export CFLAGS_ADDON_MORE="--param=ssp-buffer-size=1 -fstack-protector-all"
-# ----------- config ------------
-
-
-# ------- deps verisions ---------
-FFMPEG_VERSION="n6.0"
-NASM_VERSION="nasm-2.16.01"
-# ------- deps verisions ---------
-
-
-
-
-
-
-
-# ---------- ffmpeg ---------
-if [ 1 == 1 ]; then
-
-cd "$_SRC_"
-
-FFMPEG_FILENAME="$FFMPEG_VERSION.tar.gz"
-rm -f "ffmpeg"*.tar.*
-wget $WGET_OPTIONS "https://github.com/FFmpeg/FFmpeg/archive/refs/tags/$FFMPEG_FILENAME" -O "ffmpeg_""$FFMPEG_FILENAME"
-tar -xf "ffmpeg_""$FFMPEG_FILENAME"
-rm -f "ffmpeg"*.tar.*
-cd *mpeg*/
-
-
-
-  ./configure --arch="$ARCH" \
+RUN cd /workspace2/build/ && mkdir /workspace2/build/inst/ && \
+    cd ./FFmpeg-n6.0/ && \
+    ARCH="x86_64" && \
+    export ARCH && \
+    ./configure  \
+              --arch="$ARCH" \
               --enable-gpl \
-              --prefix="$_INST_" \
+              --prefix="/workspace2/build/inst/" \
               --target-os="mingw32" \
               --cross-prefix="$ARCH-w64-mingw32-" \
               --pkg-config="pkg-config" \
@@ -112,18 +67,9 @@ cd *mpeg*/
               --enable-decoder=rawvideo \
               --enable-demuxer=pcm_s16le \
               --enable-decoder=pcm_s16le \
-              --enable-runtime-cpudetect || exit 1
+              --enable-runtime-cpudetect  && \
+    make -j$(nproc) && \
+    make install
 
-#              --disable-lzo \
-#              --disable-avresample \
-
-  make -j || exit 1
-  make install
-
-cd "$_HOME_"
-
-ls -al "$_INST_"/lib/
-
-fi
-# ---------- ffmpeg ---------
+RUN ls -al /workspace2/build/inst/lib/
 

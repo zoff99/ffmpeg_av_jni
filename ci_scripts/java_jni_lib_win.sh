@@ -59,20 +59,27 @@ echo "JAVADIR2:""$JAVADIR2"
 
 export CFLAGS=" -fPIC -std=gnu99 -I$_INST_/include/ -L$_INST_/lib -fstack-protector-all "
 
-x86_64-w64-mingw32-gcc-win32 $CFLAGS \
+x86_64-w64-mingw32-gcc $CFLAGS \
 -Wall -D_JNI_IMPLEMENTATION_ -Wl,-kill-at \
 -DJAVA_LINUX \
 $C_FLAGS $CXX_FLAGS $LD_FLAGS \
 -D_FILE_OFFSET_BITS=64 -D__USE_GNU=1 \
 -I$JAVADIR1/ \
 -I$JAVADIR2/ \
-libffmpeg_av_jni.c \
-$_INST_/lib/libavcodec.a \
+ffmpeg_av_jni.c \
 $_INST_/lib/libavdevice.a \
+$_INST_/lib/libswscale.a \
 $_INST_/lib/libavformat.a \
+$_INST_/lib/libavcodec.a \
+$_INST_/lib/libswresample.a \
 $_INST_/lib/libavutil.a \
 -Wl,-Bstatic -lws2_32 \
 -l:libiphlpapi.a \
+-l:libshlwapi.a \
+-l:libole32.a \
+-l:libstrmiids.a \
+-l:liboleaut32.a \
+-l:libuuid.a \
 -Wl,-Bstatic -lbcrypt \
 -shared \
 -lpthread \
