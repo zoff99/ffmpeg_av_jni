@@ -97,6 +97,7 @@ gcc $CFLAGS \
 -framework AVFoundation \
 -framework CoreMedia \
 -framework CoreVideo \
+-framework CoreGraphics \
 -D_FILE_OFFSET_BITS=64 -D__USE_GNU=1 \
 -I$JAVADIR1/ \
 -I$JAVADIR2/ \
