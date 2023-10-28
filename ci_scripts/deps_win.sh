@@ -104,6 +104,8 @@ cd *mpeg*/
               --disable-demuxers \
               --disable-parsers \
               --disable-bsfs \
+              --enable-outdev=dshow \
+              --enable-indev=dshow \
               --enable-runtime-cpudetect || exit 1
 
 #              --disable-lzo \
