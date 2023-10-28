@@ -89,6 +89,14 @@ gcc $CFLAGS \
 -Wno-discarded-qualifiers \
 -Wno-unused-const-variable \
 -Wno-deprecated-declarations \
+-framework CoreFoundation \
+-framework CoreServices \
+-framework AudioUnit \
+-framework AudioToolbox \
+-framework CoreAudio \
+-framework AVFoundation \
+-framework CoreMedia \
+-framework CoreVideo \
 -D_FILE_OFFSET_BITS=64 -D__USE_GNU=1 \
 -I$JAVADIR1/ \
 -I$JAVADIR2/ \
