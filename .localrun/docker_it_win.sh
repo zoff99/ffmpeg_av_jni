@@ -14,7 +14,7 @@ if [ "$1""x" == "buildx" ]; then
 fi
 
 build_for='
-ubuntu:20.04
+windows_ub22
 '
 
 for system_to_build_for in $build_for ; do
@@ -124,6 +124,8 @@ $_INST2_/lib/libavutil.a \
 ls -al libffmpeg_av_jni.dll || exit 1
 pwd
 file libffmpeg_av_jni.dll
+
+cp -av libffmpeg_av_jni.dll /artefacts/
 
 chmod a+rw /artefacts/*
 
