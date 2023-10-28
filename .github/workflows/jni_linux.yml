@@ -51,11 +51,6 @@ jobs:
           pwd
           ./ci_scripts/java_jni_lib_linux.sh
 
-      - name: Rename artifact for nightly upload
-        if: github.ref == 'refs/heads/master'
-        run: |
-          pwd
-          cp -v /home/runner/work/ffmpeg_av_jni/ffmpeg_av_jni/libffmpeg_av_jni.so libffmpeg_av_jni.so
       - name: Upload artifact
         uses: actions/upload-artifact@v3
         with:
