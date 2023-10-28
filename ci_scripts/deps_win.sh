@@ -60,6 +60,8 @@ tar -xf "ffmpeg_""$FFMPEG_FILENAME"
 rm -f "ffmpeg"*.tar.*
 cd *mpeg*/
 
+
+
   ./configure --arch="$ARCH" \
               --enable-gpl \
               --prefix="$_INST_" \
@@ -69,7 +71,7 @@ cd *mpeg*/
               --extra-cflags="-static -O2 -g0" \
               --extra-ldflags="-lm -static" \
               --pkg-config-flags="--static" \
-              --disable-swscale \
+              --enable-swscale \
               --disable-network \
               --disable-everything \
               --disable-debug \
@@ -104,8 +106,13 @@ cd *mpeg*/
               --disable-demuxers \
               --disable-parsers \
               --disable-bsfs \
+              --enable-swresample \
               --enable-outdev=dshow \
               --enable-indev=dshow \
+              --enable-demuxer=rawvideo \
+              --enable-decoder=rawvideo \
+              --enable-demuxer=pcm_s16le \
+              --enable-decoder=pcm_s16le \
               --enable-runtime-cpudetect || exit 1
 
 #              --disable-lzo \
