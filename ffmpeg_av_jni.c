@@ -349,7 +349,6 @@ long audio_buffer_pcm_2_size = 0;
 static void reset_video_in_values()
 {
     inputFormat_video = NULL;
-    formatContext_video = NULL;
     options_video = NULL;
     video_stream_index = -1;
 }
@@ -357,7 +356,6 @@ static void reset_video_in_values()
 static void reset_audio_in_values()
 {
     inputFormat_audio = NULL;
-    formatContext_audio = NULL;
     options_audio = NULL;
     audio_stream_index = -1;
 }
@@ -910,7 +908,7 @@ Java_com_zoffcc_applications_ffmpegav_AVActivity_ffmpegav_1open_1video_1in_1devi
     {
         return -1;
     }
-        if (inputname == NULL)
+    if (inputname == NULL)
     {
         return -1;
     }
@@ -1290,8 +1288,13 @@ JNIEXPORT jint JNICALL
 Java_com_zoffcc_applications_ffmpegav_AVActivity_ffmpegav_1close_1audio_1in_1device(JNIEnv *env, jobject thiz)
 {
     avcodec_free_context(&global_audio_codec_ctx);
+    global_audio_codec_ctx = NULL;
     avformat_close_input(&formatContext_audio);
+    formatContext_audio = NULL;
     av_dict_free(&options_audio);
+    options_audio = NULL;
+    audio_codec = NULL;
+    audio_stream_index = -1;
     return 0;
 }
 
@@ -1299,8 +1302,13 @@ JNIEXPORT jint JNICALL
 Java_com_zoffcc_applications_ffmpegav_AVActivity_ffmpegav_1close_1video_1in_1device(JNIEnv *env, jobject thiz)
 {
     avcodec_free_context(&global_video_codec_ctx);
+    global_video_codec_ctx = NULL;
     avformat_close_input(&formatContext_video);
+    formatContext_video = NULL;
     av_dict_free(&options_video);
+    options_video = NULL;
+    video_codec = NULL;
+    video_stream_index = -1;
     return 0;
 }
 

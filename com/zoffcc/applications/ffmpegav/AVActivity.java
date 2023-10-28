@@ -193,6 +193,11 @@ public class AVActivity {
         final String[] video_in_devices = ffmpegav_get_video_in_devices();
         Log.i(TAG, "ffmpeg video in devices: " + video_in_devices.length);
 
+        String vdevice = "";
+        String vsource = "";
+
+        String adevice = "";
+        String asource = "";
 
         for (int i=0;i<video_in_devices.length;i++)
         {
@@ -218,6 +223,8 @@ public class AVActivity {
                 Log.i(TAG, "ffmpeg video in device #"+i+": " + video_in_devices[i]);
                 if (i == 1)
                 {
+                    vdevice = video_in_devices[i];
+                    vsource = ":0.0";
                     final int res_vd = ffmpegav_open_video_in_device(video_in_devices[i],
                         ":0.0", 640, 480, 15);
                     Log.i(TAG, "ffmpeg open video capture device: " + res_vd);
@@ -252,6 +259,8 @@ public class AVActivity {
                 Log.i(TAG, "ffmpeg audio in device #"+i+": " + audio_in_devices[i]);
                 if (i == 1)
                 {
+                    adevice = audio_in_devices[i];
+                    asource = "default";
                     final int res_ad = ffmpegav_open_audio_in_device(audio_in_devices[i],
                         "default");
                     Log.i(TAG, "ffmpeg open audio capture device: " + res_ad);
@@ -301,7 +310,7 @@ public class AVActivity {
         ffmpegav_start_audio_in_capture();
         try
         {
-            Thread.sleep(300);
+            Thread.sleep(1000);
         }
         catch(Exception e)
         {
@@ -315,6 +324,35 @@ public class AVActivity {
 
         final int res_vclose = ffmpegav_close_video_in_device();
         Log.i(TAG, "ffmpeg open close video capture device: " + res_vclose);
+
+        try
+        {
+            Thread.sleep(100);
+        }
+        catch(Exception e)
+        {
+        }
+
+        final int res_vd2 = ffmpegav_open_video_in_device(vdevice,
+            vsource, 640, 480, 15);
+        Log.i(TAG, "ffmpeg open video capture device: " + res_vd2);
+
+        final int res_ad2 = ffmpegav_open_audio_in_device(adevice,
+            asource);
+        Log.i(TAG, "ffmpeg open audio capture device: " + res_ad2);
+        ffmpegav_start_video_in_capture();
+        ffmpegav_start_audio_in_capture();
+        try
+        {
+            Thread.sleep(1000);
+        }
+        catch(Exception e)
+        {
+        }
+        ffmpegav_stop_audio_in_capture();
+        ffmpegav_stop_video_in_capture();
+        ffmpegav_close_audio_in_device();
+        ffmpegav_close_video_in_device();
     }
 }
 
