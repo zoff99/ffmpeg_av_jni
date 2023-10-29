@@ -89,6 +89,7 @@ gcc $CFLAGS \
 -Wno-discarded-qualifiers \
 -Wno-unused-const-variable \
 -Wno-deprecated-declarations \
+-framework Foundation \
 -framework CoreFoundation \
 -framework CoreServices \
 -framework AudioUnit \
