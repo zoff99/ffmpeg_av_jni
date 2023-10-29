@@ -282,7 +282,6 @@ jmethodID callback_audio_capture_frame_pts_cb_method = NULL;
 // --------- AV VARS ---------
 int global_audio_delay_factor = 0;
 
-SwrContext *swr_ctx = NULL;
 AVInputFormat *inputFormat_audio = NULL;
 AVFormatContext *formatContext_audio = NULL;
 AVCodecContext *global_audio_codec_ctx = NULL;
@@ -375,6 +374,19 @@ static void *ffmpeg_thread_video_in_capture_func(void *data)
     AVPacket packet;
     AVFrame *frame = NULL;
     int ret = 0;
+
+    if (global_video_codec_ctx == NULL) {
+        fprintf(stderr, "video codec is NULL\n");
+        return NULL;
+    }
+    if (inputFormat_video == NULL) {
+        fprintf(stderr, "inputFormat_video is NULL\n");
+        return NULL;
+    }
+    if (video_stream_index == -1) {
+        fprintf(stderr, "video_stream_index is -1\n");
+        return NULL;
+    }
 
     // Allocate a frame for decoding
     frame = av_frame_alloc();
@@ -532,6 +544,19 @@ static void *ffmpeg_thread_audio_in_capture_func(void *data)
     int audio_delay_in_bytes = 0;
     uint8_t **converted_samples = NULL;
 
+    if (global_audio_codec_ctx == NULL) {
+        fprintf(stderr, "video audio is NULL\n");
+        return NULL;
+    }
+    if (inputFormat_audio == NULL) {
+        fprintf(stderr, "inputFormat_audio is NULL\n");
+        return NULL;
+    }
+    if (audio_stream_index == -1) {
+        fprintf(stderr, "audio_stream_index is -1\n");
+        return NULL;
+    }
+
     // Allocate a frame for decoding
     frame = av_frame_alloc();
     if (!frame) {
@@ -557,7 +582,7 @@ static void *ffmpeg_thread_audio_in_capture_func(void *data)
         formatContext_audio->streams[audio_stream_index]->codecpar->sample_rate);
 
 
-    swr_ctx = swr_alloc_set_opts(NULL,
+    SwrContext *swr_ctx = swr_alloc_set_opts(NULL,
                                  out_channel_layout, AV_SAMPLE_FMT_S16, out_sample_rate,
                                  global_audio_codec_ctx->channel_layout,
                                  formatContext_audio->streams[audio_stream_index]->codecpar->format,
