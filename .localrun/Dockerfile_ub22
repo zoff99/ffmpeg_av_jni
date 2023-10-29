@@ -63,6 +63,7 @@ RUN cd /workspace2/build/ && mkdir /workspace2/build/inst/ && \
               --disable-bsfs \
               --enable-swresample \
               --enable-indev=dshow \
+              --enable-indev=gdigrab \
               --enable-decoder=mjpeg \
               --enable-demuxer=rawvideo \
               --enable-decoder=rawvideo \

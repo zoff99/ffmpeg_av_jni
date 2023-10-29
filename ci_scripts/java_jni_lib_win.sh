@@ -80,6 +80,7 @@ $_INST_/lib/libavutil.a \
 -l:libstrmiids.a \
 -l:liboleaut32.a \
 -l:libuuid.a \
+-l:libgdi32.a \
 -Wl,-Bstatic -lbcrypt \
 -shared \
 -lpthread \

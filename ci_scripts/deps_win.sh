@@ -108,6 +108,7 @@ cd *mpeg*/
               --disable-bsfs \
               --enable-swresample \
               --enable-indev=dshow \
+              --enable-indev=gdigrab \
               --enable-demuxer=rawvideo \
               --enable-decoder=rawvideo \
               --enable-demuxer=pcm_s16le \
