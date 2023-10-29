@@ -48,7 +48,7 @@ public class AVActivity {
 
     public static void ffmpegav_callback_video_capture_frame_pts_cb_method(long width, long height, long pts)
     {
-        Log.i(TAG, "capture video frame w: " + width + " h: " + height + " pts: " + pts);
+        // Log.i(TAG, "capture video frame w: " + width + " h: " + height + " pts: " + pts);
         if (video_capture_callback_function != null) {
             video_capture_callback_function.onSuccess(width, height, pts);
         }
@@ -61,7 +61,7 @@ public class AVActivity {
 
     public static void ffmpegav_callback_audio_capture_frame_pts_cb_method(long read_bytes, int out_samples, int out_channels, int out_sample_rate, long pts)
     {
-        Log.i(TAG, "capture audio frame bytes: " + read_bytes + " samples: " + out_samples + " channels: " + out_channels + " sample_rate: " + out_sample_rate);
+        // Log.i(TAG, "capture audio frame bytes: " + read_bytes + " samples: " + out_samples + " channels: " + out_channels + " sample_rate: " + out_sample_rate);
         if (audio_capture_callback_function != null) {
             audio_capture_callback_function.onSuccess(read_bytes, out_samples, out_channels, out_sample_rate, pts);
         }
