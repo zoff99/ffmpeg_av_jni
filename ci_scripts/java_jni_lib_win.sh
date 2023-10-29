@@ -57,7 +57,7 @@ export JAVADIR2=$(cat /tmp/xx2)
 echo "JAVADIR1:""$JAVADIR1"
 echo "JAVADIR2:""$JAVADIR2"
 
-export CFLAGS=" -fPIC -std=gnu99 -I$_INST_/include/ -L$_INST_/lib -fstack-protector-all "
+export CFLAGS=" -fPIC -std=gnu99 -I$_INST_/include/ -L$_INST_/lib -fstack-protector-all -D_FORTIFY_SOURCE=2 "
 
 x86_64-w64-mingw32-gcc $CFLAGS \
 -Wall -D_JNI_IMPLEMENTATION_ -Wl,-kill-at \
@@ -70,6 +70,7 @@ ffmpeg_av_jni.c \
 $_INST_/lib/libavdevice.a \
 $_INST_/lib/libswscale.a \
 $_INST_/lib/libavformat.a \
+$_INST_/lib/libavfilter.a \
 $_INST_/lib/libavcodec.a \
 $_INST_/lib/libswresample.a \
 $_INST_/lib/libavutil.a \
@@ -81,6 +82,10 @@ $_INST_/lib/libavutil.a \
 -l:liboleaut32.a \
 -l:libuuid.a \
 -l:libgdi32.a \
+-l:libavicap32.a \
+-l:libvfw32.a \
+-l:libpsapi.a \
+-l:libshell32.a \
 -Wl,-Bstatic -lbcrypt \
 -shared \
 -lpthread \

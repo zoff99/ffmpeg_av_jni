@@ -86,7 +86,7 @@ echo "JAVADIR1:""$JAVADIR1"
 echo "JAVADIR2:""$JAVADIR2"
 
 
-export CFLAGS=" -fPIC -std=gnu99 -I$_INST2_/include/ -L$_INST2_/lib -fstack-protector-all "
+export CFLAGS=" -fPIC -std=gnu99 -I$_INST2_/include/ -L$_INST2_/lib -fstack-protector-all -D_FORTIFY_SOURCE=2 "
 
 x86_64-w64-mingw32-gcc $CFLAGS \
 -Wno-format-extra-args \
@@ -105,6 +105,7 @@ ffmpeg_av_jni.c \
 $_INST2_/lib/libavdevice.a \
 $_INST2_/lib/libswscale.a \
 $_INST2_/lib/libavformat.a \
+$_INST2_/lib/libavfilter.a \
 $_INST2_/lib/libavcodec.a \
 $_INST2_/lib/libswresample.a \
 $_INST2_/lib/libavutil.a \
@@ -116,6 +117,10 @@ $_INST2_/lib/libavutil.a \
 -l:liboleaut32.a \
 -l:libuuid.a \
 -l:libgdi32.a \
+-l:libavicap32.a \
+-l:libvfw32.a \
+-l:libpsapi.a \
+-l:libshell32.a \
 -Wl,-Bstatic -lbcrypt \
 -shared \
 -lpthread \
@@ -140,6 +145,7 @@ test.c \
 $_INST2_/lib/libavdevice.a \
 $_INST2_/lib/libswscale.a \
 $_INST2_/lib/libavformat.a \
+$_INST2_/lib/libavfilter.a \
 $_INST2_/lib/libavcodec.a \
 $_INST2_/lib/libswresample.a \
 $_INST2_/lib/libavutil.a \
@@ -151,12 +157,22 @@ $_INST2_/lib/libavutil.a \
 -l:liboleaut32.a \
 -l:libuuid.a \
 -l:libgdi32.a \
+-l:libavicap32.a \
+-l:libvfw32.a \
+-l:libpsapi.a \
+-l:libshell32.a \
 -Wl,-Bstatic -lbcrypt \
 -lpthread \
 -lm \
 -o test.exe
 ls -al test.exe
 cp -av test.exe /artefacts/
+
+cp -av /workspace2/build/inst/bin/ffmpeg.exe /artefacts/
+
+
+
+
 
 ls -al ffmpeg_av_jni.dll || exit 1
 pwd

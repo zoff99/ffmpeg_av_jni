@@ -14,17 +14,15 @@ RUN cd /workspace2/build/ && mkdir /workspace2/build/inst/ && \
               --enable-gpl \
               --prefix="/workspace2/build/inst/" \
               --disable-asm \
-              --enable-pic \
-              --enable-swscale \
+              --extra-cflags="-static -O2 -g0 -D_FORTIFY_SOURCE=2 -fstack-protector-strong" \
+              --extra-ldflags="-lm -fstack-protector-strong" \
               --disable-network \
               --disable-everything \
               --disable-debug \
               --disable-shared \
-              --disable-programs \
               --disable-protocols \
               --disable-doc \
               --disable-sdl2 \
-              --disable-avfilter \
               --disable-filters \
               --disable-iconv \
               --disable-network \
@@ -47,6 +45,8 @@ RUN cd /workspace2/build/ && mkdir /workspace2/build/inst/ && \
               --disable-demuxers \
               --disable-parsers \
               --disable-bsfs \
+              --enable-pic \
+              --enable-swscale \
               --enable-swresample \
               --enable-avcodec \
               --enable-outdev=alsa \

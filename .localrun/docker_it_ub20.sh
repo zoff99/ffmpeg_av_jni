@@ -32,6 +32,7 @@ for system_to_build_for in $build_for ; do
     ls -al $_HOME_/"$system_to_build_for"/
 
     rsync -a ../ffmpeg_av_jni.c --exclude=.localrun $_HOME_/"$system_to_build_for"/workspace/build/
+    rsync -a ../test.c --exclude=.localrun $_HOME_/"$system_to_build_for"/workspace/build/
     chmod a+rwx -R $_HOME_/"$system_to_build_for"/workspace/build >/dev/null 2>/dev/null
 
     echo '#! /bin/bash
@@ -57,6 +58,7 @@ export PKG_CONFIG_PATH="$_INST2_"/lib/pkgconfig
 echo "*** compile ***"
 
 ls -al "$_INST2_"/lib/
+ls -al "$_INST2_"/bin/
 
 # libavcodec.a
 # libavdevice.a
@@ -84,7 +86,7 @@ export JAVADIR2=$(cat /tmp/xx2)
 echo "JAVADIR1:""$JAVADIR1"
 echo "JAVADIR2:""$JAVADIR2"
 
-export CFLAGS=" -fPIC -O3 -g -std=gnu99 -I$_INST2_/include/ -L$_INST2_/lib -fstack-protector-all "
+export CFLAGS=" -fPIC -O3 -g -std=gnu99 -I$_INST2_/include/ -L$_INST2_/lib -fstack-protector-all -D_FORTIFY_SOURCE=2 "
 
 
 gcc $CFLAGS \
@@ -117,18 +119,44 @@ $(pkg-config --libs --cflags libswresample) \
 -Wl,-soname,libffmpeg_av_jni.so -o libffmpeg_av_jni.so || exit 1
 
 
-# $(pkg-config --cflags --libs x11 libswresample libavcodec libswscale libavformat libavdevice libavutil) \
+
+echo "compiling test program ..."
+
+gcc $CFLAGS \
+-Wall \
+-Wno-unused-function \
+-Wno-discarded-qualifiers \
+-Wno-unused-const-variable \
+-Wno-deprecated-declarations \
+-D_FILE_OFFSET_BITS=64 -D__USE_GNU=1 \
+test.c \
+$_INST2_/lib/libavcodec.a \
+$_INST2_/lib/libavdevice.a \
+$_INST2_/lib/libavformat.a \
+$_INST2_/lib/libavutil.a \
+$(pkg-config --libs --cflags libavformat) \
+$(pkg-config --libs --cflags libavcodec) \
+$(pkg-config --libs --cflags libv4l2) \
+$(pkg-config --libs --cflags xcb) \
+$(pkg-config --libs --cflags xcb-shm) \
+$(pkg-config --libs --cflags libswscale) \
+$(pkg-config --libs --cflags libpulse) \
+$(pkg-config --libs --cflags alsa) \
+$(pkg-config --libs --cflags libswresample) \
+$(pkg-config --libs --cflags xcb-xfixes) \
+$(pkg-config --libs --cflags x11-xcb) \
+$(pkg-config --libs --cflags xcb-shape) \
+-lpthread \
+-lm \
+-o test
+ls -al test
+cp -av test /artefacts/
 
 
-#Linux:
-# g++ -shared -fPIC -o libnative.so com_baeldung_jni_HelloWorldJNI.o -lc
-# Windows version:
-# g++ -shared -o native.dll com_baeldung_jni_HelloWorldJNI.o -Wl,--add-stdcall-alias
-# MacOS version:
-# g++ -dynamiclib -o libnative.dylib com_baeldung_jni_HelloWorldJNI.o -lc
 
 
 
+cp -av "$_INST2_"/bin/* /artefacts/
 
 ls -al libffmpeg_av_jni.so || exit 1
 pwd

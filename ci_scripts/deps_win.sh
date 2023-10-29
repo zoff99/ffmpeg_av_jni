@@ -68,25 +68,20 @@ cd *mpeg*/
               --target-os="mingw32" \
               --cross-prefix="$ARCH-w64-mingw32-" \
               --pkg-config="pkg-config" \
-              --extra-cflags="-static -O2 -g0" \
-              --extra-ldflags="-lm -static" \
+              --extra-cflags="-static -O2 -g0 -D_FORTIFY_SOURCE=2 -fstack-protector-strong" \
+              --extra-ldflags="-lm -static -fstack-protector-strong" \
               --pkg-config-flags="--static" \
-              --enable-swscale \
               --disable-network \
-              --disable-everything \
               --disable-debug \
               --disable-shared \
-              --disable-programs \
               --disable-protocols \
               --disable-doc \
               --disable-sdl2 \
-              --disable-avfilter \
               --disable-filters \
               --disable-iconv \
               --disable-network \
               --disable-muxers \
               --disable-postproc \
-              --disable-swresample \
               --disable-swscale-alpha \
               --disable-dct \
               --disable-dwt \
@@ -106,9 +101,13 @@ cd *mpeg*/
               --disable-demuxers \
               --disable-parsers \
               --disable-bsfs \
+              --enable-swscale \
               --enable-swresample \
               --enable-indev=dshow \
               --enable-indev=gdigrab \
+              --enable-indev=vfwcap \
+              --enable-decoder=mjpeg \
+              --enable-decoder=bmp \
               --enable-demuxer=rawvideo \
               --enable-decoder=rawvideo \
               --enable-demuxer=pcm_s16le \

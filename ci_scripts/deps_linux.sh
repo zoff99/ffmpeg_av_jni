@@ -28,8 +28,8 @@ export MAKEFLAGS
 WGET_OPTIONS="--timeout=10"
 export WGET_OPTIONS
 
-CXXFLAGS_ADDON='-O2 -g -fPIC --param=ssp-buffer-size=1 -fstack-protector-all'
-CFLAGS_ADDON='-O2 -g -fPIC --param=ssp-buffer-size=1 -fstack-protector-all'
+CXXFLAGS_ADDON='-O2 -g -fPIC --param=ssp-buffer-size=1 -fstack-protector-all -D_FORTIFY_SOURCE=2'
+CFLAGS_ADDON='-O2 -g -fPIC --param=ssp-buffer-size=1 -fstack-protector-all -D_FORTIFY_SOURCE=2'
 # ----------- config ------------
 
 
@@ -65,17 +65,15 @@ export LDFLAGS=" "
               --enable-gpl \
               --prefix="$_INST_" \
               --disable-asm \
-              --enable-pic \
-              --enable-swscale \
+              --extra-cflags="-static -O2 -g0 -D_FORTIFY_SOURCE=2 -fstack-protector-strong" \
+              --extra-ldflags="-lm -fstack-protector-strong" \
               --disable-network \
               --disable-everything \
               --disable-debug \
               --disable-shared \
-              --disable-programs \
               --disable-protocols \
               --disable-doc \
               --disable-sdl2 \
-              --disable-avfilter \
               --disable-filters \
               --disable-iconv \
               --disable-network \
@@ -98,12 +96,15 @@ export LDFLAGS=" "
               --disable-demuxers \
               --disable-parsers \
               --disable-bsfs \
+              --enable-pic \
+              --enable-swscale \
               --enable-swresample \
               --enable-avcodec \
               --enable-outdev=alsa \
               --enable-outdev=pulse \
               --enable-indev=alsa \
               --enable-indev=xcbgrab \
+              --enable-decoder=mjpeg \
               --enable-demuxer=rawvideo \
               --enable-decoder=rawvideo \
               --enable-demuxer=pcm_s16le \
