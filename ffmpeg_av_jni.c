@@ -744,9 +744,6 @@ Java_com_zoffcc_applications_ffmpegav_AVActivity_ffmpegav_1init(JNIEnv *env, job
     avdevice_register_all();
 
     jclass cls_local = (*env)->GetObjectClass(env, thiz);
-// android
-//    AVActivity = (*env)->NewGlobalRef(env, cls_local);
-// JAVA_LINUX
     java_find_class_global("com/zoffcc/applications/ffmpegav/AVActivity", &AVActivity);
 
     printf("cls_local=%p\n", cls_local);
@@ -762,31 +759,6 @@ Java_com_zoffcc_applications_ffmpegav_AVActivity_ffmpegav_1init(JNIEnv *env, job
 
     // HINT: add error handling
     return 0;
-}
-
-JNIEXPORT jobjectArray JNICALL
-Java_com_zoffcc_applications_ffmpegav_AVActivity_ffmpegav_1get_1video_1in_1devices(JNIEnv *env, jobject thiz)
-{
-    const uint32_t max_devices = 64;
-    jobjectArray result = (*env)->NewObjectArray(env, max_devices, (*env)->FindClass(env, "java/lang/String"), NULL);
-    AVInputFormat *inputFormat_search = av_input_video_device_next(NULL);
-    uint32_t in_device_count = 0;
-    while (inputFormat_search != NULL) {
-        // printf("Input Device Name: %s long name: %s\n", inputFormat_search->name, inputFormat_search->long_name);
-        jstring str = (*env)->NewStringUTF(env, inputFormat_search->name);
-        (*env)->SetObjectArrayElement(env, result, in_device_count, str);
-        in_device_count++;
-        if (in_device_count >= max_devices)
-        {
-            break;
-        }
-        inputFormat_search = av_input_video_device_next(inputFormat_search);
-        if (inputFormat_search == NULL)
-        {
-            break;
-        }
-    }
-    return result;
 }
 
 JNIEXPORT jobjectArray JNICALL
@@ -836,6 +808,31 @@ Java_com_zoffcc_applications_ffmpegav_AVActivity_ffmpegav_1get_1in_1sources(JNIE
 
     avdevice_free_list_devices(&deviceInfoList);
     (*env)->ReleaseStringUTFChars(env, devicename, devicename_cstr);
+    return result;
+}
+
+JNIEXPORT jobjectArray JNICALL
+Java_com_zoffcc_applications_ffmpegav_AVActivity_ffmpegav_1get_1video_1in_1devices(JNIEnv *env, jobject thiz)
+{
+    const uint32_t max_devices = 64;
+    jobjectArray result = (*env)->NewObjectArray(env, max_devices, (*env)->FindClass(env, "java/lang/String"), NULL);
+    AVInputFormat *inputFormat_search = av_input_video_device_next(NULL);
+    uint32_t in_device_count = 0;
+    while (inputFormat_search != NULL) {
+        // printf("Input Device Name: %s long name: %s\n", inputFormat_search->name, inputFormat_search->long_name);
+        jstring str = (*env)->NewStringUTF(env, inputFormat_search->name);
+        (*env)->SetObjectArrayElement(env, result, in_device_count, str);
+        in_device_count++;
+        if (in_device_count >= max_devices)
+        {
+            break;
+        }
+        inputFormat_search = av_input_video_device_next(inputFormat_search);
+        if (inputFormat_search == NULL)
+        {
+            break;
+        }
+    }
     return result;
 }
 
@@ -1312,11 +1309,17 @@ JNIEXPORT jint JNICALL Java_com_zoffcc_applications_ffmpegav_AVActivity_ffmpegav
 JNIEXPORT jint JNICALL
 Java_com_zoffcc_applications_ffmpegav_AVActivity_ffmpegav_1close_1audio_1in_1device(JNIEnv *env, jobject thiz)
 {
-    avcodec_free_context(&global_audio_codec_ctx);
+    if (global_audio_codec_ctx != NULL) {
+        avcodec_free_context(&global_audio_codec_ctx);
+    }
     global_audio_codec_ctx = NULL;
-    avformat_close_input(&formatContext_audio);
+    if (formatContext_audio != NULL) {
+        avformat_close_input(&formatContext_audio);
+    }
     formatContext_audio = NULL;
-    av_dict_free(&options_audio);
+    if (options_audio != NULL) {
+        av_dict_free(&options_audio);
+    }
     options_audio = NULL;
     audio_codec = NULL;
     audio_stream_index = -1;
@@ -1326,11 +1329,17 @@ Java_com_zoffcc_applications_ffmpegav_AVActivity_ffmpegav_1close_1audio_1in_1dev
 JNIEXPORT jint JNICALL
 Java_com_zoffcc_applications_ffmpegav_AVActivity_ffmpegav_1close_1video_1in_1device(JNIEnv *env, jobject thiz)
 {
-    avcodec_free_context(&global_video_codec_ctx);
+    if (global_video_codec_ctx != NULL) {
+        avcodec_free_context(&global_video_codec_ctx);
+    }
     global_video_codec_ctx = NULL;
-    avformat_close_input(&formatContext_video);
+    if (formatContext_video != NULL) {
+        avformat_close_input(&formatContext_video);
+    }
     formatContext_video = NULL;
-    av_dict_free(&options_video);
+    if (options_video != NULL) {
+        av_dict_free(&options_video);
+    }
     options_video = NULL;
     video_codec = NULL;
     video_stream_index = -1;
