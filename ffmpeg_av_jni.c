@@ -1059,11 +1059,12 @@ Java_com_zoffcc_applications_ffmpegav_AVActivity_ffmpegav_1open_1video_1in_1devi
         fprintf(stderr, "Could not open input\n");
         // try again with "video=...." prepended
         const char prefix[] = "video=";
-        const uint32_t max_name_len = strlen(inputname_cstr) + strlen(prefix);
-        char *inputname_cstr_with_video_prepended = calloc(1, max_name_len + 4);
+        const uint32_t max_name_len = strlen(inputname_cstr) + strlen(prefix) + 1; // add 1 for the NULL character at the end!
+        char *inputname_cstr_with_video_prepended = calloc(1, max_name_len + 8);
         if (inputname_cstr_with_video_prepended)
         {
             snprintf(inputname_cstr_with_video_prepended, max_name_len, "%s%s", prefix, inputname_cstr);
+            fprintf(stderr, "trying to open: \"%s\"\n", inputname_cstr_with_video_prepended);
             if (avformat_open_input(&formatContext_video, inputname_cstr_with_video_prepended, inputFormat_video, &options_video) < 0) {
                 fprintf(stderr, "Could not open input\n");
                 reset_video_in_values();
