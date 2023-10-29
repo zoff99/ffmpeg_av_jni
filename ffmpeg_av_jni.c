@@ -1057,10 +1057,31 @@ Java_com_zoffcc_applications_ffmpegav_AVActivity_ffmpegav_1open_1video_1in_1devi
     }
     else if (avformat_open_input(&formatContext_video, inputname_cstr, inputFormat_video, &options_video) < 0) {
         fprintf(stderr, "Could not open input\n");
-        reset_video_in_values();
-        (*env)->ReleaseStringUTFChars(env, deviceformat, deviceformat_cstr);
-        (*env)->ReleaseStringUTFChars(env, inputname, inputname_cstr);
-        return -1;
+        // try again with "video=...." prepended
+        const char prefix[] = "video=";
+        const uint32_t max_name_len = strlen(inputname_cstr) + strlen(prefix);
+        char *inputname_cstr_with_video_prepended = calloc(1, max_name_len + 4);
+        if (inputname_cstr_with_video_prepended)
+        {
+            snprintf(inputname_cstr_with_video_prepended, max_name_len, "%s%s", prefix, inputname_cstr);
+            if (avformat_open_input(&formatContext_video, inputname_cstr_with_video_prepended, inputFormat_video, &options_video) < 0) {
+                fprintf(stderr, "Could not open input\n");
+                reset_video_in_values();
+                (*env)->ReleaseStringUTFChars(env, deviceformat, deviceformat_cstr);
+                (*env)->ReleaseStringUTFChars(env, inputname, inputname_cstr);
+                free(inputname_cstr_with_video_prepended);
+                return -1;
+            }
+            free(inputname_cstr_with_video_prepended);
+        }
+        else
+        {
+            fprintf(stderr, "Could not allocate inputname with prefix\n");
+            reset_video_in_values();
+            (*env)->ReleaseStringUTFChars(env, deviceformat, deviceformat_cstr);
+            (*env)->ReleaseStringUTFChars(env, inputname, inputname_cstr);
+            return -1;
+        }
     }
 
     if (avformat_find_stream_info(formatContext_video, NULL) < 0) {
