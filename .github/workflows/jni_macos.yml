@@ -46,11 +46,6 @@ jobs:
           pwd
           ./ci_scripts/java_jni_lib_macos.sh
 
-      - name: Rename artifact for nightly upload
-        if: github.ref == 'refs/heads/master'
-        run: |
-          pwd
-          cp -v /Users/runner/ffmpeg_av_jni/libffmpeg_av_jni.jnilib libffmpeg_av_jni.jnilib
       - name: Upload artifact
         uses: actions/upload-artifact@v3
         with:
