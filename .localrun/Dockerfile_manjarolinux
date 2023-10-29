@@ -1,0 +1,80 @@
+# syntax=docker/dockerfile:1
+FROM manjarolinux/base
+
+RUN pacman -Sy --noconfirm
+RUN pacman -S --noconfirm core/pkgconf
+RUN pacman -S --noconfirm extra/libxcb libpulse extra/alsa-lib extra/v4l-utils extra/libx11
+
+# ^^^ to link the runtime lib
+
+# vvv to compile the runtime lib
+
+RUN pacman -S --noconfirm core/gcc
+RUN pacman -S --noconfirm make yasm curl wget git coreutils autoconf libtool
+
+RUN pacman -S --noconfirm extra/jdk17-openjdk
+
+RUN mkdir -p /workspace2/build/
+RUN cd /workspace2/build/;FFMPEG_VERSION=n6.0 ; FFMPEG_FILENAME="$FFMPEG_VERSION.tar.gz" ;rm -f "ffmpeg"*.tar.*;wget "https://github.com/FFmpeg/FFmpeg/archive/refs/tags/$FFMPEG_FILENAME" -O "ffmpeg_""$FFMPEG_FILENAME";tar -xf "ffmpeg_""$FFMPEG_FILENAME";rm -f "ffmpeg"*.tar.*
+
+
+RUN cd /workspace2/build/ && mkdir /workspace2/build/inst/ && \
+    cd ./FFmpeg-n6.0/ && \
+    ./configure  \
+              --enable-gpl \
+              --prefix="/workspace2/build/inst/" \
+              --disable-asm \
+              --enable-pic \
+              --enable-swscale \
+              --disable-network \
+              --disable-everything \
+              --disable-debug \
+              --disable-shared \
+              --disable-programs \
+              --disable-protocols \
+              --disable-doc \
+              --disable-sdl2 \
+              --disable-avfilter \
+              --disable-filters \
+              --disable-iconv \
+              --disable-network \
+              --disable-postproc \
+              --disable-swscale-alpha \
+              --disable-dct \
+              --disable-dwt \
+              --disable-lsp \
+              --disable-mdct \
+              --disable-rdft \
+              --disable-fft \
+              --disable-faan \
+              --disable-vaapi \
+              --disable-vdpau \
+              --disable-zlib \
+              --disable-bzlib \
+              --disable-lzma \
+              --disable-encoders \
+              --disable-decoders \
+              --disable-demuxers \
+              --disable-parsers \
+              --disable-bsfs \
+              --enable-swresample \
+              --enable-avcodec \
+              --enable-outdev=alsa \
+              --enable-outdev=pulse \
+              --enable-indev=alsa \
+              --enable-indev=xcbgrab \
+              --enable-decoder=mjpeg \
+              --enable-demuxer=rawvideo \
+              --enable-decoder=rawvideo \
+              --enable-demuxer=pcm_s16le \
+              --enable-decoder=pcm_s16le \
+              --enable-libxcb --enable-libxcb-shm --enable-libxcb-xfixes --enable-libxcb-shape \
+              --enable-indev=pulse \
+              --enable-indev=v4l2 \
+              --enable-libpulse \
+              --enable-libv4l2 && \
+    make -j$(nproc) && \
+    make install
+
+RUN ls -al /workspace2/build/inst/lib/
+
