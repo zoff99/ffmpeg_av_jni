@@ -49,8 +49,8 @@
 // ----------- version -----------
 #define VERSION_MAJOR 0
 #define VERSION_MINOR 99
-#define VERSION_PATCH 0
-static const char global_version_string[] = "0.99.0";
+#define VERSION_PATCH 1
+static const char global_version_string[] = "0.99.1";
 // ----------- version -----------
 // ----------- version -----------
 
@@ -723,6 +723,12 @@ static void *ffmpeg_thread_audio_in_capture_func(void *data)
 
     printf("ffmpeg Video Capture Thread:Clean thread exit!\n");
     return NULL;
+}
+
+JNIEXPORT jstring JNICALL
+Java_com_zoffcc_applications_ffmpegav_AVActivity_ffmpegav_1version(JNIEnv *env, jobject thiz)
+{
+    return (*env)->NewStringUTF(env, global_version_string);
 }
 
 JNIEXPORT jstring JNICALL

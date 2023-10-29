@@ -5,6 +5,7 @@ public class AVActivity {
     private static final String TAG = "ffmpegav.AVActivity";
     static final String Version = "0.99.0";
 
+    public static native String ffmpegav_version();
     public static native String ffmpegav_libavutil_version();
     public static native int ffmpegav_init();
     public static native String[] ffmpegav_get_video_in_devices();
@@ -187,6 +188,7 @@ public class AVActivity {
         } catch (Exception e) {
         }
         Log.i(TAG, "libavutil version: " + ffmpegav_libavutil_version());
+        Log.i(TAG, "ffmpegav version: " + ffmpegav_version());
         final int res = ffmpegav_init();
         Log.i(TAG, "ffmpeg init: " + res);
 
@@ -335,6 +337,7 @@ public class AVActivity {
 
         // -----------------------
         // -----------------------
+        /*
         final int res_vd2 = ffmpegav_open_video_in_device(vdevice,
             vsource, 640, 480, 15);
         Log.i(TAG, "ffmpeg open video capture device: " + res_vd2);
@@ -355,6 +358,7 @@ public class AVActivity {
         ffmpegav_stop_video_in_capture();
         ffmpegav_close_audio_in_device();
         ffmpegav_close_video_in_device();
+        */
         // -----------------------
         // -----------------------
 
