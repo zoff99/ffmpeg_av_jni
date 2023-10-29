@@ -333,6 +333,8 @@ public class AVActivity {
         {
         }
 
+        // -----------------------
+        // -----------------------
         final int res_vd2 = ffmpegav_open_video_in_device(vdevice,
             vsource, 640, 480, 15);
         Log.i(TAG, "ffmpeg open video capture device: " + res_vd2);
@@ -353,6 +355,35 @@ public class AVActivity {
         ffmpegav_stop_video_in_capture();
         ffmpegav_close_audio_in_device();
         ffmpegav_close_video_in_device();
+        // -----------------------
+        // -----------------------
+
+
+        // -----------------------
+        // -----------------------
+        final int res_vd3 = ffmpegav_open_video_in_device("",
+            "", 640, 480, 15);
+        Log.i(TAG, "ffmpeg open video capture device: " + res_vd3);
+
+        final int res_ad3 = ffmpegav_open_audio_in_device("",
+            "");
+        Log.i(TAG, "ffmpeg open audio capture device: " + res_ad3);
+        ffmpegav_start_video_in_capture();
+        ffmpegav_start_audio_in_capture();
+        try
+        {
+            Thread.sleep(1000);
+        }
+        catch(Exception e)
+        {
+        }
+        ffmpegav_stop_audio_in_capture();
+        ffmpegav_stop_video_in_capture();
+        ffmpegav_close_audio_in_device();
+        ffmpegav_close_video_in_device();
+        // -----------------------
+        // -----------------------
+
     }
 }
 
