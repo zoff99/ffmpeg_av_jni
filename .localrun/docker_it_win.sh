@@ -32,6 +32,7 @@ for system_to_build_for in $build_for ; do
     ls -al $_HOME_/"$system_to_build_for"/
 
     rsync -a ../ffmpeg_av_jni.c --exclude=.localrun $_HOME_/"$system_to_build_for"/workspace/build/
+    rsync -a ../test.c --exclude=.localrun $_HOME_/"$system_to_build_for"/workspace/build/
     chmod a+rwx -R $_HOME_/"$system_to_build_for"/workspace/build >/dev/null 2>/dev/null
 
     echo '#! /bin/bash
@@ -120,6 +121,40 @@ $_INST2_/lib/libavutil.a \
 -lm \
 -o ffmpeg_av_jni.dll || exit 1
 
+
+x86_64-w64-mingw32-gcc $CFLAGS \
+-Wno-format-extra-args \
+-Wno-deprecated-declarations \
+-Wno-format \
+-Wno-unused-function \
+-Wno-discarded-qualifiers \
+-Wno-unused-const-variable \
+-Wall \
+-DJAVA_LINUX \
+$C_FLAGS \
+-D_FILE_OFFSET_BITS=64 -D__USE_GNU=1 \
+-I$JAVADIR1/ \
+-I$JAVADIR2/ \
+test.c \
+$_INST2_/lib/libavdevice.a \
+$_INST2_/lib/libswscale.a \
+$_INST2_/lib/libavformat.a \
+$_INST2_/lib/libavcodec.a \
+$_INST2_/lib/libswresample.a \
+$_INST2_/lib/libavutil.a \
+-Wl,-Bstatic -lws2_32 \
+-l:libiphlpapi.a \
+-l:libshlwapi.a \
+-l:libole32.a \
+-l:libstrmiids.a \
+-l:liboleaut32.a \
+-l:libuuid.a \
+-Wl,-Bstatic -lbcrypt \
+-lpthread \
+-lm \
+-o test.exe
+ls -al test.exe
+cp -av test.exe /artefacts/
 
 ls -al ffmpeg_av_jni.dll || exit 1
 pwd

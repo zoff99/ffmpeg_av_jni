@@ -802,6 +802,9 @@ Java_com_zoffcc_applications_ffmpegav_AVActivity_ffmpegav_1get_1in_1sources(JNIE
         if (deviceInfo->device_name)
         {
             printf("input #%d: %s\n", i, deviceInfo->device_name);
+            if (deviceInfo->device_description != NULL) {
+                printf("input descr. #%d: %s\n", i, deviceInfo->device_description);
+            }
             jstring str = (*env)->NewStringUTF(env, deviceInfo->device_name);
             (*env)->SetObjectArrayElement(env, result, in_source_count, str);
             in_source_count++;
