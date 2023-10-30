@@ -805,9 +805,12 @@ Java_com_zoffcc_applications_ffmpegav_AVActivity_ffmpegav_1get_1in_1sources(JNIE
                 (*env)->SetObjectArrayElement(env, result, in_source_count, str);
             }
         }
-#endif
+        (*env)->ReleaseStringUTFChars(env, devicename, devicename_cstr);
+        return result;
+#else
         (*env)->ReleaseStringUTFChars(env, devicename, devicename_cstr);
         return NULL;
+#endif
     }
     for (i = 0; i < deviceInfoList->nb_devices; i++) {
         deviceInfo = deviceInfoList->devices[i];
