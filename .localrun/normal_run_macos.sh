@@ -13,5 +13,6 @@ export _HOME_
 
 cd "$_HOME_"
 
-../ci_scripts/deps_macos.sh
-../ci_scripts/java_jni_lib_macos.sh
+cd ../
+./ci_scripts/deps_macos.sh
+./ci_scripts/java_jni_lib_macos.sh

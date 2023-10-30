@@ -64,5 +64,10 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           artifacts: "libffmpeg_av_jni.jnilib"
 
+      - name: Upload artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: test_macos
+          path: test_macos
 
 

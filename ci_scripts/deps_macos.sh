@@ -67,17 +67,13 @@ export LDFLAGS=" "
               --enable-gpl \
               --prefix="$_INST_" \
               --disable-asm \
-              --enable-pic \
-              --enable-swscale \
               --disable-network \
               --disable-everything \
               --disable-debug \
               --disable-shared \
-              --disable-programs \
               --disable-protocols \
               --disable-doc \
               --disable-sdl2 \
-              --disable-avfilter \
               --disable-filters \
               --disable-iconv \
               --disable-network \
@@ -100,6 +96,8 @@ export LDFLAGS=" "
               --disable-demuxers \
               --disable-parsers \
               --disable-bsfs \
+              --enable-pic \
+              --enable-swscale \
               --enable-swresample \
               --enable-avcodec \
               --enable-indev=avfoundation \
