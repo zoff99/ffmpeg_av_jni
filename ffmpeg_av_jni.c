@@ -768,7 +768,7 @@ Java_com_zoffcc_applications_ffmpegav_AVActivity_ffmpegav_1init(JNIEnv *env, job
 }
 
 JNIEXPORT jobjectArray JNICALL
-Java_com_zoffcc_applications_ffmpegav_AVActivity_ffmpegav_1get_1in_1sources(JNIEnv *env, jobject thiz, jstring devicename)
+Java_com_zoffcc_applications_ffmpegav_AVActivity_ffmpegav_1get_1in_1sources(JNIEnv *env, jobject thiz, jstring devicename, jint is_video)
 {
     if (devicename == NULL)
     {
@@ -780,7 +780,8 @@ Java_com_zoffcc_applications_ffmpegav_AVActivity_ffmpegav_1get_1in_1sources(JNIE
         return NULL;
     }
     const uint32_t max_sources = 64;
-    jobjectArray result = (*env)->NewObjectArray(env, max_sources, (*env)->FindClass(env, "java/lang/String"), NULL);
+    // add 1 more for macos "avfoundation" stuff that is not detected
+    jobjectArray result = (*env)->NewObjectArray(env, (max_sources + 1), (*env)->FindClass(env, "java/lang/String"), NULL);
 
     printf("wanted_in_device=%s\n", devicename_cstr);
     AVInputFormat *inputFormat_search = av_find_input_format(devicename_cstr);
@@ -794,6 +795,17 @@ Java_com_zoffcc_applications_ffmpegav_AVActivity_ffmpegav_1get_1in_1sources(JNIE
     if (devices_found < 1)
     {
         avdevice_free_list_devices(&deviceInfoList);
+#ifdef __APPLE__
+        if (strncmp(devicename_cstr, "avfoundation", strlen("avfoundation")) == 0) {
+            if (is_video == 1) {
+                jstring str = (*env)->NewStringUTF(env, "0:"); // format = "[VIDEO]:[AUDIO]"
+                (*env)->SetObjectArrayElement(env, result, in_source_count, str);
+            } else {
+                jstring str = (*env)->NewStringUTF(env, ":0"); // format = "[VIDEO]:[AUDIO]"
+                (*env)->SetObjectArrayElement(env, result, in_source_count, str);
+            }
+        }
+#endif
         (*env)->ReleaseStringUTFChars(env, devicename, devicename_cstr);
         return NULL;
     }
@@ -814,6 +826,18 @@ Java_com_zoffcc_applications_ffmpegav_AVActivity_ffmpegav_1get_1in_1sources(JNIE
             }
         }
     }
+
+#ifdef __APPLE__
+    if (strncmp(devicename_cstr, "avfoundation", strlen("avfoundation")) == 0) {
+        if (is_video == 1) {
+            jstring str = (*env)->NewStringUTF(env, "0:"); // format = "[VIDEO]:[AUDIO]"
+            (*env)->SetObjectArrayElement(env, result, in_source_count, str);
+        } else {
+            jstring str = (*env)->NewStringUTF(env, ":0"); // format = "[VIDEO]:[AUDIO]"
+            (*env)->SetObjectArrayElement(env, result, in_source_count, str);
+        }
+    }
+#endif
 
     avdevice_free_list_devices(&deviceInfoList);
     (*env)->ReleaseStringUTFChars(env, devicename, devicename_cstr);
@@ -842,6 +866,14 @@ Java_com_zoffcc_applications_ffmpegav_AVActivity_ffmpegav_1get_1video_1in_1devic
             break;
         }
     }
+
+#ifdef __APPLE__
+    if (in_device_count == 0) {
+        jstring str = (*env)->NewStringUTF(env, "avfoundation");
+        (*env)->SetObjectArrayElement(env, result, in_device_count, str);
+    }
+#endif
+
     return result;
 }
 
@@ -867,6 +899,14 @@ Java_com_zoffcc_applications_ffmpegav_AVActivity_ffmpegav_1get_1audio_1in_1devic
             break;
         }
     }
+
+#ifdef __APPLE__
+    if (in_device_count == 0) {
+        jstring str = (*env)->NewStringUTF(env, "avfoundation");
+        (*env)->SetObjectArrayElement(env, result, in_device_count, str);
+    }
+#endif
+
     return result;
 }
 
