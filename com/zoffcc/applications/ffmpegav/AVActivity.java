@@ -233,7 +233,7 @@ public class AVActivity {
                     vdevice = video_in_devices[i];
                     vsource = ":0.0";
                     final int res_vd = ffmpegav_open_video_in_device(video_in_devices[i],
-                        ":0.0", 640, 480, 15);
+                            ":0.0", 640, 480, 15);
                     Log.i(TAG, "ffmpeg open video capture device: " + res_vd);
                 }
             }
@@ -269,7 +269,7 @@ public class AVActivity {
                     adevice = audio_in_devices[i];
                     asource = "default";
                     final int res_ad = ffmpegav_open_audio_in_device(audio_in_devices[i],
-                        "default");
+                            "default");
                     Log.i(TAG, "ffmpeg open audio capture device: " + res_ad);
                 }
             }
@@ -309,14 +309,13 @@ public class AVActivity {
                 try
                 {
                     audio_buffer_2.rewind();
-                    final ByteBufferCompat audio_buffer_2_ = new ByteBufferCompat(audio_buffer_2);
-                    Log.i(TAG, "" + bytesToHex(audio_buffer_2_.array(), 0, 100));
+                    final ffmpegav_ByteBufferCompat audio_buffer_2_ = new ffmpegav_ByteBufferCompat(audio_buffer_2);
+                    Log.i(TAG, "audiobytes:" + bytesToHex(audio_buffer_2_.array(), 0, 100));
                 }
                 catch(Exception e)
                 {
                     e.printStackTrace();
                 }
-                                                     
             }
             @Override
             public void onError() {
@@ -381,11 +380,11 @@ public class AVActivity {
         // -----------------------
         // -----------------------
         final int res_vd3 = ffmpegav_open_video_in_device("",
-            "", 640, 480, 15);
+                "", 640, 480, 15);
         Log.i(TAG, "ffmpeg open video capture device: " + res_vd3);
 
         final int res_ad3 = ffmpegav_open_audio_in_device("",
-            "");
+                "");
         Log.i(TAG, "ffmpeg open audio capture device: " + res_ad3);
         ffmpegav_start_video_in_capture();
         ffmpegav_start_audio_in_capture();
@@ -421,12 +420,12 @@ public class AVActivity {
         return new String(hexChars);
     }
 
-    static class ByteBufferCompat
+    public static class ffmpegav_ByteBufferCompat
     {
         byte[] b = null;
         ByteBuffer f = null;
 
-        public ByteBufferCompat(ByteBuffer bf)
+        public ffmpegav_ByteBufferCompat(ByteBuffer bf)
         {
             this.f = bf;
             bf.rewind();
