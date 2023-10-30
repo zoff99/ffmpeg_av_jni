@@ -794,6 +794,7 @@ Java_com_zoffcc_applications_ffmpegav_AVActivity_ffmpegav_1get_1in_1sources(JNIE
     printf("inputs found: %d\n", devices_found);
     if (devices_found < 1)
     {
+        printf("inputs found: %d\n", devices_found);
         avdevice_free_list_devices(&deviceInfoList);
 #ifdef __APPLE__
         if (strncmp(devicename_cstr, "avfoundation", strlen("avfoundation")) == 0) {
@@ -804,14 +805,30 @@ Java_com_zoffcc_applications_ffmpegav_AVActivity_ffmpegav_1get_1in_1sources(JNIE
                 jstring str = (*env)->NewStringUTF(env, ":0"); // format = "[VIDEO]:[AUDIO]"
                 (*env)->SetObjectArrayElement(env, result, in_source_count, str);
             }
+            (*env)->ReleaseStringUTFChars(env, devicename, devicename_cstr);
+            return result;
         }
         (*env)->ReleaseStringUTFChars(env, devicename, devicename_cstr);
-        return result;
+        return NULL;
 #else
+    #ifdef __MINGW32__
+        if (strncmp(devicename_cstr, "gdigrab", strlen("gdigrab")) == 0) {
+            if (is_video == 1) {
+                jstring str = (*env)->NewStringUTF(env, "desktop");
+                (*env)->SetObjectArrayElement(env, result, in_source_count, str);
+                (*env)->ReleaseStringUTFChars(env, devicename, devicename_cstr);
+                return result;
+            }
+        }
         (*env)->ReleaseStringUTFChars(env, devicename, devicename_cstr);
         return NULL;
+    #else
+        (*env)->ReleaseStringUTFChars(env, devicename, devicename_cstr);
+        return NULL;
+    #endif
 #endif
     }
+
     for (i = 0; i < deviceInfoList->nb_devices; i++) {
         deviceInfo = deviceInfoList->devices[i];
         if (deviceInfo->device_name)
@@ -876,6 +893,13 @@ Java_com_zoffcc_applications_ffmpegav_AVActivity_ffmpegav_1get_1video_1in_1devic
         (*env)->SetObjectArrayElement(env, result, in_device_count, str);
     }
 #endif
+#ifdef __MINGW32__
+    if (in_device_count == 0) {
+        jstring str = (*env)->NewStringUTF(env, "dshow");
+        (*env)->SetObjectArrayElement(env, result, in_device_count, str);
+    }
+
+#endif
 
     return result;
 }
@@ -908,6 +932,13 @@ Java_com_zoffcc_applications_ffmpegav_AVActivity_ffmpegav_1get_1audio_1in_1devic
         jstring str = (*env)->NewStringUTF(env, "avfoundation");
         (*env)->SetObjectArrayElement(env, result, in_device_count, str);
     }
+#endif
+#ifdef __MINGW32__
+    if (in_device_count == 0) {
+        jstring str = (*env)->NewStringUTF(env, "dshow");
+        (*env)->SetObjectArrayElement(env, result, in_device_count, str);
+    }
+
 #endif
 
     return result;
@@ -1100,6 +1131,7 @@ Java_com_zoffcc_applications_ffmpegav_AVActivity_ffmpegav_1open_1video_1in_1devi
     }
     else if (avformat_open_input(&formatContext_video, inputname_cstr, inputFormat_video, &options_video) < 0) {
         fprintf(stderr, "Could not open input\n");
+#ifdef __MINGW32__
         // try again with "video=...." prepended
         const char prefix[] = "video=";
         const uint32_t max_name_len = strlen(inputname_cstr) + strlen(prefix) + 1; // add 1 for the NULL character at the end!
@@ -1126,6 +1158,12 @@ Java_com_zoffcc_applications_ffmpegav_AVActivity_ffmpegav_1open_1video_1in_1devi
             (*env)->ReleaseStringUTFChars(env, inputname, inputname_cstr);
             return -1;
         }
+#else
+        reset_video_in_values();
+        (*env)->ReleaseStringUTFChars(env, deviceformat, deviceformat_cstr);
+        (*env)->ReleaseStringUTFChars(env, inputname, inputname_cstr);
+        return -1;
+#endif
     }
 
     if (avformat_find_stream_info(formatContext_video, NULL) < 0) {
@@ -1246,10 +1284,39 @@ Java_com_zoffcc_applications_ffmpegav_AVActivity_ffmpegav_1open_1audio_1in_1devi
                 inputname_cstr,
                 inputFormat_audio, &options_audio) < 0) {
         fprintf(stderr, "Could not open input\n");
+#ifdef __MINGW32__
+        // try again with "audio=...." prepended
+        const char prefix[] = "audio=";
+        const uint32_t max_name_len = strlen(inputname_cstr) + strlen(prefix) + 1; // add 1 for the NULL character at the end!
+        char *inputname_cstr_with_audio_prepended = calloc(1, max_name_len + 8);
+        if (inputname_cstr_with_audio_prepended)
+        {
+            snprintf(inputname_cstr_with_audio_prepended, max_name_len, "%s%s", prefix, inputname_cstr);
+            fprintf(stderr, "trying to open: \"%s\"\n", inputname_cstr_with_audio_prepended);
+            if (avformat_open_input(&formatContext_audio, inputname_cstr_with_audio_prepended, inputFormat_audio, &options_audio) < 0) {
+                fprintf(stderr, "Could not open input\n");
+                reset_audio_in_values();
+                (*env)->ReleaseStringUTFChars(env, deviceformat, deviceformat_cstr);
+                (*env)->ReleaseStringUTFChars(env, inputname, inputname_cstr);
+                free(inputname_cstr_with_audio_prepended);
+                return -1;
+            }
+            free(inputname_cstr_with_audio_prepended);
+        }
+        else
+        {
+            fprintf(stderr, "Could not allocate inputname with prefix\n");
+            reset_audio_in_values();
+            (*env)->ReleaseStringUTFChars(env, deviceformat, deviceformat_cstr);
+            (*env)->ReleaseStringUTFChars(env, inputname, inputname_cstr);
+            return -1;
+        }
+#else
         reset_audio_in_values();
         (*env)->ReleaseStringUTFChars(env, deviceformat, deviceformat_cstr);
         (*env)->ReleaseStringUTFChars(env, inputname, inputname_cstr);
         return -1;
+#endif
     }
 
     if (avformat_find_stream_info(formatContext_audio, NULL) < 0) {
