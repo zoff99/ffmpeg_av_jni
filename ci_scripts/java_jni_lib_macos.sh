@@ -115,6 +115,36 @@ $_INST_/lib/libswresample.a \
 -o libffmpeg_av_jni.jnilib || exit 1
 
 
+
+gcc $CFLAGS \
+-Wall \
+-Wno-unused-function \
+-Wno-discarded-qualifiers \
+-Wno-unused-const-variable \
+-Wno-deprecated-declarations \
+-framework Foundation \
+-framework CoreFoundation \
+-framework CoreServices \
+-framework AudioUnit \
+-framework AudioToolbox \
+-framework CoreAudio \
+-framework AVFoundation \
+-framework CoreMedia \
+-framework CoreVideo \
+-framework CoreGraphics \
+-D_FILE_OFFSET_BITS=64 -D__USE_GNU=1 \
+test.c \
+$_INST_/lib/libavcodec.a \
+$_INST_/lib/libavdevice.a \
+$_INST_/lib/libavformat.a \
+$_INST_/lib/libavutil.a \
+$_INST_/lib/libswscale.a \
+$_INST_/lib/libswresample.a \
+-lpthread \
+-lm \
+-o test_macos
+
+
 ls -al libffmpeg_av_jni.jnilib || exit 1
 
 otool -L libffmpeg_av_jni.jnilib
