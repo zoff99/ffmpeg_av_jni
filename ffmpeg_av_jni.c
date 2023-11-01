@@ -790,6 +790,33 @@ Java_com_zoffcc_applications_ffmpegav_AVActivity_ffmpegav_1get_1in_1sources(JNIE
     int i;
     uint32_t in_source_count = 0;
 
+#ifdef __linux__
+    if (strncmp((char *)devicename_cstr, "x11grab", strlen((char *)"x11grab")) == 0)
+    {
+        // add available displays to "x11grag" input sources
+        Display *display = XOpenDisplay(NULL);
+        if (display != NULL)
+        {
+            int count_display = XScreenCount(display);
+            printf("Displays counter: %d\n", count_display);
+            if (count_display > 0)
+            {
+                char *current_display_string = XDisplayString(display);
+                if (current_display_string != NULL)
+                {
+                    if (strlen(current_display_string) > 0)
+                    {
+                        printf("current Display string: %s\n", current_display_string);
+                        jstring str = (*env)->NewStringUTF(env, current_display_string); // format = ":<n>"
+                        (*env)->SetObjectArrayElement(env, result, in_source_count, str);
+                        in_source_count++;
+                    }
+                }
+            }
+            XCloseDisplay(display);
+        }
+    }
+#endif
     int devices_found = avdevice_list_input_sources(inputFormat_search, NULL, NULL, &deviceInfoList);
     printf("inputs found: %d\n", devices_found);
     if (devices_found < 1)
@@ -824,7 +851,17 @@ Java_com_zoffcc_applications_ffmpegav_AVActivity_ffmpegav_1get_1in_1sources(JNIE
         return NULL;
     #else
         (*env)->ReleaseStringUTFChars(env, devicename, devicename_cstr);
-        return NULL;
+        if (in_source_count > 0)
+        {
+            // there are manually added/detected devices
+            // return "result"
+            printf("return manual result. devices: %d\n", in_source_count);
+            return result;
+        }
+        else
+        {
+            return NULL;
+        }
     #endif
 #endif
     }
