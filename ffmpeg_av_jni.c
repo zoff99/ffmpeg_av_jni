@@ -826,11 +826,23 @@ Java_com_zoffcc_applications_ffmpegav_AVActivity_ffmpegav_1get_1in_1sources(JNIE
 #ifdef __APPLE__
         if (strncmp(devicename_cstr, "avfoundation", strlen("avfoundation")) == 0) {
             if (is_video == 1) {
-                jstring str = (*env)->NewStringUTF(env, "0:"); // format = "[VIDEO]:[AUDIO]"
-                (*env)->SetObjectArrayElement(env, result, in_source_count, str);
+                jstring str1 = (*env)->NewStringUTF(env, "0:"); // format = "[VIDEO]:[AUDIO]"
+                (*env)->SetObjectArrayElement(env, result, in_source_count, str1);
+                in_source_count++;
+                // HINT: add 3 more displays, in case that there are more displays attached
+                jstring str2 = (*env)->NewStringUTF(env, "1:"); // format = "[VIDEO]:[AUDIO]"
+                (*env)->SetObjectArrayElement(env, result, in_source_count, str2);
+                in_source_count++;
+                jstring str3 = (*env)->NewStringUTF(env, "2:"); // format = "[VIDEO]:[AUDIO]"
+                (*env)->SetObjectArrayElement(env, result, in_source_count, str3);
+                in_source_count++;
+                jstring str4 = (*env)->NewStringUTF(env, "3:"); // format = "[VIDEO]:[AUDIO]"
+                (*env)->SetObjectArrayElement(env, result, in_source_count, str4);
+                in_source_count++;
             } else {
                 jstring str = (*env)->NewStringUTF(env, ":0"); // format = "[VIDEO]:[AUDIO]"
                 (*env)->SetObjectArrayElement(env, result, in_source_count, str);
+                in_source_count++;
             }
             (*env)->ReleaseStringUTFChars(env, devicename, devicename_cstr);
             return result;
