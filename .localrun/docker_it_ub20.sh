@@ -90,7 +90,6 @@ export CFLAGS=" -fdebug-prefix-map=/workspace2/build=/ -fPIC -O3 -g -std=gnu99 -
 
 
 faketime "2023-10-10 08:00:00" gcc $CFLAGS \
--Wl,--build-id=none \
 -Wall \
 -Wno-unused-function \
 -Wno-discarded-qualifiers \
