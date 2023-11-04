@@ -76,7 +76,7 @@ echo "JAVADIR2:""$JAVADIR2"
 
 
 CFLAGS_ADDON='-O2 -g -fPIC'
-CFLAGS_MORE="--param=ssp-buffer-size=1 -fstack-protector-all -D_FORTIFY_SOURCE=2 -std=gnu99 -I$_INST_/include/ -L$_INST_/lib"
+CFLAGS_MORE="-fdebug-prefix-map=/home/runner/work/ffmpeg_av_jni/ffmpeg_av_jni=/ --param=ssp-buffer-size=1 -fstack-protector-all -D_FORTIFY_SOURCE=2 -std=gnu99 -I$_INST_/include/ -L$_INST_/lib"
 
 
 gcc \
