@@ -16,8 +16,16 @@ export PKG_CONFIG_PATH=$_INST_/lib/pkgconfig
 
 
 # -- more Deterministic builds --
-export ZERO_AR_DATE=1699080443
-export SOURCE_DATE_EPOCH=0
+date
+export TZ=UTC
+date
+locale
+export LC_ALL=C
+export LANG=C
+export LANGUAGE=C
+locale
+export ZERO_AR_DATE=1
+export SOURCE_DATE_EPOCH=1696924800
 # -- more Deterministic builds --
 
 

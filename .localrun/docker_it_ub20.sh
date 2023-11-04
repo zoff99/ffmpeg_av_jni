@@ -89,7 +89,7 @@ echo "JAVADIR2:""$JAVADIR2"
 export CFLAGS=" -fPIC -O3 -g -std=gnu99 -I$_INST2_/include/ -L$_INST2_/lib -fstack-protector-all -D_FORTIFY_SOURCE=2 "
 
 
-gcc $CFLAGS \
+faketime "2023-10-10 08:00:00" gcc $CFLAGS \
 -Wall \
 -Wno-unused-function \
 -Wno-discarded-qualifiers \

@@ -35,21 +35,32 @@ jobs:
           openjdk-17-jdk-headless \
           coreutils autoconf libtool pkg-config \
           libx11-xcb-dev libpulse-dev alsa-utils libasound2-dev v4l-utils libv4l-dev v4l-conf \
-          libxcb-shm0-dev libxcb-shape0-dev libxcb-xfixes0-dev
+          libxcb-shm0-dev libxcb-shape0-dev libxcb-xfixes0-dev \
+          faketime hostname
 
       - name: build deps
         run:  |
           ls -al
           id
           pwd
-          ./ci_scripts/deps_linux.sh
+          hostname
+          domainname
+          sudo hostname "buildhost"
+          hostname
+          domainname
+          faketime '2023-10-10 08:00:00' ./ci_scripts/deps_linux.sh
 
       - name: build jni lib
         run:  |
           ls -al
           id
           pwd
-          ./ci_scripts/java_jni_lib_linux.sh
+          hostname
+          domainname
+          sudo hostname "buildhost"
+          hostname
+          domainname
+          faketime '2023-10-10 08:00:00' ./ci_scripts/java_jni_lib_linux.sh
 
       - name: Upload artifact
         uses: actions/upload-artifact@v3
