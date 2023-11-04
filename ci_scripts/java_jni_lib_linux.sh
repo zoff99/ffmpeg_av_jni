@@ -81,6 +81,7 @@ CFLAGS_MORE="-fdebug-prefix-map=/home/runner/work/ffmpeg_av_jni/ffmpeg_av_jni=/ 
 
 gcc \
 $CFLAGS_ADDON $CFLAGS_MORE \
+-Wl,--build-id=none \
 -Wall \
 -Wno-unused-function \
 -Wno-discarded-qualifiers \
