@@ -17,6 +17,10 @@ mkdir -p $_INST_
 export LD_LIBRARY_PATH=$_INST_/lib/
 export PKG_CONFIG_PATH=$_INST_/lib/pkgconfig
 
+# -- more Deterministic builds --
+export ZERO_AR_DATE=1699080443
+export SOURCE_DATE_EPOCH=0
+# -- more Deterministic builds --
 
 # ----------- config ------------
 ORIGPATH=$PATH
