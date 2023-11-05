@@ -101,6 +101,7 @@ ffmpeg_av_jni.c \
 $_INST2_/lib/libavcodec.a \
 $_INST2_/lib/libavdevice.a \
 $_INST2_/lib/libavformat.a \
+$_INST2_/lib/libavfilter.a \
 $_INST2_/lib/libavutil.a \
 $(pkg-config --libs --cflags libavformat) \
 $(pkg-config --libs --cflags libavcodec) \

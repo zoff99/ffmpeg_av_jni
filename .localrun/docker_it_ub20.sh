@@ -105,6 +105,7 @@ $_INST2_/lib/libavdevice.a \
 $_INST2_/lib/libavformat.a \
 $_INST2_/lib/libavutil.a \
 $(pkg-config --libs --cflags libavformat) \
+$(pkg-config --libs --cflags libavfilter) \
 $(pkg-config --libs --cflags libavcodec) \
 $(pkg-config --libs --cflags libv4l2) \
 $(pkg-config --libs --cflags xcb) \

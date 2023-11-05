@@ -112,6 +112,10 @@ cd *mpeg*/
               --enable-decoder=rawvideo \
               --enable-demuxer=pcm_s16le \
               --enable-decoder=pcm_s16le \
+              --enable-filter=volume \
+              --enable-filter=arnndn \
+              --enable-filter=afftdn \
+              --enable-filter=aresample \
               --enable-runtime-cpudetect || exit 1
 
 #              --disable-lzo \

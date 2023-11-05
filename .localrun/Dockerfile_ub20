@@ -62,10 +62,15 @@ RUN cd /workspace2/build/ && mkdir /workspace2/build/inst/ && \
               --enable-decoder=rawvideo \
               --enable-demuxer=pcm_s16le \
               --enable-decoder=pcm_s16le \
+              --enable-filter=volume \
+              --enable-filter=arnndn \
+              --enable-filter=afftdn \
+              --enable-filter=aresample \
               --enable-libxcb --enable-libxcb-shm --enable-libxcb-xfixes --enable-libxcb-shape \
               --enable-indev=pulse \
               --enable-indev=v4l2 \
               --enable-libpulse \
+              --enable-runtime-cpudetect \
               --enable-libv4l2 && \
     make -j$(nproc) && \
     make install

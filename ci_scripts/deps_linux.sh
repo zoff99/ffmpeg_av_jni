@@ -127,6 +127,11 @@ export LDFLAGS=" "
               --enable-indev=pulse \
               --enable-indev=v4l2 \
               --enable-libpulse \
+              --enable-filter=volume \
+              --enable-filter=arnndn \
+              --enable-filter=afftdn \
+              --enable-filter=aresample \
+              --enable-runtime-cpudetect \
               --enable-libv4l2 || exit 1
 
 

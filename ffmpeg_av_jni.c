@@ -23,6 +23,9 @@
 
 #include <libavcodec/avcodec.h>
 #include <libavdevice/avdevice.h>
+#include <libavfilter/avfilter.h>
+#include "libavfilter/buffersink.h"
+#include "libavfilter/buffersrc.h"
 #include <libavformat/avformat.h>
 #include <libavutil/avutil.h>
 #include <libavutil/imgutils.h>
@@ -49,8 +52,8 @@
 // ----------- version -----------
 #define VERSION_MAJOR 0
 #define VERSION_MINOR 99
-#define VERSION_PATCH 2
-static const char global_version_string[] = "0.99.2";
+#define VERSION_PATCH 3
+static const char global_version_string[] = "0.99.3";
 // ----------- version -----------
 // ----------- version -----------
 
@@ -292,6 +295,7 @@ bool global_audio_in_capture_running = false;
 static pthread_t ffmpeg_thread_audio_in_capture;
 AVRational time_base_audio = (AVRational) {0, 0};
 #define DEFAULT_SCREEN_CAPTURE_PULSE_DEVICE "default"
+int apply_audio_filter = 0;
 
 AVInputFormat *inputFormat_video = NULL;
 AVFormatContext *formatContext_video = NULL;
@@ -310,7 +314,7 @@ int output_height = 480;
 
 const int audio_frame_size_ms = 60;
 const int out_channels = 1; // keep in sync with `out_channel_layout`
-const int out_channel_layout = AV_CH_LAYOUT_MONO; // AV_CH_LAYOUT_MONO or AV_CH_LAYOUT_STEREO;
+const uint64_t out_channel_layout = AV_CH_LAYOUT_MONO; // AV_CH_LAYOUT_MONO or AV_CH_LAYOUT_STEREO;
 const int out_bytes_per_sample = 2; // 2 byte per PCM16 sample
 const int out_samples = audio_frame_size_ms * 48; // X ms @ 48000Hz
 const int out_sample_rate = 48000; // fixed at 48000Hz
@@ -539,13 +543,16 @@ static void *ffmpeg_thread_audio_in_capture_func(void *data)
 {
     AVPacket packet;
     AVFrame *frame = NULL;
+    AVFrame *oframe = NULL;
     int ret = 0;
     int num_samples = 0;
     int audio_delay_in_bytes = 0;
     uint8_t **converted_samples = NULL;
+    int use_filter = 0;
+    int filter_init_error = 0;
 
     if (global_audio_codec_ctx == NULL) {
-        fprintf(stderr, "video audio is NULL\n");
+        fprintf(stderr, "audio codec is NULL\n");
         return NULL;
     }
     if (inputFormat_audio == NULL) {
@@ -562,6 +569,13 @@ static void *ffmpeg_thread_audio_in_capture_func(void *data)
     if (!frame) {
         fprintf(stderr, "Could not allocate frame\n");
         printf("ffmpeg Audio Capture Thread:ERROR:001:thread exit!\n");
+        return NULL;
+    }
+
+    oframe = av_frame_alloc();
+    if (!oframe) {
+        fprintf(stderr, "Could not allocate filtered frame\n");
+        printf("ffmpeg Audio Capture Thread:ERROR:031:thread exit!\n");
         return NULL;
     }
 
@@ -590,7 +604,7 @@ static void *ffmpeg_thread_audio_in_capture_func(void *data)
                                  0, NULL);
     if (!swr_ctx) {
         fprintf(stderr, "AA:Could not allocate resampler context\n");
-        fprintf(stderr, "AA:%d %d %d %ld %d %d\n", out_channel_layout,
+        fprintf(stderr, "AA:%d %d %d %ld %d %d\n", (int)out_channel_layout,
                 AV_SAMPLE_FMT_S16, out_sample_rate, global_audio_codec_ctx->channel_layout,
                 global_audio_codec_ctx->sample_fmt, global_audio_codec_ctx->sample_rate);
         av_frame_free(&frame);
@@ -599,7 +613,7 @@ static void *ffmpeg_thread_audio_in_capture_func(void *data)
 
     if (swr_init(swr_ctx) < 0) {
         fprintf(stderr, "AA:Could not initialize resampler context\n");
-        fprintf(stderr, "AA:%d %d %d %ld %d %d\n", out_channel_layout,
+        fprintf(stderr, "AA:%d %d %d %ld %d %d\n", (int)out_channel_layout,
                 AV_SAMPLE_FMT_S16, out_sample_rate, global_audio_codec_ctx->channel_layout,
                 global_audio_codec_ctx->sample_fmt, global_audio_codec_ctx->sample_rate);
         av_frame_free(&frame);
@@ -607,7 +621,7 @@ static void *ffmpeg_thread_audio_in_capture_func(void *data)
         return NULL;
     }
 
-    fprintf(stderr, "AA:Audio Config:%d %d %d %ld %d %d\n", out_channel_layout,
+    fprintf(stderr, "AA:Audio Config:%d %d %d %ld %d %d\n", (int)out_channel_layout,
             AV_SAMPLE_FMT_S16, out_sample_rate, global_audio_codec_ctx->channel_layout,
             global_audio_codec_ctx->sample_fmt, global_audio_codec_ctx->sample_rate);
 
@@ -625,6 +639,128 @@ static void *ffmpeg_thread_audio_in_capture_func(void *data)
     }
 
     fifo_buffer_t* audio_pcm_buffer = fifo_buffer_create(temp_audio_buf_sizes);
+
+    // ------------ create filter ------------
+    AVFilterContext *abuffer_ctx = NULL;
+    AVFilterContext *aformat_ctx = NULL;
+    AVFilterContext *abuffersink_ctx = NULL;
+    AVFilterGraph *filter_graph = NULL;
+    filter_graph = avfilter_graph_alloc();
+    if (!filter_graph) {
+        fprintf(stderr, "ERROR: unable to create filter graph\n");
+    } else {
+
+        // ---------- here is the actual filter ----------
+        AVFilter *noisefilter = avfilter_get_by_name("arnndn");
+        AVFilterContext *noisefilter_ctx = NULL;
+        static char strbuf[512];
+        snprintf(strbuf, sizeof(strbuf), "m=mp.rnnn");
+        fprintf(stderr, "afftdn filter: %s\n", strbuf);
+
+        /*
+        // -------- afftdn filter --------
+        // we metallic robots. unusable for speech it seems.
+        AVFilter *noisefilter = avfilter_get_by_name("afftdn");
+        AVFilterContext *noisefilter_ctx = NULL;
+        static char strbuf[512];
+        snprintf(strbuf, sizeof(strbuf), "nt=w:om=output");
+        fprintf(stderr, "afftdn filter: %s\n", strbuf);
+        */
+        /*
+        // -------- volume filter --------
+        AVFilter *noisefilter = avfilter_get_by_name("volume");
+        AVFilterContext *noisefilter_ctx = NULL;
+        static char strbuf[512];
+        double vol = 0.20;
+        snprintf(strbuf, sizeof(strbuf), "volume=%f", vol);
+        fprintf(stderr, "volume: %s\n", strbuf);
+        */
+        // -------- volume filter --------
+        int err_filter = avfilter_graph_create_filter(&noisefilter_ctx, noisefilter, NULL, strbuf, NULL, filter_graph);
+        if (err_filter < 0) {
+            fprintf(stderr, "ERROR: error initializing noise filter\n");
+            filter_init_error = 1;
+        }
+        // ---------- here is the actual filter ----------
+
+        if (filter_init_error == 1)
+        {
+            avfilter_graph_free(&filter_graph);
+        }
+        else
+        {
+            // ---------- abuffer ----------
+            AVFilter *abuffer = avfilter_get_by_name("abuffer");
+            snprintf(strbuf, sizeof(strbuf),
+                    "sample_rate=%d:sample_fmt=%s:channel_layout=0x%"PRIx64,
+                    global_audio_codec_ctx->sample_rate,
+                    av_get_sample_fmt_name(global_audio_codec_ctx->sample_fmt),
+                    global_audio_codec_ctx->channel_layout
+                    );
+            fprintf(stderr, "abuffer: %s\n", strbuf);
+            int err = avfilter_graph_create_filter(&abuffer_ctx, abuffer, NULL, strbuf, NULL, filter_graph);
+            if (err < 0) {
+                fprintf(stderr, "ERROR: error initializing abuffer filter\n");
+            }
+            // ---------- abuffer ----------
+
+            // ---------- aformat ----------
+            /* Create the aformat filter;
+            * it ensures that the output is of the format we want. */
+            AVFilter *aformat = avfilter_get_by_name("aformat");
+            if (!aformat) {
+                fprintf(stderr, "ERROR: Could not find the aformat filter\n");
+            }
+            aformat_ctx = avfilter_graph_alloc_filter(filter_graph, aformat, "aformat");
+            if (!aformat_ctx) {
+                fprintf(stderr, "ERROR: Could not allocate the aformat instance.\n");
+            }
+            /* passing the options is in a string of the form
+            * key1=value1:key2=value2.... */
+            memset(strbuf, 0, sizeof(strbuf));
+            snprintf(strbuf, sizeof(strbuf),
+                    "sample_fmts=%s:sample_rates=%d:channel_layouts=0x%"PRIx64,
+                    av_get_sample_fmt_name(global_audio_codec_ctx->sample_fmt),
+                    global_audio_codec_ctx->sample_rate,
+                    global_audio_codec_ctx->channel_layout
+                    );
+            err = avfilter_init_str(aformat_ctx, strbuf);
+            if (err < 0) {
+                fprintf(stderr, "ERROR: Could not initialize the aformat filter.\n");
+            }
+            // ---------- aformat ----------
+
+            // ---------- abuffersink ----------
+            AVFilter *abuffersink = avfilter_get_by_name("abuffersink");
+            int err_abuffersink = avfilter_graph_create_filter(&abuffersink_ctx, abuffersink,
+                    NULL, NULL, NULL, filter_graph);
+            if (err_abuffersink < 0) {
+                fprintf(stderr, "ERROR: error initializing abuffer filter\n");
+            }
+            // ---------- abuffersink ----------
+
+            // *************************
+            //
+            // input ==> abuffer_ctx -> noisefilter_ctx -> aformat_ctx -> abuffersink_ctx ==> output
+            //
+            if (err >= 0) err = avfilter_link(abuffer_ctx, 0, noisefilter_ctx, 0);
+            if (err >= 0) err = avfilter_link(noisefilter_ctx, 0, aformat_ctx, 0);
+            if (err >= 0) err = avfilter_link(aformat_ctx, 0, abuffersink_ctx, 0);
+            if (err < 0) {
+                fprintf(stderr, "ERROR: error connecting filters\n");
+            }
+
+            int err_fgraph = avfilter_graph_config(filter_graph, NULL);
+            if (err_fgraph < 0) {
+                fprintf(stderr, "ERROR: error configuring the filter graph\n");
+                avfilter_graph_free(&filter_graph);
+            } else {
+                use_filter = 1;
+                fprintf(stderr, "OK: using filter\n");
+            }
+        }
+    }
+    // ------------ create filter ------------
 
     while (global_audio_in_capture_running == true)
     {
@@ -652,60 +788,155 @@ static void *ffmpeg_thread_audio_in_capture_func(void *data)
                         break;
                     }
 
-                    num_samples = av_rescale_rnd(frame->nb_samples,
-                                                        out_sample_rate,
-                                                        global_audio_codec_ctx->sample_rate,
-                                                        AV_ROUND_UP);
-
-                    av_samples_alloc_array_and_samples(&converted_samples,
-                                NULL,
-                                out_channels,
-                                num_samples,
-                                AV_SAMPLE_FMT_S16,
-                                0);
-                    __attribute__((unused)) int samples_out = swr_convert(swr_ctx,
-                            converted_samples,
-                            num_samples,
-                            (const uint8_t **)frame->extended_data,
-                            frame->nb_samples);
-
-                    const int want_write_bytes = (num_samples * out_channels * out_bytes_per_sample);
-                    __attribute__((unused)) size_t written_bytes = fifo_buffer_write(audio_pcm_buffer, converted_samples[0], want_write_bytes);
-
-                    audio_delay_in_bytes = (out_samples * out_channels * out_bytes_per_sample) * global_audio_delay_factor; // n x 60 ms delay
-                    if (fifo_buffer_data_available(audio_pcm_buffer) >= (out_samples * out_channels * out_bytes_per_sample) + (audio_delay_in_bytes))
+                    if ((use_filter == 1) && (apply_audio_filter == 1))
                     {
-                        const int data_size_bytes = out_samples * out_channels * out_bytes_per_sample;
-                        if (audio_buffer_pcm_2_size >= data_size_bytes)
-                        {
-                            size_t read_bytes = fifo_buffer_read(
-                                    audio_pcm_buffer,
-                                    audio_buffer_pcm_2,
-                                    data_size_bytes);
+                        // push the audio data from decoded frame into the filtergraph
+                        int err_filter_in = av_buffersrc_write_frame(abuffer_ctx, frame);
+                        if (err_filter_in < 0) {
+                            fprintf(stderr, "ERROR: error writing audio frame to buffersrc\n");
+                        } else {
+                            // fprintf(stderr, "OK: writing audio frame to buffersrc\n");
+                        }
+                        // run USING the filter -----------------------
+                        for (;;) {
+                            int err = av_buffersink_get_frame(abuffersink_ctx, oframe);
+                            if (err == AVERROR_EOF || err == AVERROR(EAGAIN))
+                                break;
+                            if (err < 0) {
+                                fprintf(stderr, "ERROR: error reading buffer from buffersink\n");
+                                break;
+                            }
 
-                            if (jnienv2 != NULL) {
-                            (*jnienv2)->CallStaticVoidMethod(jnienv2, AVActivity,
-                                    callback_audio_capture_frame_pts_cb_method,
-                                    (jlong)read_bytes,
-                                    (jint)out_samples,
-                                    (jint)out_channels,
-                                    (jint)out_sample_rate,
-                                    (jlong)0
-                                );
+                            /*
+                            fprintf(stderr, "frame: %d %d %d %s %s\n",
+                                    frame->nb_samples,
+                                    (int)frame->channel_layout,
+                                    frame->channels,
+                                    av_get_sample_fmt_name(frame->format),
+                                    av_get_sample_fmt_name(global_audio_codec_ctx->sample_fmt));
+
+                            fprintf(stderr, "oframe: %d %d %d %s\n",
+                                    oframe->nb_samples,
+                                    (int)oframe->channel_layout,
+                                    oframe->channels,
+                                    av_get_sample_fmt_name(oframe->format));
+                            */
+                            num_samples = av_rescale_rnd(oframe->nb_samples,
+                                                                out_sample_rate,
+                                                                global_audio_codec_ctx->sample_rate,
+                                                                AV_ROUND_UP);
+
+                            av_samples_alloc_array_and_samples(&converted_samples,
+                                        NULL,
+                                        out_channels,
+                                        num_samples,
+                                        AV_SAMPLE_FMT_S16,
+                                        0);
+                            __attribute__((unused)) int samples_out = swr_convert(swr_ctx,
+                                    converted_samples,
+                                    num_samples,
+                                    (const uint8_t **)oframe->extended_data,
+                                    oframe->nb_samples);
+
+                            const int want_write_bytes = (num_samples * out_channels * out_bytes_per_sample);
+                            __attribute__((unused)) size_t written_bytes = fifo_buffer_write(audio_pcm_buffer, converted_samples[0], want_write_bytes);
+
+                            audio_delay_in_bytes = (out_samples * out_channels * out_bytes_per_sample) * global_audio_delay_factor; // n x 60 ms delay
+                            if (fifo_buffer_data_available(audio_pcm_buffer) >= (out_samples * out_channels * out_bytes_per_sample) + (audio_delay_in_bytes))
+                            {
+                                const int data_size_bytes = out_samples * out_channels * out_bytes_per_sample;
+                                if (audio_buffer_pcm_2_size >= data_size_bytes)
+                                {
+                                    size_t read_bytes = fifo_buffer_read(
+                                            audio_pcm_buffer,
+                                            audio_buffer_pcm_2,
+                                            data_size_bytes);
+
+                                    if (jnienv2 != NULL) {
+                                    (*jnienv2)->CallStaticVoidMethod(jnienv2, AVActivity,
+                                            callback_audio_capture_frame_pts_cb_method,
+                                            (jlong)read_bytes,
+                                            (jint)out_samples,
+                                            (jint)out_channels,
+                                            (jint)out_sample_rate,
+                                            (jlong)0
+                                        );
+                                    }
+                                    else
+                                    {
+                                        fprintf(stderr, "could not attach thread to JVM\n");
+                                    }
+                                }
+                                else
+                                {
+                                    fprintf(stderr, "JNI audio caputre buffer too small\n");
+                                }
+                            }
+
+                            av_freep(&converted_samples[0]);
+                            av_freep(&converted_samples);
+                        }
+                        // run USING the filter -----------------------
+                    }
+                    else
+                    {
+                        // run without filter -----------------------
+                        num_samples = av_rescale_rnd(frame->nb_samples,
+                                                            out_sample_rate,
+                                                            global_audio_codec_ctx->sample_rate,
+                                                            AV_ROUND_UP);
+
+                        av_samples_alloc_array_and_samples(&converted_samples,
+                                    NULL,
+                                    out_channels,
+                                    num_samples,
+                                    AV_SAMPLE_FMT_S16,
+                                    0);
+                        __attribute__((unused)) int samples_out = swr_convert(swr_ctx,
+                                converted_samples,
+                                num_samples,
+                                (const uint8_t **)frame->extended_data,
+                                frame->nb_samples);
+
+                        const int want_write_bytes = (num_samples * out_channels * out_bytes_per_sample);
+                        __attribute__((unused)) size_t written_bytes = fifo_buffer_write(audio_pcm_buffer, converted_samples[0], want_write_bytes);
+
+                        audio_delay_in_bytes = (out_samples * out_channels * out_bytes_per_sample) * global_audio_delay_factor; // n x 60 ms delay
+                        if (fifo_buffer_data_available(audio_pcm_buffer) >= (out_samples * out_channels * out_bytes_per_sample) + (audio_delay_in_bytes))
+                        {
+                            const int data_size_bytes = out_samples * out_channels * out_bytes_per_sample;
+                            if (audio_buffer_pcm_2_size >= data_size_bytes)
+                            {
+                                size_t read_bytes = fifo_buffer_read(
+                                        audio_pcm_buffer,
+                                        audio_buffer_pcm_2,
+                                        data_size_bytes);
+
+                                if (jnienv2 != NULL) {
+                                (*jnienv2)->CallStaticVoidMethod(jnienv2, AVActivity,
+                                        callback_audio_capture_frame_pts_cb_method,
+                                        (jlong)read_bytes,
+                                        (jint)out_samples,
+                                        (jint)out_channels,
+                                        (jint)out_sample_rate,
+                                        (jlong)0
+                                    );
+                                }
+                                else
+                                {
+                                    fprintf(stderr, "could not attach thread to JVM\n");
+                                }
                             }
                             else
                             {
-                                fprintf(stderr, "could not attach thread to JVM\n");
+                                fprintf(stderr, "JNI audio caputre buffer too small\n");
                             }
                         }
-                        else
-                        {
-                            fprintf(stderr, "JNI audio caputre buffer too small\n");
-                        }
-                    }
 
-                    av_freep(&converted_samples[0]);
-                    av_freep(&converted_samples);
+                        av_freep(&converted_samples[0]);
+                        av_freep(&converted_samples);
+                        // run without filter -----------------------
+                    }
                 }
             }
             av_packet_unref(&packet);
@@ -714,14 +945,21 @@ static void *ffmpeg_thread_audio_in_capture_func(void *data)
     }
 
     av_frame_free(&frame);
+    av_frame_free(&oframe);
     swr_free(&swr_ctx);
+
+    // ------------ destroy filter ------------
+    if (use_filter == 1) {
+        avfilter_graph_free(&filter_graph);
+    }
+    // ------------ destroy filter ------------
 
     if (cachedJVM)
     {
         (*cachedJVM)->DetachCurrentThread(cachedJVM);
     }
 
-    printf("ffmpeg Video Capture Thread:Clean thread exit!\n");
+    printf("ffmpeg Audio Capture Thread:Clean thread exit!\n");
     return NULL;
 }
 
@@ -738,6 +976,13 @@ Java_com_zoffcc_applications_ffmpegav_AVActivity_ffmpegav_1libavutil_1version(JN
     CLEAR(libavutil_version_str);
     snprintf(libavutil_version_str, 1999, "%d.%d.%d", (int)LIBAVUTIL_VERSION_MAJOR, (int)LIBAVUTIL_VERSION_MINOR, (int)LIBAVUTIL_VERSION_MICRO);
     return (*env)->NewStringUTF(env, libavutil_version_str);
+}
+
+JNIEXPORT void JNICALL
+Java_com_zoffcc_applications_ffmpegav_AVActivity_ffmpegav_1apply_1audio_1filter(JNIEnv *env, jobject thiz, jint apply_filter)
+{
+    apply_audio_filter = apply_filter;
+    fprintf(stderr, "apply_audio_filter=%d\n", apply_audio_filter);
 }
 
 JNIEXPORT jint JNICALL

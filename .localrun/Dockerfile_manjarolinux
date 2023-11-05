@@ -72,6 +72,11 @@ RUN cd /workspace2/build/ && mkdir /workspace2/build/inst/ && \
               --enable-indev=pulse \
               --enable-indev=v4l2 \
               --enable-libpulse \
+              --enable-filter=volume \
+              --enable-filter=arnndn \
+              --enable-filter=afftdn \
+              --enable-filter=aresample \
+              --enable-runtime-cpudetect \
               --enable-libv4l2 && \
     make -j$(nproc) && \
     make install

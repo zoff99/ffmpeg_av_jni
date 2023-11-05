@@ -106,6 +106,7 @@ ffmpeg_av_jni.c \
 $_INST_/lib/libavcodec.a \
 $_INST_/lib/libavdevice.a \
 $_INST_/lib/libavformat.a \
+$_INST_/lib/libavfilter.a \
 $_INST_/lib/libavutil.a \
 $_INST_/lib/libswscale.a \
 $_INST_/lib/libswresample.a \
