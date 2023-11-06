@@ -52,8 +52,8 @@
 // ----------- version -----------
 #define VERSION_MAJOR 0
 #define VERSION_MINOR 99
-#define VERSION_PATCH 3
-static const char global_version_string[] = "0.99.3";
+#define VERSION_PATCH 4
+static const char global_version_string[] = "0.99.4";
 // ----------- version -----------
 // ----------- version -----------
 
@@ -296,6 +296,8 @@ static pthread_t ffmpeg_thread_audio_in_capture;
 AVRational time_base_audio = (AVRational) {0, 0};
 #define DEFAULT_SCREEN_CAPTURE_PULSE_DEVICE "default"
 int apply_audio_filter = 0;
+char *resources_dir_path = NULL;
+const int resources_dir_path_maxlen = 1000;
 
 AVInputFormat *inputFormat_video = NULL;
 AVFormatContext *formatContext_video = NULL;
@@ -653,13 +655,16 @@ static void *ffmpeg_thread_audio_in_capture_func(void *data)
         // ---------- here is the actual filter ----------
         AVFilter *noisefilter = avfilter_get_by_name("arnndn");
         AVFilterContext *noisefilter_ctx = NULL;
-        static char strbuf[512];
-        snprintf(strbuf, sizeof(strbuf), "m=mp.rnnn");
-        fprintf(stderr, "afftdn filter: %s\n", strbuf);
+        static char args_strbuf[1512];
+        if (resources_dir_path) {
+            snprintf(args_strbuf, sizeof(args_strbuf), "m=%smp.rnnn", resources_dir_path);
+        } else {
+            snprintf(args_strbuf, sizeof(args_strbuf), "m=mp.rnnn");
+        }
+        fprintf(stderr, "afftdn filter: %s\n", args_strbuf);
 
         /*
         // -------- afftdn filter --------
-        // we metallic robots. unusable for speech it seems.
         AVFilter *noisefilter = avfilter_get_by_name("afftdn");
         AVFilterContext *noisefilter_ctx = NULL;
         static char strbuf[512];
@@ -676,7 +681,7 @@ static void *ffmpeg_thread_audio_in_capture_func(void *data)
         fprintf(stderr, "volume: %s\n", strbuf);
         */
         // -------- volume filter --------
-        int err_filter = avfilter_graph_create_filter(&noisefilter_ctx, noisefilter, NULL, strbuf, NULL, filter_graph);
+        int err_filter = avfilter_graph_create_filter(&noisefilter_ctx, noisefilter, NULL, args_strbuf, NULL, filter_graph);
         if (err_filter < 0) {
             fprintf(stderr, "ERROR: error initializing noise filter\n");
             filter_init_error = 1;
@@ -691,14 +696,15 @@ static void *ffmpeg_thread_audio_in_capture_func(void *data)
         {
             // ---------- abuffer ----------
             AVFilter *abuffer = avfilter_get_by_name("abuffer");
-            snprintf(strbuf, sizeof(strbuf),
+            memset(args_strbuf, 0, sizeof(args_strbuf));
+            snprintf(args_strbuf, sizeof(args_strbuf),
                     "sample_rate=%d:sample_fmt=%s:channel_layout=0x%"PRIx64,
                     global_audio_codec_ctx->sample_rate,
                     av_get_sample_fmt_name(global_audio_codec_ctx->sample_fmt),
                     global_audio_codec_ctx->channel_layout
                     );
-            fprintf(stderr, "abuffer: %s\n", strbuf);
-            int err = avfilter_graph_create_filter(&abuffer_ctx, abuffer, NULL, strbuf, NULL, filter_graph);
+            fprintf(stderr, "abuffer: %s\n", args_strbuf);
+            int err = avfilter_graph_create_filter(&abuffer_ctx, abuffer, NULL, args_strbuf, NULL, filter_graph);
             if (err < 0) {
                 fprintf(stderr, "ERROR: error initializing abuffer filter\n");
             }
@@ -717,14 +723,14 @@ static void *ffmpeg_thread_audio_in_capture_func(void *data)
             }
             /* passing the options is in a string of the form
             * key1=value1:key2=value2.... */
-            memset(strbuf, 0, sizeof(strbuf));
-            snprintf(strbuf, sizeof(strbuf),
+            memset(args_strbuf, 0, sizeof(args_strbuf));
+            snprintf(args_strbuf, sizeof(args_strbuf),
                     "sample_fmts=%s:sample_rates=%d:channel_layouts=0x%"PRIx64,
                     av_get_sample_fmt_name(global_audio_codec_ctx->sample_fmt),
                     global_audio_codec_ctx->sample_rate,
                     global_audio_codec_ctx->channel_layout
                     );
-            err = avfilter_init_str(aformat_ctx, strbuf);
+            err = avfilter_init_str(aformat_ctx, args_strbuf);
             if (err < 0) {
                 fprintf(stderr, "ERROR: Could not initialize the aformat filter.\n");
             }
@@ -986,8 +992,33 @@ Java_com_zoffcc_applications_ffmpegav_AVActivity_ffmpegav_1apply_1audio_1filter(
 }
 
 JNIEXPORT jint JNICALL
-Java_com_zoffcc_applications_ffmpegav_AVActivity_ffmpegav_1init(JNIEnv *env, jobject thiz)
+Java_com_zoffcc_applications_ffmpegav_AVActivity_ffmpegav_1init(JNIEnv *env, jobject thiz, jstring resources_dir)
 {
+    if (resources_dir == NULL)
+    {
+        if (resources_dir_path) {
+            memset(resources_dir_path, 0, resources_dir_path_maxlen + 4);
+        }
+    }
+    else
+    {
+        const char *resources_dir_cstr = (*env)->GetStringUTFChars(env, resources_dir, NULL);
+        if (resources_dir_cstr != NULL)
+        {
+            if (!resources_dir_path) {
+                resources_dir_path = calloc(1, resources_dir_path_maxlen + 4);
+            } else {
+                memset(resources_dir_path, 0, resources_dir_path_maxlen + 4);
+            }
+            if (resources_dir_path)
+            {
+                snprintf(resources_dir_path, resources_dir_path_maxlen, "%s", resources_dir_cstr);
+                fprintf(stderr, "init: resources_dir_path=%s\n", resources_dir_path);
+            }
+            (*env)->ReleaseStringUTFChars(env, resources_dir, resources_dir_cstr);
+        }
+    }
+
 #if (LIBAVFORMAT_VERSION_INT < AV_VERSION_INT(58,9,100))
     av_register_all();
 #endif
@@ -1008,6 +1039,7 @@ Java_com_zoffcc_applications_ffmpegav_AVActivity_ffmpegav_1init(JNIEnv *env, job
             "ffmpegav_callback_audio_capture_frame_pts_cb_method", "(JIIIJ)V");
     printf("ffmpegav_callback_audio_capture_frame_pts_cb_method=%p\n", callback_audio_capture_frame_pts_cb_method);
 
+    fprintf(stderr, "init: DONE\n");
     // HINT: add error handling
     return 0;
 }
