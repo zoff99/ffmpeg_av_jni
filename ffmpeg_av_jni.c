@@ -52,8 +52,8 @@
 // ----------- version -----------
 #define VERSION_MAJOR 0
 #define VERSION_MINOR 99
-#define VERSION_PATCH 4
-static const char global_version_string[] = "0.99.4";
+#define VERSION_PATCH 5
+static const char global_version_string[] = "0.99.5";
 // ----------- version -----------
 // ----------- version -----------
 
@@ -309,8 +309,7 @@ bool global_video_in_capture_running = false;
 static pthread_t ffmpeg_thread_video_in_capture;
 AVRational time_base_video = (AVRational) {0, 0};
 
-#define DEFAULT_SCREEN_CAPTURE_FPS "20" // 20 fps desktop screen capture
-int sws_scale_algo = SWS_BILINEAR; // SWS_FAST_BILINEAR SWS_BILINEAR SWS_BICUBIC SWS_SINC SWS_LANCZOS
+int sws_scale_algo = SWS_FAST_BILINEAR; // SWS_FAST_BILINEAR SWS_BILINEAR SWS_BICUBIC SWS_SINC SWS_LANCZOS
 int output_width = 640;
 int output_height = 480;
 
@@ -380,6 +379,9 @@ static void *ffmpeg_thread_video_in_capture_func(void *data)
     AVPacket packet;
     AVFrame *frame = NULL;
     int ret = 0;
+    int estimated_fps = 0;
+    uint64_t fps_measure_timestamp = 0;
+    int32_t count_video_frames = 0;
 
     if (global_video_codec_ctx == NULL) {
         fprintf(stderr, "video codec is NULL\n");
@@ -458,6 +460,7 @@ static void *ffmpeg_thread_video_in_capture_func(void *data)
         }
     }
 
+    fps_measure_timestamp = ffmpegav_current_time_monotonic_default();
     while (global_video_in_capture_running == true)
     {
         if (av_read_frame(formatContext_video, &packet) >= 0)
@@ -483,6 +486,23 @@ static void *ffmpeg_thread_video_in_capture_func(void *data)
                         fprintf(stderr, "Error during video decoding\n");
                         break;
                     }
+
+                    // calculate fps on every 5th video frame ---------------------------------
+                    count_video_frames++;
+                    if (count_video_frames > 4)
+                    {
+                        const uint64_t fps_measure_timestamp_end = ffmpegav_current_time_monotonic_default();
+                        const float delta_ms = (float)(fps_measure_timestamp_end - fps_measure_timestamp);
+                        if ((delta_ms > 1) && (delta_ms < 8000)) {
+                            estimated_fps = (int)(1000.0f / (delta_ms / (float)count_video_frames));
+                        } else {
+                            estimated_fps = 0; // set fps to zero on any errors or issues
+                        }
+                        fps_measure_timestamp = fps_measure_timestamp_end;
+                        count_video_frames = 0;
+                    }
+                    // calculate fps on every 5th video frame ---------------------------------
+
                     // Convert the video frame to YUV
                     int planes_stride[3];
                     planes_stride[0] = av_image_get_linesize(AV_PIX_FMT_YUV420P, output_width, 0);
@@ -509,7 +529,8 @@ static void *ffmpeg_thread_video_in_capture_func(void *data)
                              callback_video_capture_frame_pts_cb_method,
                              (jlong)output_width,
                              (jlong)output_height,
-                             (jlong)0
+                             (jlong)0,
+                             (jint)estimated_fps
                             );
                         }
                         else
@@ -1032,7 +1053,7 @@ Java_com_zoffcc_applications_ffmpegav_AVActivity_ffmpegav_1init(JNIEnv *env, job
     printf("AVActivity=%p\n", AVActivity);
 
     callback_video_capture_frame_pts_cb_method = (*env)->GetStaticMethodID(env, AVActivity,
-            "ffmpegav_callback_video_capture_frame_pts_cb_method", "(JJJ)V");
+            "ffmpegav_callback_video_capture_frame_pts_cb_method", "(JJJI)V");
     printf("ffmpegav_callback_video_capture_frame_pts_cb_method=%p\n", callback_video_capture_frame_pts_cb_method);
 
     callback_audio_capture_frame_pts_cb_method = (*env)->GetStaticMethodID(env, AVActivity,
