@@ -52,8 +52,8 @@
 // ----------- version -----------
 #define VERSION_MAJOR 0
 #define VERSION_MINOR 99
-#define VERSION_PATCH 5
-static const char global_version_string[] = "0.99.5";
+#define VERSION_PATCH 6
+static const char global_version_string[] = "0.99.6";
 // ----------- version -----------
 // ----------- version -----------
 
@@ -529,6 +529,8 @@ static void *ffmpeg_thread_video_in_capture_func(void *data)
                              callback_video_capture_frame_pts_cb_method,
                              (jlong)output_width,
                              (jlong)output_height,
+                             (jlong)global_video_codec_ctx->width,
+                             (jlong)global_video_codec_ctx->height,
                              (jlong)0,
                              (jint)estimated_fps
                             );
@@ -1053,7 +1055,7 @@ Java_com_zoffcc_applications_ffmpegav_AVActivity_ffmpegav_1init(JNIEnv *env, job
     printf("AVActivity=%p\n", AVActivity);
 
     callback_video_capture_frame_pts_cb_method = (*env)->GetStaticMethodID(env, AVActivity,
-            "ffmpegav_callback_video_capture_frame_pts_cb_method", "(JJJI)V");
+            "ffmpegav_callback_video_capture_frame_pts_cb_method", "(JJJJJI)V");
     printf("ffmpegav_callback_video_capture_frame_pts_cb_method=%p\n", callback_video_capture_frame_pts_cb_method);
 
     callback_audio_capture_frame_pts_cb_method = (*env)->GetStaticMethodID(env, AVActivity,
