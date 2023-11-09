@@ -52,8 +52,8 @@
 // ----------- version -----------
 #define VERSION_MAJOR 0
 #define VERSION_MINOR 99
-#define VERSION_PATCH 6
-static const char global_version_string[] = "0.99.6";
+#define VERSION_PATCH 7
+static const char global_version_string[] = "0.99.7";
 // ----------- version -----------
 // ----------- version -----------
 
@@ -382,6 +382,7 @@ static void *ffmpeg_thread_video_in_capture_func(void *data)
     int estimated_fps = 0;
     uint64_t fps_measure_timestamp = 0;
     int32_t count_video_frames = 0;
+    int source_format = -1;
 
     if (global_video_codec_ctx == NULL) {
         fprintf(stderr, "video codec is NULL\n");
@@ -460,6 +461,7 @@ static void *ffmpeg_thread_video_in_capture_func(void *data)
         }
     }
 
+    source_format = global_video_codec_ctx->codec_id;
     fps_measure_timestamp = ffmpegav_current_time_monotonic_default();
     while (global_video_in_capture_running == true)
     {
@@ -532,7 +534,8 @@ static void *ffmpeg_thread_video_in_capture_func(void *data)
                              (jlong)global_video_codec_ctx->width,
                              (jlong)global_video_codec_ctx->height,
                              (jlong)0,
-                             (jint)estimated_fps
+                             (jint)estimated_fps,
+                             (jint)source_format
                             );
                         }
                         else
@@ -1055,7 +1058,7 @@ Java_com_zoffcc_applications_ffmpegav_AVActivity_ffmpegav_1init(JNIEnv *env, job
     printf("AVActivity=%p\n", AVActivity);
 
     callback_video_capture_frame_pts_cb_method = (*env)->GetStaticMethodID(env, AVActivity,
-            "ffmpegav_callback_video_capture_frame_pts_cb_method", "(JJJJJI)V");
+            "ffmpegav_callback_video_capture_frame_pts_cb_method", "(JJJJJII)V");
     printf("ffmpegav_callback_video_capture_frame_pts_cb_method=%p\n", callback_video_capture_frame_pts_cb_method);
 
     callback_audio_capture_frame_pts_cb_method = (*env)->GetStaticMethodID(env, AVActivity,
@@ -1472,6 +1475,36 @@ Java_com_zoffcc_applications_ffmpegav_AVActivity_ffmpegav_1open_1video_1in_1devi
         }
 #else
         fprintf(stderr, "Could not open desktop as video input stream.\n");
+        reset_video_in_values();
+        (*env)->ReleaseStringUTFChars(env, deviceformat, deviceformat_cstr);
+        (*env)->ReleaseStringUTFChars(env, inputname, inputname_cstr);
+        return -1;
+#endif
+    }
+    else if (strncmp((char *)deviceformat_cstr, "video4linux2", strlen((char *)"video4linux2")) == 0)
+    {
+#ifdef __linux__
+        AVDictionary* options = NULL;
+
+        const int camresolution_string_len = 1000;
+        char camresolution_string[camresolution_string_len];
+        memset(camresolution_string, 0, camresolution_string_len);
+        snprintf(camresolution_string, camresolution_string_len, "%dx%d", wanted_width, wanted_height);
+        fprintf(stderr, "Wanted camera resolution_string: %s\n", camresolution_string);
+
+        av_dict_set(&options, "video_size", camresolution_string, 0);
+        // av_dict_set(&options, "input_format", "mjpeg", 0);
+        // av_dict_set(&options, "framerate", "15", 0);
+        if (avformat_open_input(&formatContext_video, inputname_cstr, inputFormat_video, &options) != 0)
+        {
+            fprintf(stderr, "Could not open desktop as video input stream.\n");
+            reset_video_in_values();
+            (*env)->ReleaseStringUTFChars(env, deviceformat, deviceformat_cstr);
+            (*env)->ReleaseStringUTFChars(env, inputname, inputname_cstr);
+            return -1;
+        }
+#else
+        fprintf(stderr, "Could not open v4l2 as video input stream.\n");
         reset_video_in_values();
         (*env)->ReleaseStringUTFChars(env, deviceformat, deviceformat_cstr);
         (*env)->ReleaseStringUTFChars(env, inputname, inputname_cstr);
