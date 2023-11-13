@@ -52,8 +52,8 @@
 // ----------- version -----------
 #define VERSION_MAJOR 0
 #define VERSION_MINOR 99
-#define VERSION_PATCH 7
-static const char global_version_string[] = "0.99.7";
+#define VERSION_PATCH 8
+static const char global_version_string[] = "0.99.8";
 // ----------- version -----------
 // ----------- version -----------
 
@@ -278,7 +278,9 @@ int java_find_class_global(char *name, jclass *ret)
 
 jclass AVActivity = NULL;
 jmethodID callback_video_capture_frame_pts_cb_method = NULL;
+jmethodID callback_video_capture_frame_too_small_cb_method = NULL;
 jmethodID callback_audio_capture_frame_pts_cb_method = NULL;
+jmethodID callback_audio_capture_frame_too_small_cb_method = NULL;
 
 // --------- AV VARS ---------
 // --------- AV VARS ---------
@@ -540,12 +542,24 @@ static void *ffmpeg_thread_video_in_capture_func(void *data)
                         }
                         else
                         {
-                            fprintf(stderr, "could not attach thread to JVM\n");
+                            fprintf(stderr, "could not attach thread to JVM [1]\n");
                         }
                     }
                     else
                     {
-                        fprintf(stderr, "video buffer to small for video frame data\n");
+                        fprintf(stderr, "video buffer too small for video frame data\n");
+                        if (jnienv2 != NULL) {
+                        (*jnienv2)->CallStaticVoidMethod(jnienv2, AVActivity,
+                             callback_video_capture_frame_too_small_cb_method,
+                             (jint)(planes_stride[0] * output_height),
+                             (jint)(planes_stride[1] * (output_height / 2)),
+                             (jint)(planes_stride[2] * (output_height / 2))
+                            );
+                        }
+                        else
+                        {
+                            fprintf(stderr, "could not attach thread to JVM [2]\n");
+                        }
                     }
                 }
             }
@@ -877,7 +891,7 @@ static void *ffmpeg_thread_audio_in_capture_func(void *data)
                             if (fifo_buffer_data_available(audio_pcm_buffer) >= (out_samples * out_channels * out_bytes_per_sample) + (audio_delay_in_bytes))
                             {
                                 const int data_size_bytes = out_samples * out_channels * out_bytes_per_sample;
-                                if (audio_buffer_pcm_2_size >= data_size_bytes)
+                                if (audio_buffer_pcm_2_size >= (long)data_size_bytes)
                                 {
                                     size_t read_bytes = fifo_buffer_read(
                                             audio_pcm_buffer,
@@ -896,12 +910,22 @@ static void *ffmpeg_thread_audio_in_capture_func(void *data)
                                     }
                                     else
                                     {
-                                        fprintf(stderr, "could not attach thread to JVM\n");
+                                        fprintf(stderr, "could not attach thread to JVM [3]\n");
                                     }
                                 }
                                 else
                                 {
                                     fprintf(stderr, "JNI audio caputre buffer too small\n");
+                                    if (jnienv2 != NULL) {
+                                    (*jnienv2)->CallStaticVoidMethod(jnienv2, AVActivity,
+                                            callback_audio_capture_frame_too_small_cb_method,
+                                            (jint)data_size_bytes
+                                        );
+                                    }
+                                    else
+                                    {
+                                        fprintf(stderr, "could not attach thread to JVM [4]\n");
+                                    }
                                 }
                             }
 
@@ -937,7 +961,7 @@ static void *ffmpeg_thread_audio_in_capture_func(void *data)
                         if (fifo_buffer_data_available(audio_pcm_buffer) >= (out_samples * out_channels * out_bytes_per_sample) + (audio_delay_in_bytes))
                         {
                             const int data_size_bytes = out_samples * out_channels * out_bytes_per_sample;
-                            if (audio_buffer_pcm_2_size >= data_size_bytes)
+                            if (audio_buffer_pcm_2_size >= (long)data_size_bytes)
                             {
                                 size_t read_bytes = fifo_buffer_read(
                                         audio_pcm_buffer,
@@ -956,12 +980,22 @@ static void *ffmpeg_thread_audio_in_capture_func(void *data)
                                 }
                                 else
                                 {
-                                    fprintf(stderr, "could not attach thread to JVM\n");
+                                    fprintf(stderr, "could not attach thread to JVM [5]\n");
                                 }
                             }
                             else
                             {
                                 fprintf(stderr, "JNI audio caputre buffer too small\n");
+                                if (jnienv2 != NULL) {
+                                (*jnienv2)->CallStaticVoidMethod(jnienv2, AVActivity,
+                                        callback_audio_capture_frame_too_small_cb_method,
+                                        (jint)data_size_bytes
+                                    );
+                                }
+                                else
+                                {
+                                    fprintf(stderr, "could not attach thread to JVM [6]\n");
+                                }
                             }
                         }
 
@@ -1061,9 +1095,17 @@ Java_com_zoffcc_applications_ffmpegav_AVActivity_ffmpegav_1init(JNIEnv *env, job
             "ffmpegav_callback_video_capture_frame_pts_cb_method", "(JJJJJII)V");
     printf("ffmpegav_callback_video_capture_frame_pts_cb_method=%p\n", callback_video_capture_frame_pts_cb_method);
 
+    callback_video_capture_frame_too_small_cb_method = (*env)->GetStaticMethodID(env, AVActivity,
+            "ffmpegav_callback_video_capture_frame_too_small_cb_method", "(III)V");
+    printf("ffmpegav_callback_video_capture_frame_too_small_cb_method=%p\n", callback_video_capture_frame_too_small_cb_method);
+
     callback_audio_capture_frame_pts_cb_method = (*env)->GetStaticMethodID(env, AVActivity,
             "ffmpegav_callback_audio_capture_frame_pts_cb_method", "(JIIIJ)V");
     printf("ffmpegav_callback_audio_capture_frame_pts_cb_method=%p\n", callback_audio_capture_frame_pts_cb_method);
+
+    callback_audio_capture_frame_too_small_cb_method = (*env)->GetStaticMethodID(env, AVActivity,
+            "ffmpegav_callback_audio_capture_frame_too_small_cb_method", "(I)V");
+    printf("ffmpegav_callback_audio_capture_frame_too_small_cb_method=%p\n", callback_audio_capture_frame_too_small_cb_method);
 
     fprintf(stderr, "init: DONE\n");
     // HINT: add error handling
