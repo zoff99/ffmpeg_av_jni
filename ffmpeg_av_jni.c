@@ -52,8 +52,8 @@
 // ----------- version -----------
 #define VERSION_MAJOR 0
 #define VERSION_MINOR 99
-#define VERSION_PATCH 8
-static const char global_version_string[] = "0.99.8";
+#define VERSION_PATCH 9
+static const char global_version_string[] = "0.99.9";
 // ----------- version -----------
 // ----------- version -----------
 
@@ -1401,7 +1401,7 @@ static void print_codec_parameters_audio(AVCodecParameters *codecpar, const char
 JNIEXPORT jint JNICALL
 Java_com_zoffcc_applications_ffmpegav_AVActivity_ffmpegav_1open_1video_1in_1device(JNIEnv *env, jobject thiz,
     jstring deviceformat, jstring inputname,
-    jint wanted_width, jint wanted_height, jint fps)
+    jint wanted_width, jint wanted_height, jint fps, jint force_mjpeg)
 {
     if (deviceformat == NULL)
     {
@@ -1535,7 +1535,9 @@ Java_com_zoffcc_applications_ffmpegav_AVActivity_ffmpegav_1open_1video_1in_1devi
         fprintf(stderr, "Wanted camera resolution_string: %s\n", camresolution_string);
 
         av_dict_set(&options, "video_size", camresolution_string, 0);
-        // av_dict_set(&options, "input_format", "mjpeg", 0);
+        if (force_mjpeg == 1) {
+            av_dict_set(&options, "input_format", "mjpeg", 0);
+        }
         // av_dict_set(&options, "framerate", "15", 0);
         if (avformat_open_input(&formatContext_video, inputname_cstr, inputFormat_video, &options) != 0)
         {
