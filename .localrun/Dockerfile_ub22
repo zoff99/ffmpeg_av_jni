@@ -3,7 +3,7 @@ FROM ubuntu:20.04
 
 RUN export DEBIAN_FRONTEND=noninteractive ; apt update && apt install -y make    yasm curl   wget    git    coreutils    autoconf    libtool    pkg-config    libsodium-dev     nano    vim
 RUN mkdir -p /workspace2/build/
-RUN cd /workspace2/build/;FFMPEG_VERSION=n6.0.1 ; FFMPEG_FILENAME="$FFMPEG_VERSION.tar.gz" ;rm -f "ffmpeg"*.tar.*;wget "https://github.com/FFmpeg/FFmpeg/archive/refs/tags/$FFMPEG_FILENAME" -O "ffmpeg_""$FFMPEG_FILENAME";tar -xf "ffmpeg_""$FFMPEG_FILENAME";rm -f "ffmpeg"*.tar.*
+RUN cd /workspace2/build/;FFMPEG_VERSION=n6.1 ; FFMPEG_FILENAME="$FFMPEG_VERSION.tar.gz" ;rm -f "ffmpeg"*.tar.*;wget "https://github.com/FFmpeg/FFmpeg/archive/refs/tags/$FFMPEG_FILENAME" -O "ffmpeg_""$FFMPEG_FILENAME";tar -xf "ffmpeg_""$FFMPEG_FILENAME";rm -f "ffmpeg"*.tar.*
 RUN export DEBIAN_FRONTEND=noninteractive ; apt install -y yasm \
           openjdk-17-jdk \
           openjdk-17-jdk-headless \
@@ -13,7 +13,7 @@ RUN export DEBIAN_FRONTEND=noninteractive ; apt install -y yasm \
           mingw-w64-x86-64-dev
 
 RUN cd /workspace2/build/ && mkdir /workspace2/build/inst/ && \
-    cd ./FFmpeg-n6.0.1/ && \
+    cd ./FFmpeg-n6.1/ && \
     ARCH="x86_64" && \
     export ARCH && \
     ./configure  \
@@ -38,12 +38,8 @@ RUN cd /workspace2/build/ && mkdir /workspace2/build/inst/ && \
               --disable-muxers \
               --disable-postproc \
               --disable-swscale-alpha \
-              --disable-dct \
               --disable-dwt \
               --disable-lsp \
-              --disable-mdct \
-              --disable-rdft \
-              --disable-fft \
               --disable-faan \
               --disable-vaapi \
               --disable-vdpau \

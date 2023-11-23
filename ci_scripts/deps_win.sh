@@ -38,7 +38,7 @@ export CFLAGS_ADDON_MORE="--param=ssp-buffer-size=1 -fstack-protector-all"
 
 
 # ------- deps verisions ---------
-FFMPEG_VERSION="n6.0.1"
+FFMPEG_VERSION="n6.1"
 NASM_VERSION="nasm-2.16.01"
 # ------- deps verisions ---------
 
@@ -83,12 +83,8 @@ cd *mpeg*/
               --disable-muxers \
               --disable-postproc \
               --disable-swscale-alpha \
-              --disable-dct \
               --disable-dwt \
               --disable-lsp \
-              --disable-mdct \
-              --disable-rdft \
-              --disable-fft \
               --disable-faan \
               --disable-vaapi \
               --disable-vdpau \
