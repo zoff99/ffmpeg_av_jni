@@ -48,7 +48,7 @@ CFLAGS_ADDON='-O2 -g -fPIC --param=ssp-buffer-size=1 -fstack-protector-all -D_FO
 
 
 # ------- deps verisions ---------
-FFMPEG_VERSION="n6.0"
+FFMPEG_VERSION="n6.0.1"
 # ------- deps verisions ---------
 
 
