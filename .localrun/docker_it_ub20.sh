@@ -88,6 +88,7 @@ echo "JAVADIR2:""$JAVADIR2"
 
 export CFLAGS=" -fdebug-prefix-map=/workspace2/build=/ -fPIC -O3 -g -std=gnu99 -I$_INST2_/include/ -L$_INST2_/lib -fstack-protector-all -D_FORTIFY_SOURCE=2 "
 
+# -fsanitize=address -fno-omit-frame-pointer -fsanitize-recover=address \
 
 faketime "2023-10-10 08:00:00" gcc $CFLAGS \
 -Wall \
@@ -118,8 +119,6 @@ $(pkg-config --libs --cflags libswresample) \
 -lm \
 -shared \
 -Wl,-soname,libffmpeg_av_jni.so -o libffmpeg_av_jni.so || exit 1
-
-
 
 echo "compiling test program ..."
 
