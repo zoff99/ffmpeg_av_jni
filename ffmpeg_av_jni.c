@@ -52,8 +52,8 @@
 // ----------- version -----------
 #define VERSION_MAJOR 0
 #define VERSION_MINOR 99
-#define VERSION_PATCH 9
-static const char global_version_string[] = "0.99.9";
+#define VERSION_PATCH 10
+static const char global_version_string[] = "0.99.10";
 // ----------- version -----------
 // ----------- version -----------
 
@@ -311,7 +311,13 @@ bool global_video_in_capture_running = false;
 static pthread_t ffmpeg_thread_video_in_capture;
 AVRational time_base_video = (AVRational) {0, 0};
 
-int sws_scale_algo = SWS_FAST_BILINEAR; // SWS_FAST_BILINEAR SWS_BILINEAR SWS_BICUBIC SWS_SINC SWS_LANCZOS
+pthread_mutex_t vsend___mutex;
+pthread_mutex_t vscale___mutex;
+pthread_mutex_t vbuffer2___mutex;
+#define VIDEO_SEND_THREAD_COUNT_MAX 10
+int vsend_thread_count = 0;
+
+int sws_scale_algo = SWS_POINT; // SWS_POINT SWS_FAST_BILINEAR SWS_BILINEAR SWS_BICUBIC SWS_SINC SWS_LANCZOS
 int output_width = 640;
 int output_height = 480;
 
@@ -376,6 +382,148 @@ static void yieldcpu(uint32_t ms)
     usleep(1000 * ms);
 }
 
+struct vsend_data {
+    int output_width;
+    int output_height;
+    struct SwsContext *scaler_ctx;
+    AVFrame* frame2;
+    int source_format;
+    uint64_t pin_ts_ms;
+    int estimated_fps;
+    uint8_t *dst_yuv_buffer[3];
+};
+
+static void *thread_v_send_bg_func(void *data)
+{
+    struct vsend_data *vs = (struct vsend_data *) data;
+    int output_width = vs->output_width;
+    int output_height = vs->output_height;
+    struct SwsContext *scaler_ctx = vs->scaler_ctx;
+    AVFrame* frame = vs->frame2;
+    uint64_t pint_ts_ms = vs->pin_ts_ms;
+    int source_format = vs->source_format;
+    int estimated_fps = vs->estimated_fps;
+
+    // Convert the video frame to YUV
+    int planes_stride[3];
+    planes_stride[0] = av_image_get_linesize(AV_PIX_FMT_YUV420P, output_width, 0);
+    planes_stride[1] = av_image_get_linesize(AV_PIX_FMT_YUV420P, output_width, 1);
+    planes_stride[2] = av_image_get_linesize(AV_PIX_FMT_YUV420P, output_width, 2);
+    // fprintf(stderr, "VideoFrame:strides:%d %d %d\n",planes_stride[0],planes_stride[1],planes_stride[2]);
+
+    uint8_t *yuv_buffer = (uint8_t *)av_malloc(av_image_get_buffer_size(AV_PIX_FMT_YUV420P,
+            output_width, output_height, 1));
+    if (yuv_buffer == NULL) {
+        fprintf(stderr, "Error: could not allocate YUV buffer\n");
+
+        av_frame_unref(frame);
+        free(vs);
+        pthread_mutex_lock(&vsend___mutex);
+        vsend_thread_count--;
+        if (vsend_thread_count < 0)
+        {
+            vsend_thread_count = 0;
+        }
+        pthread_mutex_unlock(&vsend___mutex);
+
+        return NULL;
+    }
+
+    uint8_t *dst_yuv_buffer[3];
+    dst_yuv_buffer[0] = yuv_buffer;
+    dst_yuv_buffer[1] = yuv_buffer + (output_width * output_height);
+    dst_yuv_buffer[2] = dst_yuv_buffer[1] + ((output_width * output_height) / 4);
+
+    pthread_mutex_lock(&vscale___mutex);
+    sws_scale(scaler_ctx, (const uint8_t * const*)frame->data, frame->linesize, 0, global_video_codec_ctx->height,
+            dst_yuv_buffer, planes_stride);
+    pthread_mutex_unlock(&vscale___mutex);
+
+    JNIEnv *jnienv2 = NULL;
+    if (jnienv2 == NULL)
+    {
+        JavaVMAttachArgs args;
+        args.version = JNI_VERSION_1_6; // choose your JNI version
+        args.name = "t_ff_jvcb2"; // you might want to give the java thread a name
+        args.group = NULL; // you might want to assign the java thread to a ThreadGroup
+        if (cachedJVM)
+        {
+            (*cachedJVM)->AttachCurrentThread(cachedJVM, (void **) &jnienv2, &args);
+        }
+    }
+
+    pthread_mutex_lock(&vbuffer2___mutex);
+    if (
+        (video_buffer_2_y_size >= (planes_stride[0] * output_height)) &&
+        (video_buffer_2_u_size >= (planes_stride[1] * (output_height / 2))) &&
+        (video_buffer_2_v_size >= (planes_stride[2] * (output_height / 2)))
+        )
+    {
+        memcpy(video_buffer_2, dst_yuv_buffer[0], planes_stride[0] * output_height);
+        memcpy(video_buffer_2_u, dst_yuv_buffer[1], planes_stride[1] * (output_height / 2));
+        memcpy(video_buffer_2_v, dst_yuv_buffer[2], planes_stride[2] * (output_height / 2));
+        pthread_mutex_unlock(&vbuffer2___mutex);
+
+        if (jnienv2 != NULL) {
+        uint64_t video_frame_age_ms = ffmpegav_current_time_monotonic_default() - pint_ts_ms;
+        if ((video_frame_age_ms < 1) || (video_frame_age_ms > 300))
+        {
+            video_frame_age_ms = 0;
+        }
+        (*jnienv2)->CallStaticVoidMethod(jnienv2, AVActivity,
+                callback_video_capture_frame_pts_cb_method,
+                (jlong)output_width,
+                (jlong)output_height,
+                (jlong)global_video_codec_ctx->width,
+                (jlong)global_video_codec_ctx->height,
+                (jlong)video_frame_age_ms,
+                (jint)estimated_fps,
+                (jint)source_format
+            );
+        }
+        else
+        {
+            fprintf(stderr, "could not attach thread to JVM [1]\n");
+        }
+    }
+    else
+    {
+        pthread_mutex_unlock(&vbuffer2___mutex);
+        fprintf(stderr, "video buffer too small for video frame data\n");
+        if (jnienv2 != NULL) {
+        (*jnienv2)->CallStaticVoidMethod(jnienv2, AVActivity,
+                callback_video_capture_frame_too_small_cb_method,
+                (jint)(planes_stride[0] * output_height),
+                (jint)(planes_stride[1] * (output_height / 2)),
+                (jint)(planes_stride[2] * (output_height / 2))
+            );
+        }
+        else
+        {
+            fprintf(stderr, "could not attach thread to JVM [2]\n");
+        }
+    }
+
+    av_free(yuv_buffer);
+    av_frame_unref(frame);
+    free(vs);
+
+    if (cachedJVM)
+    {
+        (*cachedJVM)->DetachCurrentThread(cachedJVM);
+    }
+
+    pthread_mutex_lock(&vsend___mutex);
+    vsend_thread_count--;
+    if (vsend_thread_count < 0)
+    {
+        vsend_thread_count = 0;
+    }
+    pthread_mutex_unlock(&vsend___mutex);
+    return NULL;
+
+}
+
 static void *ffmpeg_thread_video_in_capture_func(void *data)
 {
     AVPacket packet;
@@ -418,10 +566,12 @@ static void *ffmpeg_thread_video_in_capture_func(void *data)
         return NULL;
     }
 
+/*
     uint8_t *dst_yuv_buffer[3];
     dst_yuv_buffer[0] = yuv_buffer;
     dst_yuv_buffer[1] = yuv_buffer + (output_width * output_height);
     dst_yuv_buffer[2] = dst_yuv_buffer[1] + ((output_width * output_height) / 4);
+*/
 
     if (global_video_codec_ctx->pix_fmt < 0 || global_video_codec_ctx->pix_fmt >= AV_PIX_FMT_NB)
     {
@@ -507,60 +657,63 @@ static void *ffmpeg_thread_video_in_capture_func(void *data)
                     }
                     // calculate fps on every 5th video frame ---------------------------------
 
-                    // Convert the video frame to YUV
-                    int planes_stride[3];
-                    planes_stride[0] = av_image_get_linesize(AV_PIX_FMT_YUV420P, output_width, 0);
-                    planes_stride[1] = av_image_get_linesize(AV_PIX_FMT_YUV420P, output_width, 1);
-                    planes_stride[2] = av_image_get_linesize(AV_PIX_FMT_YUV420P, output_width, 2);
-                    // fprintf(stderr, "VideoFrame:strides:%d %d %d\n",planes_stride[0],planes_stride[1],planes_stride[2]);
+                    // --------------------
+                    // --------------------
+                    // ---- Background ----
+                    // --------------------
+                    // --------------------
+                    AVFrame* frame2 = av_frame_clone(frame);
+                    av_frame_unref(frame);
 
-                    sws_scale(scaler_ctx, (const uint8_t * const*)frame->data, frame->linesize, 0, global_video_codec_ctx->height,
-                            dst_yuv_buffer, planes_stride);
+                    struct vsend_data *vs = malloc(sizeof(struct vsend_data));
+                    vs->output_width = output_width;
+                    vs->output_height = output_height;
+                    vs->scaler_ctx = scaler_ctx;
+                    vs->frame2 = frame2;
+                    vs->source_format = source_format;
+                    vs->pin_ts_ms = ffmpegav_current_time_monotonic_default();
+                    vs->estimated_fps = estimated_fps;
 
-                    if (
-                        (video_buffer_2_y_size >= (planes_stride[0] * output_height)) &&
-                        (video_buffer_2_u_size >= (planes_stride[1] * (output_height / 2))) &&
-                        (video_buffer_2_v_size >= (planes_stride[2] * (output_height / 2)))
-                        )
+                    bool vsend_thread_spawn = 1;
+                    pthread_t thread_v_send_bg;
+                    pthread_mutex_lock(&vsend___mutex);
+                    if (vsend_thread_count > VIDEO_SEND_THREAD_COUNT_MAX)
                     {
-
-                        memcpy(video_buffer_2, dst_yuv_buffer[0], planes_stride[0] * output_height);
-                        memcpy(video_buffer_2_u, dst_yuv_buffer[1], planes_stride[1] * (output_height / 2));
-                        memcpy(video_buffer_2_v, dst_yuv_buffer[2], planes_stride[2] * (output_height / 2));
-
-                        if (jnienv2 != NULL) {
-                        (*jnienv2)->CallStaticVoidMethod(jnienv2, AVActivity,
-                             callback_video_capture_frame_pts_cb_method,
-                             (jlong)output_width,
-                             (jlong)output_height,
-                             (jlong)global_video_codec_ctx->width,
-                             (jlong)global_video_codec_ctx->height,
-                             (jlong)0,
-                             (jint)estimated_fps,
-                             (jint)source_format
-                            );
+                        vsend_thread_spawn = 0;
+                    }
+                    pthread_mutex_unlock(&vsend___mutex);
+                    if (vsend_thread_spawn == 1)
+                    {
+                        if (pthread_create(&thread_v_send_bg, NULL, thread_v_send_bg_func, (void *)vs) != 0)
+                        {
+                            printf("VSend Thread create failed\n");
+                            av_frame_unref(frame2);
+                            free(vs);
                         }
                         else
                         {
-                            fprintf(stderr, "could not attach thread to JVM [1]\n");
+                            pthread_mutex_lock(&vsend___mutex);
+                            vsend_thread_count++;
+                            // printf("vsend_thread_count:%d\n", vsend_thread_count);
+                            pthread_mutex_unlock(&vsend___mutex);
+                            pthread_setname_np(thread_v_send_bg, "t_vsend");
+                            if (pthread_detach(thread_v_send_bg))
+                            {
+                                printf("error detaching VSend Thread\n");
+                            }
                         }
                     }
                     else
                     {
-                        fprintf(stderr, "video buffer too small for video frame data\n");
-                        if (jnienv2 != NULL) {
-                        (*jnienv2)->CallStaticVoidMethod(jnienv2, AVActivity,
-                             callback_video_capture_frame_too_small_cb_method,
-                             (jint)(planes_stride[0] * output_height),
-                             (jint)(planes_stride[1] * (output_height / 2)),
-                             (jint)(planes_stride[2] * (output_height / 2))
-                            );
-                        }
-                        else
-                        {
-                            fprintf(stderr, "could not attach thread to JVM [2]\n");
-                        }
+                        av_frame_unref(frame2);
+                        free(vs);
                     }
+
+                    // --------------------
+                    // --------------------
+                    // ---- Background ----
+                    // --------------------
+                    // --------------------
                 }
             }
             av_packet_unref(&packet);
@@ -568,14 +721,28 @@ static void *ffmpeg_thread_video_in_capture_func(void *data)
         // yieldcpu(100);
     }
 
-    av_frame_free(&frame);
-    av_free(yuv_buffer);
-    sws_freeContext(scaler_ctx);
+    // HINT: wait for all video bg send threads to finish ------------
+    while (true)
+    {
+        pthread_mutex_lock(&vsend___mutex);
+        if (vsend_thread_count < 1)
+        {
+            pthread_mutex_unlock(&vsend___mutex);
+            break;
+        }
+        pthread_mutex_unlock(&vsend___mutex);
+        yieldcpu(2);
+    }
+    // HINT: wait for all video bg send threads to finish ------------
 
     if (cachedJVM)
     {
         (*cachedJVM)->DetachCurrentThread(cachedJVM);
     }
+
+    av_frame_free(&frame);
+    av_free(yuv_buffer);
+    sws_freeContext(scaler_ctx);
 
     printf("ffmpeg Video Capture Thread:Clean thread exit!\n");
     return NULL;
@@ -1090,6 +1257,27 @@ Java_com_zoffcc_applications_ffmpegav_AVActivity_ffmpegav_1init(JNIEnv *env, job
 
     printf("cls_local=%p\n", cls_local);
     printf("AVActivity=%p\n", AVActivity);
+
+    if (pthread_mutex_init(&vsend___mutex, NULL) != 0)
+    {
+        fprintf(stderr, "Creating vsend mutex failed\n");
+        // HINT: add error handling
+        // return -1;
+    }
+
+    if (pthread_mutex_init(&vscale___mutex, NULL) != 0)
+    {
+        fprintf(stderr, "Creating vscale mutex failed\n");
+        // HINT: add error handling
+        // return -1;
+    }
+
+    if (pthread_mutex_init(&vbuffer2___mutex, NULL) != 0)
+    {
+        fprintf(stderr, "Creating vbuffer2 mutex failed\n");
+        // HINT: add error handling
+        // return -1;
+    }
 
     callback_video_capture_frame_pts_cb_method = (*env)->GetStaticMethodID(env, AVActivity,
             "ffmpegav_callback_video_capture_frame_pts_cb_method", "(JJJJJII)V");
@@ -1938,6 +2126,9 @@ JNIEXPORT void JNICALL Java_com_zoffcc_applications_ffmpegav_AVActivity_ffmpegav
 {
     JNIEnv *jnienv2;
     jnienv2 = jni_getenv();
+    //
+    pthread_mutex_lock(&vbuffer2___mutex);
+    //
     video_buffer_2 = (uint8_t *)(*jnienv2)->GetDirectBufferAddress(jnienv2, send_vbuf_y);
     jlong capacity_y = (*jnienv2)->GetDirectBufferCapacity(jnienv2, send_vbuf_y);
     video_buffer_2_y_size = (long)capacity_y;
@@ -1949,6 +2140,8 @@ JNIEXPORT void JNICALL Java_com_zoffcc_applications_ffmpegav_AVActivity_ffmpegav
     video_buffer_2_v = (uint8_t *)(*jnienv2)->GetDirectBufferAddress(jnienv2, send_vbuf_v);
     jlong capacity_v = (*jnienv2)->GetDirectBufferCapacity(jnienv2, send_vbuf_v);
     video_buffer_2_v_size = (long)capacity_v;
+    //
+    pthread_mutex_unlock(&vbuffer2___mutex);
 }
 
 // audio_buffer is for playing audio
