@@ -696,7 +696,9 @@ static void *ffmpeg_thread_video_in_capture_func(void *data)
                             vsend_thread_count++;
                             // printf("vsend_thread_count:%d\n", vsend_thread_count);
                             pthread_mutex_unlock(&vsend___mutex);
+#ifdef __linux__
                             pthread_setname_np(thread_v_send_bg, "t_vsend");
+#endif
                             if (pthread_detach(thread_v_send_bg))
                             {
                                 printf("error detaching VSend Thread\n");
