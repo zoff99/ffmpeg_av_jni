@@ -724,6 +724,8 @@ static void *ffmpeg_thread_video_in_capture_func(void *data)
     }
 
     // HINT: wait for all video bg send threads to finish ------------
+    long loop_count = 0;
+    const max_loop_count = 50;
     while (true)
     {
         pthread_mutex_lock(&vsend___mutex);
@@ -734,6 +736,12 @@ static void *ffmpeg_thread_video_in_capture_func(void *data)
         }
         pthread_mutex_unlock(&vsend___mutex);
         yieldcpu(2);
+        loop_count++;
+        if (loop_count > max_loop_count)
+        {
+            fprintf(stderr, "break waiting for video capture threads to finish\n");
+            break;
+        }
     }
     // HINT: wait for all video bg send threads to finish ------------
 
