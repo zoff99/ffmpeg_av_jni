@@ -1,32 +1,27 @@
 # syntax=docker/dockerfile:1
-FROM ubuntu:20.04
+FROM ubuntu:22.04
 
-RUN export DEBIAN_FRONTEND=noninteractive ; apt update && apt install -y make    yasm curl   wget    git    coreutils    autoconf    libtool    pkg-config    libsodium-dev     nano    vim
+RUN export DEBIAN_FRONTEND=noninteractive  ; apt update && apt install -y make    yasm curl   wget    git    coreutils    autoconf    libtool    pkg-config    libsodium-dev     nano    vim
 RUN mkdir -p /workspace2/build/
 RUN cd /workspace2/build/;FFMPEG_VERSION=n6.1 ; FFMPEG_FILENAME="$FFMPEG_VERSION.tar.gz" ;rm -f "ffmpeg"*.tar.*;wget "https://github.com/FFmpeg/FFmpeg/archive/refs/tags/$FFMPEG_FILENAME" -O "ffmpeg_""$FFMPEG_FILENAME";tar -xf "ffmpeg_""$FFMPEG_FILENAME";rm -f "ffmpeg"*.tar.*
-RUN export DEBIAN_FRONTEND=noninteractive ; apt install -y yasm \
-          openjdk-17-jdk \
-          openjdk-17-jdk-headless \
-          coreutils autoconf libtool pkg-config \
-          gcc-mingw-w64-x86-64 g++-mingw-w64-x86-64 binutils-mingw-w64-x86-64 \
-          mingw-w64-tools pkg-config-mingw-w64-x86-64 win-iconv-mingw-w64-dev \
-          mingw-w64-x86-64-dev
+RUN export DEBIAN_FRONTEND=noninteractive ; apt install -y libx11-xcb-dev libpulse-dev alsa-utils libasound2-dev v4l-utils libv4l-dev v4l-conf
+RUN export DEBIAN_FRONTEND=noninteractive ; apt install -y openjdk-17-jdk-headless
+RUN export DEBIAN_FRONTEND=noninteractive ; apt install -y libxcb-shm0-dev libxcb-shape0-dev libxcb-xfixes0-dev
+RUN export DEBIAN_FRONTEND=noninteractive ; apt install -y faketime
+
+RUN hostname
+RUN domainname
 
 RUN cd /workspace2/build/ && mkdir /workspace2/build/inst/ && \
     cd ./FFmpeg-n6.1/ && \
-    ARCH="x86_64" && \
-    export ARCH && \
-    ./configure  \
-              --arch="$ARCH" \
+    faketime "2023-10-10 08:00:00" ./configure  \
               --enable-gpl \
               --prefix="/workspace2/build/inst/" \
-              --target-os="mingw32" \
-              --cross-prefix="$ARCH-w64-mingw32-" \
-              --pkg-config="pkg-config" \
-              --extra-cflags="-static -O2 -g0 -D_FORTIFY_SOURCE=2 -fstack-protector-strong" \
-              --extra-ldflags="-lm -static -fstack-protector-strong" \
-              --pkg-config-flags="--static" \
+              --disable-asm \
+              --extra-cflags=" -fdebug-prefix-map=/workspace2/build=/ -static -O2 -g0 -D_FORTIFY_SOURCE=2 -fstack-protector-strong" \
+              --extra-ldflags=" -fdebug-prefix-map=/workspace2/build=/ -lm -fstack-protector-strong" \
               --disable-network \
+              --disable-everything \
               --disable-debug \
               --disable-shared \
               --disable-protocols \
@@ -35,7 +30,6 @@ RUN cd /workspace2/build/ && mkdir /workspace2/build/inst/ && \
               --disable-filters \
               --disable-iconv \
               --disable-network \
-              --disable-muxers \
               --disable-postproc \
               --disable-swscale-alpha \
               --disable-dwt \
@@ -44,7 +38,6 @@ RUN cd /workspace2/build/ && mkdir /workspace2/build/inst/ && \
               --disable-vaapi \
               --disable-vdpau \
               --disable-zlib \
-              --disable-xlib \
               --disable-bzlib \
               --disable-lzma \
               --disable-encoders \
@@ -52,13 +45,15 @@ RUN cd /workspace2/build/ && mkdir /workspace2/build/inst/ && \
               --disable-demuxers \
               --disable-parsers \
               --disable-bsfs \
+              --enable-pic \
               --enable-swscale \
               --enable-swresample \
-              --enable-indev=dshow \
-              --enable-indev=gdigrab \
-              --enable-indev=vfwcap \
+              --enable-avcodec \
+              --enable-outdev=alsa \
+              --enable-outdev=pulse \
+              --enable-indev=alsa \
+              --enable-indev=xcbgrab \
               --enable-decoder=mjpeg \
-              --enable-decoder=bmp \
               --enable-demuxer=rawvideo \
               --enable-decoder=rawvideo \
               --enable-demuxer=pcm_s16le \
@@ -67,10 +62,14 @@ RUN cd /workspace2/build/ && mkdir /workspace2/build/inst/ && \
               --enable-filter=arnndn \
               --enable-filter=afftdn \
               --enable-filter=aresample \
-              --enable-runtime-cpudetect  && \
+              --enable-libxcb --enable-libxcb-shm --enable-libxcb-xfixes --enable-libxcb-shape \
+              --enable-indev=pulse \
+              --enable-indev=v4l2 \
+              --enable-libpulse \
+              --enable-runtime-cpudetect \
+              --enable-libv4l2 && \
     make -j$(nproc) && \
     make install
 
 RUN ls -al /workspace2/build/inst/lib/
-RUN ls -al /workspace2/build/inst/bin/
 
