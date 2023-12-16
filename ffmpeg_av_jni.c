@@ -725,7 +725,7 @@ static void *ffmpeg_thread_video_in_capture_func(void *data)
 
     // HINT: wait for all video bg send threads to finish ------------
     long loop_count = 0;
-    const max_loop_count = 50;
+    const long max_loop_count = 50;
     while (true)
     {
         pthread_mutex_lock(&vsend___mutex);
