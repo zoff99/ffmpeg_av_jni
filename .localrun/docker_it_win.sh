@@ -9,7 +9,7 @@ echo $_HOME_
 cd $_HOME_
 
 if [ "$1""x" == "buildx" ]; then
-    docker build -f Dockerfile_ub22 -t ffmpeg_av_jni_ready_ub22_win_001 .
+    docker build -f Dockerfile_winub20 -t ffmpeg_av_jni_ready_ub22_win_001 .
     exit 0
 fi
 
