@@ -18,8 +18,8 @@ RUN cd /workspace2/build/ && mkdir /workspace2/build/inst/ && \
               --enable-gpl \
               --prefix="/workspace2/build/inst/" \
               --disable-asm \
-              --extra-cflags="-fdebug-prefix-map=/workspace2/build=/ -static -O2 -g0 -D_FORTIFY_SOURCE=2 -fstack-protector-strong" \
-              --extra-ldflags="-fdebug-prefix-map=/workspace2/build=/ -lm -fstack-protector-strong" \
+              --extra-cflags=" -fdebug-prefix-map=/workspace2/build=/ -static -O2 -g0 -D_FORTIFY_SOURCE=2 -fstack-protector-strong" \
+              --extra-ldflags=" -fdebug-prefix-map=/workspace2/build=/ -lm -fstack-protector-strong" \
               --disable-network \
               --disable-everything \
               --disable-debug \
