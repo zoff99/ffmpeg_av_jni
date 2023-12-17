@@ -52,8 +52,8 @@
 // ----------- version -----------
 #define VERSION_MAJOR 0
 #define VERSION_MINOR 99
-#define VERSION_PATCH 10
-static const char global_version_string[] = "0.99.10";
+#define VERSION_PATCH 11
+static const char global_version_string[] = "0.99.11";
 // ----------- version -----------
 // ----------- version -----------
 
@@ -725,7 +725,7 @@ static void *ffmpeg_thread_video_in_capture_func(void *data)
 
     // HINT: wait for all video bg send threads to finish ------------
     long loop_count = 0;
-    const long max_loop_count = 50;
+    const long max_loop_count = 200;
     while (true)
     {
         pthread_mutex_lock(&vsend___mutex);
@@ -739,7 +739,7 @@ static void *ffmpeg_thread_video_in_capture_func(void *data)
         loop_count++;
         if (loop_count > max_loop_count)
         {
-            fprintf(stderr, "break waiting for video capture threads to finish\n");
+            fprintf(stderr, "break waiting for video capture threads to finish, vsend_thread_count=%d\n", vsend_thread_count);
             break;
         }
     }
