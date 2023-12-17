@@ -54,6 +54,7 @@
 #define VERSION_MINOR 99
 #define VERSION_PATCH 11
 static const char global_version_string[] = "0.99.11";
+static const char global_version_asan_string[] = "0.99.11-ASAN";
 // ----------- version -----------
 // ----------- version -----------
 
@@ -1209,7 +1210,11 @@ static void *ffmpeg_thread_audio_in_capture_func(void *data)
 JNIEXPORT jstring JNICALL
 Java_com_zoffcc_applications_ffmpegav_AVActivity_ffmpegav_1version(JNIEnv *env, jobject thiz)
 {
+#if defined(__SANITIZE_ADDRESS__)
+    return (*env)->NewStringUTF(env, global_version_asan_string);
+#else
     return (*env)->NewStringUTF(env, global_version_string);
+#endif
 }
 
 JNIEXPORT jstring JNICALL
