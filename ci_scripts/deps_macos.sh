@@ -104,8 +104,9 @@ export LDFLAGS=" "
               --enable-filter=volume \
               --enable-filter=arnndn \
               --enable-filter=afftdn \
-              --enable-filter=aresample \
-              --enable-runtime-cpudetect || exit 1
+              --enable-filter=aresample || exit 1
+
+#              --enable-runtime-cpudetect || exit 1
 
   make -j || exit 1
   make install
