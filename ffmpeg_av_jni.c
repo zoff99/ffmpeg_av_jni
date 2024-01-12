@@ -52,9 +52,9 @@
 // ----------- version -----------
 #define VERSION_MAJOR 0
 #define VERSION_MINOR 99
-#define VERSION_PATCH 11
-static const char global_version_string[] = "0.99.11";
-static const char global_version_asan_string[] = "0.99.11-ASAN";
+#define VERSION_PATCH 20
+static const char global_version_string[] = "0.99.20";
+static const char global_version_asan_string[] = "0.99.20-ASAN";
 // ----------- version -----------
 // ----------- version -----------
 
@@ -278,6 +278,10 @@ int java_find_class_global(char *name, jclass *ret)
 
 
 jclass AVActivity = NULL;
+jclass cls_descrid = NULL;
+jmethodID descrid_constr = NULL;
+jfieldID descrid_descr = NULL;
+jfieldID descrid_id = NULL;
 jmethodID callback_video_capture_frame_pts_cb_method = NULL;
 jmethodID callback_video_capture_frame_too_small_cb_method = NULL;
 jmethodID callback_audio_capture_frame_pts_cb_method = NULL;
@@ -1273,6 +1277,17 @@ Java_com_zoffcc_applications_ffmpegav_AVActivity_ffmpegav_1init(JNIEnv *env, job
     printf("cls_local=%p\n", cls_local);
     printf("AVActivity=%p\n", AVActivity);
 
+    java_find_class_global("com/zoffcc/applications/ffmpegav/AVActivity$ffmpegav_descrid", &cls_descrid);
+    printf("cls_descrid=%p\n", cls_descrid);
+
+    descrid_constr = (*env)->GetMethodID(env, cls_descrid, "<init>", "()V");
+    printf("descrid_constr=%p\n", descrid_constr);
+
+    descrid_descr = (*env)->GetFieldID(env, cls_descrid, "description", "Ljava/lang/String;");
+    printf("descrid_descr=%p\n", descrid_descr);
+    descrid_id = (*env)->GetFieldID(env, cls_descrid, "id", "Ljava/lang/String;");
+    printf("descrid_id=%p\n", descrid_id);
+
     if (pthread_mutex_init(&vsend___mutex, NULL) != 0)
     {
         fprintf(stderr, "Creating vsend mutex failed\n");
@@ -1315,6 +1330,28 @@ Java_com_zoffcc_applications_ffmpegav_AVActivity_ffmpegav_1init(JNIEnv *env, job
     return 0;
 }
 
+static void fill_descrid_array(JNIEnv *env, const jobjectArray array,
+    const uint32_t in_source_count, const char* id, const char *descr)
+{
+    if (id == NULL)
+    {
+        return;
+    }
+
+    jobject descrid_item = (*env)->NewObject(env, cls_descrid, descrid_constr);
+
+    jstring str_id = (*env)->NewStringUTF(env, id);
+    (*env)->SetObjectField(env, descrid_item, descrid_id, str_id);
+
+    if (descr != NULL)
+    {
+        jstring str_descr = (*env)->NewStringUTF(env, descr);
+        (*env)->SetObjectField(env, descrid_item, descrid_descr, str_descr);
+    }
+
+    (*env)->SetObjectArrayElement(env, array, in_source_count, descrid_item);
+}
+
 JNIEXPORT jobjectArray JNICALL
 Java_com_zoffcc_applications_ffmpegav_AVActivity_ffmpegav_1get_1in_1sources(JNIEnv *env, jobject thiz, jstring devicename, jint is_video)
 {
@@ -1329,7 +1366,7 @@ Java_com_zoffcc_applications_ffmpegav_AVActivity_ffmpegav_1get_1in_1sources(JNIE
     }
     const uint32_t max_sources = 64;
     // add 1 more for macos "avfoundation" stuff that is not detected
-    jobjectArray result = (*env)->NewObjectArray(env, (max_sources + 1), (*env)->FindClass(env, "java/lang/String"), NULL);
+    jobjectArray result = (*env)->NewObjectArray(env, (max_sources + 1), cls_descrid, NULL);
 
     printf("wanted_in_device=%s\n", devicename_cstr);
     AVInputFormat *inputFormat_search = av_find_input_format(devicename_cstr);
@@ -1355,8 +1392,7 @@ Java_com_zoffcc_applications_ffmpegav_AVActivity_ffmpegav_1get_1in_1sources(JNIE
                     if (strlen(current_display_string) > 0)
                     {
                         printf("current Display string: %s\n", current_display_string);
-                        jstring str = (*env)->NewStringUTF(env, current_display_string); // format = ":<n>"
-                        (*env)->SetObjectArrayElement(env, result, in_source_count, str);
+                        fill_descrid_array(env, result, in_source_count, current_display_string, NULL);
                         in_source_count++;
                     }
                 }
@@ -1374,22 +1410,17 @@ Java_com_zoffcc_applications_ffmpegav_AVActivity_ffmpegav_1get_1in_1sources(JNIE
 #ifdef __APPLE__
         if (strncmp(devicename_cstr, "avfoundation", strlen("avfoundation")) == 0) {
             if (is_video == 1) {
-                jstring str1 = (*env)->NewStringUTF(env, "0:"); // format = "[VIDEO]:[AUDIO]"
-                (*env)->SetObjectArrayElement(env, result, in_source_count, str1);
+                fill_descrid_array(env, result, in_source_count, "0:", NULL); // format = "[VIDEO]:[AUDIO]"
                 in_source_count++;
                 // HINT: add 3 more displays, in case that there are more displays attached
-                jstring str2 = (*env)->NewStringUTF(env, "1:"); // format = "[VIDEO]:[AUDIO]"
-                (*env)->SetObjectArrayElement(env, result, in_source_count, str2);
+                fill_descrid_array(env, result, in_source_count, "1:", NULL); // format = "[VIDEO]:[AUDIO]"
                 in_source_count++;
-                jstring str3 = (*env)->NewStringUTF(env, "2:"); // format = "[VIDEO]:[AUDIO]"
-                (*env)->SetObjectArrayElement(env, result, in_source_count, str3);
+                fill_descrid_array(env, result, in_source_count, "2:", NULL); // format = "[VIDEO]:[AUDIO]"
                 in_source_count++;
-                jstring str4 = (*env)->NewStringUTF(env, "3:"); // format = "[VIDEO]:[AUDIO]"
-                (*env)->SetObjectArrayElement(env, result, in_source_count, str4);
+                fill_descrid_array(env, result, in_source_count, "3:", NULL); // format = "[VIDEO]:[AUDIO]"
                 in_source_count++;
             } else {
-                jstring str = (*env)->NewStringUTF(env, ":0"); // format = "[VIDEO]:[AUDIO]"
-                (*env)->SetObjectArrayElement(env, result, in_source_count, str);
+                fill_descrid_array(env, result, in_source_count, ":0", NULL); // format = "[VIDEO]:[AUDIO]"
                 in_source_count++;
             }
             (*env)->ReleaseStringUTFChars(env, devicename, devicename_cstr);
@@ -1401,8 +1432,7 @@ Java_com_zoffcc_applications_ffmpegav_AVActivity_ffmpegav_1get_1in_1sources(JNIE
     #ifdef __MINGW32__
         if (strncmp(devicename_cstr, "gdigrab", strlen("gdigrab")) == 0) {
             if (is_video == 1) {
-                jstring str = (*env)->NewStringUTF(env, "desktop");
-                (*env)->SetObjectArrayElement(env, result, in_source_count, str);
+                fill_descrid_array(env, result, in_source_count, "desktop", NULL);
                 (*env)->ReleaseStringUTFChars(env, devicename, devicename_cstr);
                 return result;
             }
@@ -1434,8 +1464,8 @@ Java_com_zoffcc_applications_ffmpegav_AVActivity_ffmpegav_1get_1in_1sources(JNIE
             if (deviceInfo->device_description != NULL) {
                 printf("input descr. #%d: %s\n", i, deviceInfo->device_description);
             }
-            jstring str = (*env)->NewStringUTF(env, deviceInfo->device_name);
-            (*env)->SetObjectArrayElement(env, result, in_source_count, str);
+            fill_descrid_array(env, result, in_source_count,
+                deviceInfo->device_name, deviceInfo->device_description);
             in_source_count++;
             if (in_source_count >= max_sources)
             {
@@ -1447,11 +1477,9 @@ Java_com_zoffcc_applications_ffmpegav_AVActivity_ffmpegav_1get_1in_1sources(JNIE
 #ifdef __APPLE__
     if (strncmp(devicename_cstr, "avfoundation", strlen("avfoundation")) == 0) {
         if (is_video == 1) {
-            jstring str = (*env)->NewStringUTF(env, "0:"); // format = "[VIDEO]:[AUDIO]"
-            (*env)->SetObjectArrayElement(env, result, in_source_count, str);
+            fill_descrid_array(env, result, in_source_count, "0:", NULL); // format = "[VIDEO]:[AUDIO]"
         } else {
-            jstring str = (*env)->NewStringUTF(env, ":0"); // format = "[VIDEO]:[AUDIO]"
-            (*env)->SetObjectArrayElement(env, result, in_source_count, str);
+            fill_descrid_array(env, result, in_source_count, ":0", NULL); // format = "[VIDEO]:[AUDIO]"
         }
     }
 #endif
