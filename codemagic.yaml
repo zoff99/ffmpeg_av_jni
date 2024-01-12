@@ -15,14 +15,18 @@ workflows:
           ls -al
           id
           pwd
-          ./circle_scripts/deps_macos.sh
+          ./ci_scripts/deps_macos.sh
 
         - |
           ls -al
           id
           pwd
-          ./circle_scripts/java_jni_lib_macos.sh
+          ./ci_scripts/java_jni_lib_macos.sh
 
         - pwd
-        - find . -name 'libffmpeg_av_jni.jnilib'
+        - find . -name 'libjni-c-toxcore.jnilib'
+        - ls -al /Users/runner/ffmpeg_av_jni/jni-c-toxcore/libjni-c-toxcore.jnilib
+        - mv -v /Users/runner/ffmpeg_av_jni/jni-c-toxcore/libjni-c-toxcore.jnilib /Users/runner/ToxAndroidRefImpl/jni-c-toxcore/libjni-c-toxcore_arm64.jnilib
 
+    artifacts:
+      - /Users/runner/ffmpeg_av_jni/jni-c-toxcore/libjni-c-toxcore_arm64.jnilib
