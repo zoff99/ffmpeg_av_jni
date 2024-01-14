@@ -85,6 +85,36 @@ if [ "$1""x" == "raspix" ]; then
   GCC_="$CC"
 fi
 
+if [ "$1""x" == "raspix" ]; then
+
+$GCC_ \
+$CFLAGS_ADDON $CFLAGS_MORE \
+-Wall \
+-Wno-unused-function \
+-Wno-discarded-qualifiers \
+-Wno-unused-const-variable \
+-Wno-deprecated-declarations \
+-D_FILE_OFFSET_BITS=64 -D__USE_GNU=1 \
+-I$JAVADIR1/ \
+-I$JAVADIR2/ \
+ffmpeg_av_jni.c \
+$_INST_/lib/libavcodec.a \
+$_INST_/lib/libavdevice.a \
+$_INST_/lib/libavformat.a \
+$_INST_/lib/libavfilter.a \
+$_INST_/lib/libavutil.a \
+$(pkg-config --libs --cflags libavformat) \
+$(pkg-config --libs --cflags libavcodec) \
+$(pkg-config --libs --cflags libswscale) \
+$(pkg-config --libs --cflags libswresample) \
+-lpthread \
+-lm \
+-shared \
+-Wl,-soname,libffmpeg_av_jni.so -o libffmpeg_av_jni.so || exit 1
+
+
+else
+
 $GCC_ \
 $CFLAGS_ADDON $CFLAGS_MORE \
 -Wall \
@@ -115,6 +145,7 @@ $(pkg-config --libs --cflags libswresample) \
 -shared \
 -Wl,-soname,libffmpeg_av_jni.so -o libffmpeg_av_jni.so || exit 1
 
+fi
 
 ls -al libffmpeg_av_jni.so || exit 1
 pwd
