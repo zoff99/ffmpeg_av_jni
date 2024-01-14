@@ -95,6 +95,7 @@ $CFLAGS_ADDON $CFLAGS_MORE \
 -Wno-unused-const-variable \
 -Wno-deprecated-declarations \
 -D_FILE_OFFSET_BITS=64 -D__USE_GNU=1 \
+-DDONOTHAVEX11=1 \
 -I$JAVADIR1/ \
 -I$JAVADIR2/ \
 ffmpeg_av_jni.c \

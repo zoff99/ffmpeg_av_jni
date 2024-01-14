@@ -43,7 +43,9 @@
 #endif
 
 #ifdef __linux__
+#ifndef DONOTHAVEX11
 #include <X11/Xlib.h>
+#endif
 #endif
 
 #include <jni.h>
@@ -1376,6 +1378,7 @@ Java_com_zoffcc_applications_ffmpegav_AVActivity_ffmpegav_1get_1in_1sources(JNIE
     uint32_t in_source_count = 0;
 
 #ifdef __linux__
+#ifndef DONOTHAVEX11
     if (strncmp((char *)devicename_cstr, "x11grab", strlen((char *)"x11grab")) == 0)
     {
         // add available displays to "x11grag" input sources
@@ -1400,6 +1403,7 @@ Java_com_zoffcc_applications_ffmpegav_AVActivity_ffmpegav_1get_1in_1sources(JNIE
             XCloseDisplay(display);
         }
     }
+#endif
 #endif
     int devices_found = avdevice_list_input_sources(inputFormat_search, NULL, NULL, &deviceInfoList);
     printf("inputs found: %d\n", devices_found);
@@ -1672,6 +1676,7 @@ Java_com_zoffcc_applications_ffmpegav_AVActivity_ffmpegav_1open_1video_1in_1devi
     if (strncmp((char *)deviceformat_cstr, "x11grab", strlen((char *)"x11grab")) == 0)
     {
 #ifdef __linux__
+#ifndef DONOTHAVEX11
         // capture desktop on X11 Linux
         Display *display = XOpenDisplay(NULL);
         if (display == NULL)
@@ -1746,6 +1751,7 @@ Java_com_zoffcc_applications_ffmpegav_AVActivity_ffmpegav_1open_1video_1in_1devi
             (*env)->ReleaseStringUTFChars(env, inputname, inputname_cstr);
             return -1;
         }
+#endif
 #else
         fprintf(stderr, "Could not open desktop as video input stream.\n");
         reset_video_in_values();
