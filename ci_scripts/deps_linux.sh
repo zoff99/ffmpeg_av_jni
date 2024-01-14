@@ -75,6 +75,66 @@ export LDFLAGS=" "
 
   export CXXFLAGS=${CXXFLAGS_ADDON}
   export CFLAGS=${CFLAGS_ADDON}
+
+  if [ "$1""x" == "raspix" ]; then
+    echo "*** RASPI ***"
+  ./configure --arch="aarch64" \
+              --enable-gpl \
+              --prefix="$_INST_" \
+              --target-os="linux" \
+              --cross-prefix="$CROSS_COMPILE" \
+              --disable-asm \
+              --enable-pic \
+              --disable-network \
+              --disable-everything \
+              --disable-debug \
+              --disable-shared \
+              --disable-protocols \
+              --disable-doc \
+              --disable-sdl2 \
+              --disable-filters \
+              --disable-iconv \
+              --disable-network \
+              --disable-postproc \
+              --disable-swscale-alpha \
+              --disable-dwt \
+              --disable-lsp \
+              --disable-faan \
+              --disable-vaapi \
+              --disable-vdpau \
+              --disable-zlib \
+              --disable-bzlib \
+              --disable-lzma \
+              --disable-encoders \
+              --disable-decoders \
+              --disable-demuxers \
+              --disable-parsers \
+              --disable-bsfs \
+              --enable-pic \
+              --enable-swscale \
+              --enable-swresample \
+              --enable-avcodec \
+              --enable-outdev=alsa \
+              --enable-outdev=pulse \
+              --enable-indev=alsa \
+              --enable-indev=xcbgrab \
+              --enable-decoder=mjpeg \
+              --enable-demuxer=rawvideo \
+              --enable-decoder=rawvideo \
+              --enable-demuxer=pcm_s16le \
+              --enable-decoder=pcm_s16le \
+              --enable-libxcb --enable-libxcb-shm --enable-libxcb-xfixes --enable-libxcb-shape \
+              --enable-indev=pulse \
+              --enable-indev=v4l2 \
+              --enable-libpulse \
+              --enable-filter=volume \
+              --enable-filter=arnndn \
+              --enable-filter=afftdn \
+              --enable-filter=aresample \
+              --enable-libv4l2 || exit 1
+
+  else
+
   ./configure \
               --enable-gpl \
               --prefix="$_INST_" \
@@ -129,6 +189,8 @@ export LDFLAGS=" "
               --enable-filter=aresample \
               --enable-runtime-cpudetect \
               --enable-libv4l2 || exit 1
+
+  fi
 
 
 #              --disable-lzo \

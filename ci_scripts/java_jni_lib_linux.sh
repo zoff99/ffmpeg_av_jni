@@ -78,8 +78,14 @@ echo "JAVADIR2:""$JAVADIR2"
 CFLAGS_ADDON='-O2 -g -fPIC'
 CFLAGS_MORE="-fdebug-prefix-map=/home/runner/work/ffmpeg_av_jni/ffmpeg_av_jni=/ --param=ssp-buffer-size=1 -fstack-protector-all -D_FORTIFY_SOURCE=2 -std=gnu99 -I$_INST_/include/ -L$_INST_/lib"
 
+GCC_=gcc
 
-gcc \
+if [ "$1""x" == "raspix" ]; then
+  echo "*** RASPI ***"
+  GCC_="$CC"
+fi
+
+$GCC_ \
 $CFLAGS_ADDON $CFLAGS_MORE \
 -Wall \
 -Wno-unused-function \
