@@ -122,8 +122,7 @@ export LDFLAGS=" "
               --enable-filter=volume \
               --enable-filter=arnndn \
               --enable-filter=afftdn \
-              --enable-filter=aresample \
-              --enable-libv4l2 || exit 1
+              --enable-filter=aresample || exit 1
 
   else
 
