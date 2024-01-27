@@ -45,8 +45,12 @@ NASM_VERSION="nasm-2.16.01"
 
 
 
-
-
+# ---------- openal ---------
+cd "$_SRC_"
+git clone https://github.com/zoff99/openal_mingw
+ls -al openal_mingw/
+pwd
+# ---------- openal ---------
 
 # ---------- ffmpeg ---------
 if [ 1 == 1 ]; then
@@ -61,6 +65,10 @@ rm -f "ffmpeg"*.tar.*
 cd *mpeg*/
 
 
+  sed -i -e 's#-lopenal#-lOpenAL32#' configure
+  sed -i -e 's#check_lib openal#echo #' configure
+  sed -i -e 's#die "ERROR: openal must#echo "#' configure
+  sed -i -e 's#enabled openal#enabled opexaynal #' configure
 
   ./configure --arch="$ARCH" \
               --enable-gpl \
@@ -68,8 +76,8 @@ cd *mpeg*/
               --target-os="mingw32" \
               --cross-prefix="$ARCH-w64-mingw32-" \
               --pkg-config="pkg-config" \
-              --extra-cflags="-static -O2 -g0 -D_FORTIFY_SOURCE=2 -fstack-protector-strong" \
-              --extra-ldflags="-lm -static -fstack-protector-strong" \
+              --extra-cflags="-DAL_LIBTYPE_STATIC -static -I"$_SRC_"/openal_mingw/ -O2 -g0 -D_FORTIFY_SOURCE=2 -fstack-protector-strong" \
+              --extra-ldflags="-DAL_LIBTYPE_STATIC "$_SRC_"/openal_mingw/router/OpenAL32.lib -lm -static -fstack-protector-strong" \
               --pkg-config-flags="--static" \
               --disable-network \
               --disable-debug \
@@ -98,7 +106,10 @@ cd *mpeg*/
               --disable-parsers \
               --disable-bsfs \
               --enable-swscale \
+              --disable-ffmpeg \
+              --disable-ffprobe \
               --enable-swresample \
+              --enable-openal \
               --enable-indev=openal \
               --enable-indev=dshow \
               --enable-indev=gdigrab \

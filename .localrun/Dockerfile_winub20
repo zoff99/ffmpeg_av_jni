@@ -14,59 +14,16 @@ RUN export DEBIAN_FRONTEND=noninteractive ; apt install -y yasm \
 
 RUN export DEBIAN_FRONTEND=noninteractive ; apt install -y cmake
 
-RUN cd /workspace2/build/; OPENAL_VERSION=b80570bed017de60b67c6452264c634085c3b148 ; wget \
-   "https://github.com/irungentoo/openal-soft-tox/archive/${OPENAL_VERSION}.tar.gz" -O openal.tgz
-RUN cd /workspace2/build/; tar -xzvf openal.tgz
-
-# RUN cd /workspace2/build/; git clone https://github.com/kcat/openal-soft
-
 RUN ls -al /workspace2/build/
 RUN ls -al /usr/x86_64-w64-mingw32/include
 RUN ls -al /usr/x86_64-w64-mingw32/lib/libdsound.a
 
-RUN cd /workspace2/build/openal-soft* ; wget https://raw.githubusercontent.com/Zoxcore/qTox_enhanced/zoxcore/push_notification/buildscripts/patches/openal-cmake-3-11.patch
-RUN cd /workspace2/build/openal-soft* ; patch -p1 < openal-cmake-3-11.patch
+RUN mkdir /workspace2/build/openal_bin/
+RUN echo 2
+RUN cd /workspace2/build/openal_bin/ ; git clone https://github.com/zoff99/openal_mingw
+RUN ls -al /workspace2/build/openal_bin/openal_mingw/
 
-RUN cd /workspace2/build/openal-soft*; \
-    DDSOUND="-DDSOUND_INCLUDE_DIR=/usr/x86_64-w64-mingw32/include \
-    -DDSOUND_LIBRARY=/usr/x86_64-w64-mingw32/lib/libdsound.a" ; \
-    cmake "-DCMAKE_INSTALL_PREFIX=/workspace2/build/inst/" \
-    -DCMAKE_BUILD_TYPE=Release \
-    -DCMAKE_SYSTEM_NAME=Windows \
-    -DCMAKE_C_COMPILER=x86_64-w64-mingw32-gcc \
-    -DCMAKE_CXX_COMPILER=x86_64-w64-mingw32-g++ \
-    -DCMAKE_RC_COMPILER=x86_64-w64-mingw32-windres \
-    -DCMAKE_FIND_ROOT_PATH=/usr/x86_64-w64-mingw32 \
-    -DCMAKE_FIND_ROOT_PATH_MODE_PROGRAM=NEVER \
-    -DCMAKE_FIND_ROOT_PATH_MODE_LIBRARY=ONLY \
-    -DCMAKE_FIND_ROOT_PATH_MODE_INCLUDE=ONLY \
-    -DCMAKE_REQUIRED_LIBRARIES=m \
-    -DALSOFT_UTILS=OFF \
-    -DALSOFT_EXAMPLES=OFF \
-    "${CMAKE_TOOLCHAIN_FILE}" \
-    "${DDSOUND}" \
-    .
-
-RUN cd /workspace2/build/openal-soft*;make -j$(nproc)
-RUN cd /workspace2/build/openal-soft*;make install
-
-#-- Installing: /workspace2/build/inst/lib/libOpenAL32.dll.a
-#-- Installing: /workspace2/build/inst/bin/OpenAL32.dll
-#-- Installing: /workspace2/build/inst/include/AL/al.h
-#-- Installing: /workspace2/build/inst/include/AL/alc.h
-#-- Installing: /workspace2/build/inst/include/AL/alext.h
-#-- Installing: /workspace2/build/inst/include/AL/efx.h
-#-- Installing: /workspace2/build/inst/include/AL/efx-creative.h
-#-- Installing: /workspace2/build/inst/include/AL/efx-presets.h
-#-- Installing: /workspace2/build/inst/lib/pkgconfig/openal.pc
-#-- Installing: /workspace2/build/inst/share/openal/alsoftrc.sample
-#-- Installing: /workspace2/build/inst/share/openal/hrtf/default-44100.mhr
-#-- Installing: /workspace2/build/inst/share/openal/hrtf/default-48000.mhr
-
-RUN export PKG_CONFIG_PATH=/workspace2/build/inst/lib/pkgconfig ; \
-    cat /workspace2/build/inst/lib/pkgconfig/openal.pc ; \
-    pkg-config --libs openal ; \
-    cd /workspace2/build/ && mkdir -p /workspace2/build/inst/ && \
+RUN cd /workspace2/build/ && mkdir -p /workspace2/build/inst/ && \
     cd ./FFmpeg-n6.1/ && \
     ARCH="x86_64" && \
     export ARCH && \
@@ -83,8 +40,8 @@ RUN export PKG_CONFIG_PATH=/workspace2/build/inst/lib/pkgconfig ; \
               --target-os="mingw32" \
               --cross-prefix="$ARCH-w64-mingw32-" \
               --pkg-config="pkg-config" \
-              --extra-cflags="-static -I/workspace2/build/inst/include/ -O2 -g0 -D_FORTIFY_SOURCE=2 -fstack-protector-strong" \
-              --extra-ldflags="-lm -L/workspace2/build/inst/lib/ -static /workspace2/build/inst/lib/libOpenAL32.dll.a -fstack-protector-strong" \
+              --extra-cflags="-DAL_LIBTYPE_STATIC -static -I/workspace2/build/openal_bin/openal_mingw/ -O2 -g0 -D_FORTIFY_SOURCE=2 -fstack-protector-strong" \
+              --extra-ldflags="-DAL_LIBTYPE_STATIC -L/workspace2/build/openal_bin/openal_mingw/router/ /workspace2/build/openal_bin/openal_mingw/router/OpenAL32.lib -lm -L/workspace2/build/inst/lib/ -static -fstack-protector-strong" \
               --pkg-config-flags="--static" \
               --disable-network \
               --disable-debug \
@@ -113,6 +70,8 @@ RUN export PKG_CONFIG_PATH=/workspace2/build/inst/lib/pkgconfig ; \
               --disable-parsers \
               --disable-bsfs \
               --enable-swscale \
+              --disable-ffmpeg \
+              --disable-ffprobe \
               --enable-swresample \
               --enable-openal \
               --enable-indev=openal \
@@ -134,5 +93,5 @@ RUN export PKG_CONFIG_PATH=/workspace2/build/inst/lib/pkgconfig ; \
     make install
 
 RUN ls -al /workspace2/build/inst/lib/
-RUN ls -al /workspace2/build/inst/bin/
+RUN ls -al /workspace2/build/inst/bin/ || echo "NOERR"
 
