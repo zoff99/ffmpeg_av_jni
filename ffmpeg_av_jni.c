@@ -54,9 +54,9 @@
 // ----------- version -----------
 #define VERSION_MAJOR 0
 #define VERSION_MINOR 99
-#define VERSION_PATCH 21
-static const char global_version_string[] = "0.99.21";
-static const char global_version_asan_string[] = "0.99.21-ASAN";
+#define VERSION_PATCH 22
+static const char global_version_string[] = "0.99.22";
+static const char global_version_asan_string[] = "0.99.22-ASAN";
 // ----------- version -----------
 // ----------- version -----------
 
@@ -1437,6 +1437,13 @@ Java_com_zoffcc_applications_ffmpegav_AVActivity_ffmpegav_1get_1in_1sources(JNIE
         if (strncmp(devicename_cstr, "gdigrab", strlen("gdigrab")) == 0) {
             if (is_video == 1) {
                 fill_descrid_array(env, result, in_source_count, "desktop", NULL);
+                (*env)->ReleaseStringUTFChars(env, devicename, devicename_cstr);
+                return result;
+            }
+        }
+        else if (strncmp(devicename_cstr, "dshow", strlen("dshow")) == 0) {
+            if (is_video == 0) {
+                fill_descrid_array(env, result, in_source_count, "audio=\"Microphone\"", NULL);
                 (*env)->ReleaseStringUTFChars(env, devicename, devicename_cstr);
                 return result;
             }
