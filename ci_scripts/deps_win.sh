@@ -99,6 +99,7 @@ cd *mpeg*/
               --disable-bsfs \
               --enable-swscale \
               --enable-swresample \
+              --enable-indev=openal \
               --enable-indev=dshow \
               --enable-indev=gdigrab \
               --enable-indev=vfwcap \

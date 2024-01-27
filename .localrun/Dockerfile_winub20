@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1
 FROM ubuntu:20.04
-
+RUN echo x
 RUN export DEBIAN_FRONTEND=noninteractive ; apt update && apt install -y make    yasm curl   wget    git    coreutils    autoconf    libtool    pkg-config    libsodium-dev     nano    vim
 RUN mkdir -p /workspace2/build/
 RUN cd /workspace2/build/;FFMPEG_VERSION=n6.1 ; FFMPEG_FILENAME="$FFMPEG_VERSION.tar.gz" ;rm -f "ffmpeg"*.tar.*;wget "https://github.com/FFmpeg/FFmpeg/archive/refs/tags/$FFMPEG_FILENAME" -O "ffmpeg_""$FFMPEG_FILENAME";tar -xf "ffmpeg_""$FFMPEG_FILENAME";rm -f "ffmpeg"*.tar.*
@@ -12,10 +12,70 @@ RUN export DEBIAN_FRONTEND=noninteractive ; apt install -y yasm \
           mingw-w64-tools pkg-config-mingw-w64-x86-64 win-iconv-mingw-w64-dev \
           mingw-w64-x86-64-dev
 
-RUN cd /workspace2/build/ && mkdir /workspace2/build/inst/ && \
+RUN export DEBIAN_FRONTEND=noninteractive ; apt install -y cmake
+
+RUN cd /workspace2/build/; OPENAL_VERSION=b80570bed017de60b67c6452264c634085c3b148 ; wget \
+   "https://github.com/irungentoo/openal-soft-tox/archive/${OPENAL_VERSION}.tar.gz" -O openal.tgz
+RUN cd /workspace2/build/; tar -xzvf openal.tgz
+
+# RUN cd /workspace2/build/; git clone https://github.com/kcat/openal-soft
+
+RUN ls -al /workspace2/build/
+RUN ls -al /usr/x86_64-w64-mingw32/include
+RUN ls -al /usr/x86_64-w64-mingw32/lib/libdsound.a
+
+RUN cd /workspace2/build/openal-soft* ; wget https://raw.githubusercontent.com/Zoxcore/qTox_enhanced/zoxcore/push_notification/buildscripts/patches/openal-cmake-3-11.patch
+RUN cd /workspace2/build/openal-soft* ; patch -p1 < openal-cmake-3-11.patch
+
+RUN cd /workspace2/build/openal-soft*; \
+    DDSOUND="-DDSOUND_INCLUDE_DIR=/usr/x86_64-w64-mingw32/include \
+    -DDSOUND_LIBRARY=/usr/x86_64-w64-mingw32/lib/libdsound.a" ; \
+    cmake "-DCMAKE_INSTALL_PREFIX=/workspace2/build/inst/" \
+    -DCMAKE_BUILD_TYPE=Release \
+    -DCMAKE_SYSTEM_NAME=Windows \
+    -DCMAKE_C_COMPILER=x86_64-w64-mingw32-gcc \
+    -DCMAKE_CXX_COMPILER=x86_64-w64-mingw32-g++ \
+    -DCMAKE_RC_COMPILER=x86_64-w64-mingw32-windres \
+    -DCMAKE_FIND_ROOT_PATH=/usr/x86_64-w64-mingw32 \
+    -DCMAKE_FIND_ROOT_PATH_MODE_PROGRAM=NEVER \
+    -DCMAKE_FIND_ROOT_PATH_MODE_LIBRARY=ONLY \
+    -DCMAKE_FIND_ROOT_PATH_MODE_INCLUDE=ONLY \
+    -DCMAKE_REQUIRED_LIBRARIES=m \
+    -DALSOFT_UTILS=OFF \
+    -DALSOFT_EXAMPLES=OFF \
+    "${CMAKE_TOOLCHAIN_FILE}" \
+    "${DDSOUND}" \
+    .
+
+RUN cd /workspace2/build/openal-soft*;make -j$(nproc)
+RUN cd /workspace2/build/openal-soft*;make install
+
+#-- Installing: /workspace2/build/inst/lib/libOpenAL32.dll.a
+#-- Installing: /workspace2/build/inst/bin/OpenAL32.dll
+#-- Installing: /workspace2/build/inst/include/AL/al.h
+#-- Installing: /workspace2/build/inst/include/AL/alc.h
+#-- Installing: /workspace2/build/inst/include/AL/alext.h
+#-- Installing: /workspace2/build/inst/include/AL/efx.h
+#-- Installing: /workspace2/build/inst/include/AL/efx-creative.h
+#-- Installing: /workspace2/build/inst/include/AL/efx-presets.h
+#-- Installing: /workspace2/build/inst/lib/pkgconfig/openal.pc
+#-- Installing: /workspace2/build/inst/share/openal/alsoftrc.sample
+#-- Installing: /workspace2/build/inst/share/openal/hrtf/default-44100.mhr
+#-- Installing: /workspace2/build/inst/share/openal/hrtf/default-48000.mhr
+
+RUN export PKG_CONFIG_PATH=/workspace2/build/inst/lib/pkgconfig ; \
+    cat /workspace2/build/inst/lib/pkgconfig/openal.pc ; \
+    pkg-config --libs openal ; \
+    cd /workspace2/build/ && mkdir -p /workspace2/build/inst/ && \
     cd ./FFmpeg-n6.1/ && \
     ARCH="x86_64" && \
     export ARCH && \
+    sed -i -e 's#-lopenal#-lOpenAL32#' configure ; \
+    sed -i -e 's#check_lib openal#echo #' configure ; \
+    sed -i -e 's#die "ERROR: openal must#echo "#' configure ; \
+    sed -i -e 's#enabled openal#enabled opexaynal #' configure ; \
+    echo ${OPENAL_LIBS} ; \
+    cat configure|grep -i openal ; \
     ./configure  \
               --arch="$ARCH" \
               --enable-gpl \
@@ -23,8 +83,8 @@ RUN cd /workspace2/build/ && mkdir /workspace2/build/inst/ && \
               --target-os="mingw32" \
               --cross-prefix="$ARCH-w64-mingw32-" \
               --pkg-config="pkg-config" \
-              --extra-cflags="-static -O2 -g0 -D_FORTIFY_SOURCE=2 -fstack-protector-strong" \
-              --extra-ldflags="-lm -static -fstack-protector-strong" \
+              --extra-cflags="-static -I/workspace2/build/inst/include/ -O2 -g0 -D_FORTIFY_SOURCE=2 -fstack-protector-strong" \
+              --extra-ldflags="-lm -L/workspace2/build/inst/lib/ -static /workspace2/build/inst/lib/libOpenAL32.dll.a -fstack-protector-strong" \
               --pkg-config-flags="--static" \
               --disable-network \
               --disable-debug \
@@ -54,6 +114,8 @@ RUN cd /workspace2/build/ && mkdir /workspace2/build/inst/ && \
               --disable-bsfs \
               --enable-swscale \
               --enable-swresample \
+              --enable-openal \
+              --enable-indev=openal \
               --enable-indev=dshow \
               --enable-indev=gdigrab \
               --enable-indev=vfwcap \
