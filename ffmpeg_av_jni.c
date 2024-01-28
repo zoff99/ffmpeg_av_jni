@@ -1570,10 +1570,8 @@ Java_com_zoffcc_applications_ffmpegav_AVActivity_ffmpegav_1get_1audio_1in_1devic
     }
 #endif
 #ifdef __MINGW32__
-    if (in_device_count == 0) {
         jstring str = (*env)->NewStringUTF(env, "dshow");
         (*env)->SetObjectArrayElement(env, result, in_device_count, str);
-    }
 
 #endif
 
