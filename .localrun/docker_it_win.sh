@@ -32,7 +32,7 @@ for system_to_build_for in $build_for ; do
     ls -al $_HOME_/"$system_to_build_for"/
 
     rsync -a ../ffmpeg_av_jni.c --exclude=.localrun $_HOME_/"$system_to_build_for"/workspace/build/
-    rsync -a ../test.c --exclude=.localrun $_HOME_/"$system_to_build_for"/workspace/build/
+    rsync -a ../test*.c --exclude=.localrun $_HOME_/"$system_to_build_for"/workspace/build/
     chmod a+rwx -R $_HOME_/"$system_to_build_for"/workspace/build >/dev/null 2>/dev/null
 
     echo '#! /bin/bash
