@@ -86,7 +86,6 @@ $_INST_/lib/libavutil.a \
 -l:libvfw32.a \
 -l:libpsapi.a \
 -l:libshell32.a \
-"$_SRC_"/openal_mingw/router/OpenAL32.lib \
 -Wl,-Bstatic -lbcrypt \
 -shared \
 -lpthread \

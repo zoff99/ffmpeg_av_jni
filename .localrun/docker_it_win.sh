@@ -121,12 +121,12 @@ $_INST2_/lib/libavutil.a \
 -l:libvfw32.a \
 -l:libpsapi.a \
 -l:libshell32.a \
-/workspace2/build/openal_bin/openal_mingw/router/OpenAL32.lib \
 -Wl,-Bstatic -lbcrypt \
 -shared \
 -lpthread \
 -lm \
 -o ffmpeg_av_jni.dll || exit 1
+
 
 x86_64-w64-mingw32-gcc $CFLAGS \
 -Wno-format-extra-args \
@@ -161,7 +161,6 @@ $_INST2_/lib/libavutil.a \
 -l:libvfw32.a \
 -l:libpsapi.a \
 -l:libshell32.a \
-/workspace2/build/openal_bin/openal_mingw/router/OpenAL32.lib \
 -Wl,-Bstatic -lbcrypt \
 -lpthread \
 -lm \
