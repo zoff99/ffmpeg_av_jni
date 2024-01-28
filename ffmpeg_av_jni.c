@@ -1495,6 +1495,16 @@ Java_com_zoffcc_applications_ffmpegav_AVActivity_ffmpegav_1get_1in_1sources(JNIE
     }
 #endif
 
+#ifdef __MINGW32__
+    if (strncmp(devicename_cstr, "dshow", strlen("dshow")) == 0) {
+        if (is_video == 1) {
+            // TODO: write me
+        } else {
+            // fill_descrid_array(env, result, in_source_count, ":0", NULL); // format = "audio=\"source name\""
+        }
+    }
+#endif
+
     avdevice_free_list_devices(&deviceInfoList);
     (*env)->ReleaseStringUTFChars(env, devicename, devicename_cstr);
     return result;
