@@ -1443,13 +1443,13 @@ Java_com_zoffcc_applications_ffmpegav_AVActivity_ffmpegav_1get_1in_1sources(JNIE
                 return result;
             }
         }
-        else if (strncmp(devicename_cstr, "dshow", strlen("dshow")) == 0) {
-            if (is_video == 0) {
-                fill_descrid_array(env, result, in_source_count, "audio=\"Microphone\"", NULL);
-                (*env)->ReleaseStringUTFChars(env, devicename, devicename_cstr);
-                return result;
-            }
-        }
+        //else if (strncmp(devicename_cstr, "dshow", strlen("dshow")) == 0) {
+        //    if (is_video == 0) {
+        //        fill_descrid_array(env, result, in_source_count, "audio=\"Microphone\"", NULL);
+        //        (*env)->ReleaseStringUTFChars(env, devicename, devicename_cstr);
+        //        return result;
+        //    }
+        //}
         (*env)->ReleaseStringUTFChars(env, devicename, devicename_cstr);
         return NULL;
     #else
@@ -1542,10 +1542,8 @@ Java_com_zoffcc_applications_ffmpegav_AVActivity_ffmpegav_1get_1video_1in_1devic
     }
 #endif
 #ifdef __MINGW32__
-    if (in_device_count == 0) {
         jstring str = (*env)->NewStringUTF(env, "dshow");
         (*env)->SetObjectArrayElement(env, result, in_device_count, str);
-    }
 
 #endif
 
