@@ -1273,6 +1273,8 @@ Java_com_zoffcc_applications_ffmpegav_AVActivity_ffmpegav_1init(JNIEnv *env, job
     // avformat_network_init();
     avdevice_register_all();
 
+    av_log_set_level(AV_LOG_INFO);
+
     jclass cls_local = (*env)->GetObjectClass(env, thiz);
     java_find_class_global("com/zoffcc/applications/ffmpegav/AVActivity", &AVActivity);
 
