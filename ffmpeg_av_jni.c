@@ -811,6 +811,7 @@ static void *ffmpeg_thread_audio_in_capture_func(void *data)
 
     if (global_audio_codec_ctx->channel_layout == 0)
     {
+        fprintf(stderr, "AA:audio_codec_ctx->channel_layout is zero. we assume AV_CH_LAYOUT_STEREO\n");
         // HINT: no idea what to do here. just guess STEREO?
         global_audio_codec_ctx->channel_layout = AV_CH_LAYOUT_STEREO;
     }
@@ -885,7 +886,7 @@ static void *ffmpeg_thread_audio_in_capture_func(void *data)
         } else {
             snprintf(args_strbuf, sizeof(args_strbuf), "m=mp.rnnn");
         }
-        fprintf(stderr, "afftdn filter: %s\n", args_strbuf);
+        fprintf(stderr, "arnndn filter: %s\n", args_strbuf);
 
         /*
         // -------- afftdn filter --------
@@ -1153,7 +1154,7 @@ static void *ffmpeg_thread_audio_in_capture_func(void *data)
                                         data_size_bytes);
 
                                 if (jnienv2 != NULL) {
-                                (*jnienv2)->CallStaticVoidMethod(jnienv2, AVActivity,
+                                    (*jnienv2)->CallStaticVoidMethod(jnienv2, AVActivity,
                                         callback_audio_capture_frame_pts_cb_method,
                                         (jlong)read_bytes,
                                         (jint)out_samples,
@@ -1171,7 +1172,7 @@ static void *ffmpeg_thread_audio_in_capture_func(void *data)
                             {
                                 fprintf(stderr, "JNI audio caputre buffer too small\n");
                                 if (jnienv2 != NULL) {
-                                (*jnienv2)->CallStaticVoidMethod(jnienv2, AVActivity,
+                                    (*jnienv2)->CallStaticVoidMethod(jnienv2, AVActivity,
                                         callback_audio_capture_frame_too_small_cb_method,
                                         (jint)data_size_bytes
                                     );
