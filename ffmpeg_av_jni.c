@@ -54,9 +54,9 @@
 // ----------- version -----------
 #define VERSION_MAJOR 0
 #define VERSION_MINOR 99
-#define VERSION_PATCH 22
-static const char global_version_string[] = "0.99.22";
-static const char global_version_asan_string[] = "0.99.22-ASAN";
+#define VERSION_PATCH 23
+static const char global_version_string[] = "0.99.23";
+static const char global_version_asan_string[] = "0.99.23-ASAN";
 // ----------- version -----------
 // ----------- version -----------
 
