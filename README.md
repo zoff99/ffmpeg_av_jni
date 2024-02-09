@@ -1,6 +1,6 @@
 # ffmpeg AV JNI
 
-Audio and Video devices for java via JNI
+This is a library to detect Audio and Video devices for java via JNI and capture Audio and Video (including Desktop)
 
 # arm64 macOS lib
 
