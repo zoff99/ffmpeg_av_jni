@@ -403,8 +403,8 @@ struct vsend_data {
 static void *thread_v_send_bg_func(void *data)
 {
     struct vsend_data *vs = (struct vsend_data *) data;
-    int output_width = vs->output_width;
-    int output_height = vs->output_height;
+    int output_width_local = vs->output_width;
+    int output_height_local = vs->output_height;
     struct SwsContext *scaler_ctx = vs->scaler_ctx;
     AVFrame* frame = vs->frame2;
     uint64_t pint_ts_ms = vs->pin_ts_ms;
@@ -413,13 +413,13 @@ static void *thread_v_send_bg_func(void *data)
 
     // Convert the video frame to YUV
     int planes_stride[3];
-    planes_stride[0] = av_image_get_linesize(AV_PIX_FMT_YUV420P, output_width, 0);
-    planes_stride[1] = av_image_get_linesize(AV_PIX_FMT_YUV420P, output_width, 1);
-    planes_stride[2] = av_image_get_linesize(AV_PIX_FMT_YUV420P, output_width, 2);
+    planes_stride[0] = av_image_get_linesize(AV_PIX_FMT_YUV420P, output_width_local, 0);
+    planes_stride[1] = av_image_get_linesize(AV_PIX_FMT_YUV420P, output_width_local, 1);
+    planes_stride[2] = av_image_get_linesize(AV_PIX_FMT_YUV420P, output_width_local, 2);
     // fprintf(stderr, "VideoFrame:strides:%d %d %d\n",planes_stride[0],planes_stride[1],planes_stride[2]);
 
     uint8_t *yuv_buffer = (uint8_t *)av_malloc(av_image_get_buffer_size(AV_PIX_FMT_YUV420P,
-            output_width, output_height, 1));
+            output_width_local, output_height_local, 1));
     if (yuv_buffer == NULL) {
         fprintf(stderr, "Error: could not allocate YUV buffer\n");
 
@@ -438,8 +438,8 @@ static void *thread_v_send_bg_func(void *data)
 
     uint8_t *dst_yuv_buffer[3];
     dst_yuv_buffer[0] = yuv_buffer;
-    dst_yuv_buffer[1] = yuv_buffer + (output_width * output_height);
-    dst_yuv_buffer[2] = dst_yuv_buffer[1] + ((output_width * output_height) / 4);
+    dst_yuv_buffer[1] = yuv_buffer + (output_width_local * output_height_local);
+    dst_yuv_buffer[2] = dst_yuv_buffer[1] + ((output_width_local * output_height_local) / 4);
 
     pthread_mutex_lock(&vscale___mutex);
     sws_scale(scaler_ctx, (const uint8_t * const*)frame->data, frame->linesize, 0, global_video_codec_ctx->height,
@@ -461,14 +461,14 @@ static void *thread_v_send_bg_func(void *data)
 
     pthread_mutex_lock(&vbuffer2___mutex);
     if (
-        (video_buffer_2_y_size >= (planes_stride[0] * output_height)) &&
-        (video_buffer_2_u_size >= (planes_stride[1] * (output_height / 2))) &&
-        (video_buffer_2_v_size >= (planes_stride[2] * (output_height / 2)))
+        (video_buffer_2_y_size >= (planes_stride[0] * output_height_local)) &&
+        (video_buffer_2_u_size >= (planes_stride[1] * (output_height_local / 2))) &&
+        (video_buffer_2_v_size >= (planes_stride[2] * (output_height_local / 2)))
         )
     {
-        memcpy(video_buffer_2, dst_yuv_buffer[0], planes_stride[0] * output_height);
-        memcpy(video_buffer_2_u, dst_yuv_buffer[1], planes_stride[1] * (output_height / 2));
-        memcpy(video_buffer_2_v, dst_yuv_buffer[2], planes_stride[2] * (output_height / 2));
+        memcpy(video_buffer_2, dst_yuv_buffer[0], planes_stride[0] * output_height_local);
+        memcpy(video_buffer_2_u, dst_yuv_buffer[1], planes_stride[1] * (output_height_local / 2));
+        memcpy(video_buffer_2_v, dst_yuv_buffer[2], planes_stride[2] * (output_height_local / 2));
         pthread_mutex_unlock(&vbuffer2___mutex);
 
         if (jnienv2 != NULL) {
@@ -479,8 +479,8 @@ static void *thread_v_send_bg_func(void *data)
         }
         (*jnienv2)->CallStaticVoidMethod(jnienv2, AVActivity,
                 callback_video_capture_frame_pts_cb_method,
-                (jlong)output_width,
-                (jlong)output_height,
+                (jlong)output_width_local,
+                (jlong)output_height_local,
                 (jlong)global_video_codec_ctx->width,
                 (jlong)global_video_codec_ctx->height,
                 (jlong)video_frame_age_ms,
@@ -500,9 +500,9 @@ static void *thread_v_send_bg_func(void *data)
         if (jnienv2 != NULL) {
         (*jnienv2)->CallStaticVoidMethod(jnienv2, AVActivity,
                 callback_video_capture_frame_too_small_cb_method,
-                (jint)(planes_stride[0] * output_height),
-                (jint)(planes_stride[1] * (output_height / 2)),
-                (jint)(planes_stride[2] * (output_height / 2))
+                (jint)(planes_stride[0] * output_height_local),
+                (jint)(planes_stride[1] * (output_height_local / 2)),
+                (jint)(planes_stride[2] * (output_height_local / 2))
             );
         }
         else
