@@ -86,7 +86,7 @@ extern "C" {
 // ############## FIFO ##############
 
 typedef struct {
-    void* data;
+    uint8_t* data;
     size_t size;
     size_t head;
     size_t tail;
@@ -94,7 +94,7 @@ typedef struct {
 
 fifo_buffer_t* fifo_buffer_create(size_t size) {
     fifo_buffer_t* buffer = calloc(1, sizeof(fifo_buffer_t));
-    buffer->data = calloc(1, size);
+    buffer->data = (uint8_t *)calloc(1, size);
     buffer->size = size;
     buffer->head = 0;
     buffer->tail = 0;
@@ -132,7 +132,7 @@ size_t fifo_buffer_data_available(fifo_buffer_t* buffer) {
     }
 }
 
-size_t fifo_buffer_write(fifo_buffer_t* buffer, const void* data, size_t size) {
+size_t fifo_buffer_write(fifo_buffer_t* buffer, const uint8_t* data, size_t size) {
     size_t available = fifo_buffer_free(buffer);
     if (size > available) {
         size = available;
@@ -142,7 +142,7 @@ size_t fifo_buffer_write(fifo_buffer_t* buffer, const void* data, size_t size) {
     return size;
 }
 
-size_t fifo_buffer_read(fifo_buffer_t* buffer, void* data, size_t size) {
+size_t fifo_buffer_read(fifo_buffer_t* buffer, uint8_t* data, size_t size) {
     size_t available = fifo_buffer_data_available(buffer);
     if (size > available) {
         size = available;
