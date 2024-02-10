@@ -1279,19 +1279,19 @@ Java_com_zoffcc_applications_ffmpegav_AVActivity_ffmpegav_1init(JNIEnv *env, job
     jclass cls_local = (*env)->GetObjectClass(env, thiz);
     java_find_class_global("com/zoffcc/applications/ffmpegav/AVActivity", &AVActivity);
 
-    printf("cls_local=%p\n", cls_local);
-    printf("AVActivity=%p\n", AVActivity);
+    printf("cls_local=%p\n", (void *)cls_local);
+    printf("AVActivity=%p\n", (void *)AVActivity);
 
     java_find_class_global("com/zoffcc/applications/ffmpegav/AVActivity$ffmpegav_descrid", &cls_descrid);
-    printf("cls_descrid=%p\n", cls_descrid);
+    printf("cls_descrid=%p\n", (void *)cls_descrid);
 
     descrid_constr = (*env)->GetMethodID(env, cls_descrid, "<init>", "()V");
-    printf("descrid_constr=%p\n", descrid_constr);
+    printf("descrid_constr=%p\n", (void *)descrid_constr);
 
     descrid_descr = (*env)->GetFieldID(env, cls_descrid, "description", "Ljava/lang/String;");
-    printf("descrid_descr=%p\n", descrid_descr);
+    printf("descrid_descr=%p\n", (void *)descrid_descr);
     descrid_id = (*env)->GetFieldID(env, cls_descrid, "id", "Ljava/lang/String;");
-    printf("descrid_id=%p\n", descrid_id);
+    printf("descrid_id=%p\n", (void *)descrid_id);
 
     if (pthread_mutex_init(&vsend___mutex, NULL) != 0)
     {
@@ -1316,19 +1316,19 @@ Java_com_zoffcc_applications_ffmpegav_AVActivity_ffmpegav_1init(JNIEnv *env, job
 
     callback_video_capture_frame_pts_cb_method = (*env)->GetStaticMethodID(env, AVActivity,
             "ffmpegav_callback_video_capture_frame_pts_cb_method", "(JJJJJII)V");
-    printf("ffmpegav_callback_video_capture_frame_pts_cb_method=%p\n", callback_video_capture_frame_pts_cb_method);
+    printf("ffmpegav_callback_video_capture_frame_pts_cb_method=%p\n", (void *)callback_video_capture_frame_pts_cb_method);
 
     callback_video_capture_frame_too_small_cb_method = (*env)->GetStaticMethodID(env, AVActivity,
             "ffmpegav_callback_video_capture_frame_too_small_cb_method", "(III)V");
-    printf("ffmpegav_callback_video_capture_frame_too_small_cb_method=%p\n", callback_video_capture_frame_too_small_cb_method);
+    printf("ffmpegav_callback_video_capture_frame_too_small_cb_method=%p\n", (void *)callback_video_capture_frame_too_small_cb_method);
 
     callback_audio_capture_frame_pts_cb_method = (*env)->GetStaticMethodID(env, AVActivity,
             "ffmpegav_callback_audio_capture_frame_pts_cb_method", "(JIIIJ)V");
-    printf("ffmpegav_callback_audio_capture_frame_pts_cb_method=%p\n", callback_audio_capture_frame_pts_cb_method);
+    printf("ffmpegav_callback_audio_capture_frame_pts_cb_method=%p\n", (void *)callback_audio_capture_frame_pts_cb_method);
 
     callback_audio_capture_frame_too_small_cb_method = (*env)->GetStaticMethodID(env, AVActivity,
             "ffmpegav_callback_audio_capture_frame_too_small_cb_method", "(I)V");
-    printf("ffmpegav_callback_audio_capture_frame_too_small_cb_method=%p\n", callback_audio_capture_frame_too_small_cb_method);
+    printf("ffmpegav_callback_audio_capture_frame_too_small_cb_method=%p\n", (void *)callback_audio_capture_frame_too_small_cb_method);
 
     fprintf(stderr, "init: DONE\n");
     // HINT: add error handling
@@ -1382,7 +1382,7 @@ Java_com_zoffcc_applications_ffmpegav_AVActivity_ffmpegav_1get_1in_1sources(JNIE
 
 #ifdef __linux__
 #ifndef DONOTHAVEX11
-    if (strncmp((char *)devicename_cstr, "x11grab", strlen((char *)"x11grab")) == 0)
+    if (strncmp((const char *)devicename_cstr, "x11grab", strlen((char *)"x11grab")) == 0)
     {
         // add available displays to "x11grag" input sources
         Display *display = XOpenDisplay(NULL);
@@ -1689,7 +1689,7 @@ Java_com_zoffcc_applications_ffmpegav_AVActivity_ffmpegav_1open_1video_1in_1devi
         return -1;
     }
 
-    if (strncmp((char *)deviceformat_cstr, "x11grab", strlen((char *)"x11grab")) == 0)
+    if (strncmp((const char *)deviceformat_cstr, "x11grab", strlen((char *)"x11grab")) == 0)
     {
 #ifdef __linux__
 #ifndef DONOTHAVEX11
@@ -1776,7 +1776,7 @@ Java_com_zoffcc_applications_ffmpegav_AVActivity_ffmpegav_1open_1video_1in_1devi
         return -1;
 #endif
     }
-    else if (strncmp((char *)deviceformat_cstr, "video4linux2", strlen((char *)"video4linux2")) == 0)
+    else if (strncmp((const char *)deviceformat_cstr, "video4linux2", strlen((char *)"video4linux2")) == 0)
     {
 #ifdef __linux__
         AVDictionary* options = NULL;
@@ -1954,7 +1954,7 @@ Java_com_zoffcc_applications_ffmpegav_AVActivity_ffmpegav_1open_1audio_1in_1devi
         return -1;
     }
 
-    if (strncmp((char *)deviceformat_cstr, "xxxxxx", strlen((char *)"xxxxxx")) == 0)
+    if (strncmp((const char *)deviceformat_cstr, "xxxxxx", strlen((char *)"xxxxxx")) == 0)
     {
 #ifdef __linux__
 #endif
