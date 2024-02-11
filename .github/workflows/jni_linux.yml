@@ -63,7 +63,7 @@ jobs:
           faketime '2023-10-10 08:00:00' ./ci_scripts/java_jni_lib_linux.sh
 
       - name: Upload artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: libffmpeg_av_jni.so
           path: libffmpeg_av_jni.so
