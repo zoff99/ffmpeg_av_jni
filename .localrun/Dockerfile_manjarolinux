@@ -24,17 +24,15 @@ RUN cd /workspace2/build/ && mkdir /workspace2/build/inst/ && \
               --enable-gpl \
               --prefix="/workspace2/build/inst/" \
               --disable-asm \
-              --enable-pic \
-              --enable-swscale \
+              --extra-cflags=" -fdebug-prefix-map=/workspace2/build=/ -static -O2 -g0 -D_FORTIFY_SOURCE=2 -fstack-protector-strong" \
+              --extra-ldflags=" -fdebug-prefix-map=/workspace2/build=/ -lm -fstack-protector-strong" \
               --disable-network \
               --disable-everything \
               --disable-debug \
               --disable-shared \
-              --disable-programs \
               --disable-protocols \
               --disable-doc \
               --disable-sdl2 \
-              --disable-avfilter \
               --disable-filters \
               --disable-iconv \
               --disable-network \
@@ -53,6 +51,8 @@ RUN cd /workspace2/build/ && mkdir /workspace2/build/inst/ && \
               --disable-demuxers \
               --disable-parsers \
               --disable-bsfs \
+              --enable-pic \
+              --enable-swscale \
               --enable-swresample \
               --enable-avcodec \
               --enable-outdev=alsa \
@@ -64,14 +64,14 @@ RUN cd /workspace2/build/ && mkdir /workspace2/build/inst/ && \
               --enable-decoder=rawvideo \
               --enable-demuxer=pcm_s16le \
               --enable-decoder=pcm_s16le \
-              --enable-libxcb --enable-libxcb-shm --enable-libxcb-xfixes --enable-libxcb-shape \
-              --enable-indev=pulse \
-              --enable-indev=v4l2 \
-              --enable-libpulse \
               --enable-filter=volume \
               --enable-filter=arnndn \
               --enable-filter=afftdn \
               --enable-filter=aresample \
+              --enable-libxcb --enable-libxcb-shm --enable-libxcb-xfixes --enable-libxcb-shape \
+              --enable-indev=pulse \
+              --enable-indev=v4l2 \
+              --enable-libpulse \
               --enable-runtime-cpudetect \
               --enable-libv4l2 && \
     make -j$(nproc) && \
