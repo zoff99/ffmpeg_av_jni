@@ -54,9 +54,9 @@
 // ----------- version -----------
 #define VERSION_MAJOR 0
 #define VERSION_MINOR 99
-#define VERSION_PATCH 23
-static const char global_version_string[] = "0.99.23";
-static const char global_version_asan_string[] = "0.99.23-ASAN";
+#define VERSION_PATCH 24
+static const char global_version_string[] = "0.99.24";
+static const char global_version_asan_string[] = "0.99.24-ASAN";
 // ----------- version -----------
 // ----------- version -----------
 
@@ -294,6 +294,8 @@ jmethodID callback_audio_capture_frame_too_small_cb_method = NULL;
 // --------- AV VARS ---------
 int global_audio_delay_factor = 0;
 
+bool video_device_open = false;
+bool audio_device_open = false;
 AVInputFormat *inputFormat_audio = NULL;
 AVFormatContext *formatContext_audio = NULL;
 AVCodecContext *global_audio_codec_ctx = NULL;
@@ -317,6 +319,8 @@ AVCodec *video_codec = NULL;
 bool global_video_in_capture_running = false;
 static pthread_t ffmpeg_thread_video_in_capture;
 AVRational time_base_video = (AVRational) {0, 0};
+
+pthread_mutex_t apicalls___mutex;
 
 pthread_mutex_t vsend___mutex;
 pthread_mutex_t vscale___mutex;
@@ -1314,6 +1318,13 @@ Java_com_zoffcc_applications_ffmpegav_AVActivity_ffmpegav_1init(JNIEnv *env, job
         // return -1;
     }
 
+    if (pthread_mutex_init(&apicalls___mutex, NULL) != 0)
+    {
+        fprintf(stderr, "Creating apicalls mutex failed\n");
+        // HINT: add error handling
+        // return -1;
+    }
+
     callback_video_capture_frame_pts_cb_method = (*env)->GetStaticMethodID(env, AVActivity,
             "ffmpegav_callback_video_capture_frame_pts_cb_method", "(JJJJJII)V");
     printf("ffmpegav_callback_video_capture_frame_pts_cb_method=%p\n", (void *)callback_video_capture_frame_pts_cb_method);
@@ -1360,13 +1371,16 @@ static void fill_descrid_array(JNIEnv *env, const jobjectArray array,
 JNIEXPORT jobjectArray JNICALL
 Java_com_zoffcc_applications_ffmpegav_AVActivity_ffmpegav_1get_1in_1sources(JNIEnv *env, jobject thiz, jstring devicename, jint is_video)
 {
+    pthread_mutex_lock(&apicalls___mutex);
     if (devicename == NULL)
     {
+        pthread_mutex_unlock(&apicalls___mutex);
         return NULL;
     }
     const char *devicename_cstr = (*env)->GetStringUTFChars(env, devicename, NULL);
     if (devicename_cstr == NULL)
     {
+        pthread_mutex_unlock(&apicalls___mutex);
         return NULL;
     }
     const uint32_t max_sources = 64;
@@ -1431,9 +1445,11 @@ Java_com_zoffcc_applications_ffmpegav_AVActivity_ffmpegav_1get_1in_1sources(JNIE
                 in_source_count++;
             }
             (*env)->ReleaseStringUTFChars(env, devicename, devicename_cstr);
+            pthread_mutex_unlock(&apicalls___mutex);
             return result;
         }
         (*env)->ReleaseStringUTFChars(env, devicename, devicename_cstr);
+        pthread_mutex_unlock(&apicalls___mutex);
         return NULL;
 #else
     #ifdef __MINGW32__
@@ -1441,6 +1457,7 @@ Java_com_zoffcc_applications_ffmpegav_AVActivity_ffmpegav_1get_1in_1sources(JNIE
             if (is_video == 1) {
                 fill_descrid_array(env, result, in_source_count, "desktop", NULL);
                 (*env)->ReleaseStringUTFChars(env, devicename, devicename_cstr);
+                pthread_mutex_unlock(&apicalls___mutex);
                 return result;
             }
         }
@@ -1448,10 +1465,12 @@ Java_com_zoffcc_applications_ffmpegav_AVActivity_ffmpegav_1get_1in_1sources(JNIE
         //    if (is_video == 0) {
         //        fill_descrid_array(env, result, in_source_count, "audio=\"Microphone\"", NULL);
         //        (*env)->ReleaseStringUTFChars(env, devicename, devicename_cstr);
+        //        pthread_mutex_unlock(&apicalls___mutex);
         //        return result;
         //    }
         //}
         (*env)->ReleaseStringUTFChars(env, devicename, devicename_cstr);
+        pthread_mutex_unlock(&apicalls___mutex);
         return NULL;
     #else
         (*env)->ReleaseStringUTFChars(env, devicename, devicename_cstr);
@@ -1460,10 +1479,12 @@ Java_com_zoffcc_applications_ffmpegav_AVActivity_ffmpegav_1get_1in_1sources(JNIE
             // there are manually added/detected devices
             // return "result"
             printf("return manual result. devices: %d\n", in_source_count);
+            pthread_mutex_unlock(&apicalls___mutex);
             return result;
         }
         else
         {
+            pthread_mutex_unlock(&apicalls___mutex);
             return NULL;
         }
     #endif
@@ -1510,12 +1531,14 @@ Java_com_zoffcc_applications_ffmpegav_AVActivity_ffmpegav_1get_1in_1sources(JNIE
 
     avdevice_free_list_devices(&deviceInfoList);
     (*env)->ReleaseStringUTFChars(env, devicename, devicename_cstr);
+    pthread_mutex_unlock(&apicalls___mutex);
     return result;
 }
 
 JNIEXPORT jobjectArray JNICALL
 Java_com_zoffcc_applications_ffmpegav_AVActivity_ffmpegav_1get_1video_1in_1devices(JNIEnv *env, jobject thiz)
 {
+    pthread_mutex_lock(&apicalls___mutex);
     const uint32_t max_devices = 64;
     jobjectArray result = (*env)->NewObjectArray(env, max_devices, (*env)->FindClass(env, "java/lang/String"), NULL);
     AVInputFormat *inputFormat_search = av_input_video_device_next(NULL);
@@ -1548,12 +1571,14 @@ Java_com_zoffcc_applications_ffmpegav_AVActivity_ffmpegav_1get_1video_1in_1devic
 
 #endif
 
+    pthread_mutex_unlock(&apicalls___mutex);
     return result;
 }
 
 JNIEXPORT jobjectArray JNICALL
 Java_com_zoffcc_applications_ffmpegav_AVActivity_ffmpegav_1get_1audio_1in_1devices(JNIEnv *env, jobject thiz)
 {
+    pthread_mutex_lock(&apicalls___mutex);
     const uint32_t max_devices = 64;
     jobjectArray result = (*env)->NewObjectArray(env, max_devices, (*env)->FindClass(env, "java/lang/String"), NULL);
     AVInputFormat *inputFormat_search = av_input_audio_device_next(NULL);
@@ -1586,6 +1611,7 @@ Java_com_zoffcc_applications_ffmpegav_AVActivity_ffmpegav_1get_1audio_1in_1devic
 
 #endif
 
+    pthread_mutex_unlock(&apicalls___mutex);
     return result;
 }
 
@@ -1662,15 +1688,25 @@ Java_com_zoffcc_applications_ffmpegav_AVActivity_ffmpegav_1open_1video_1in_1devi
     {
         return -1;
     }
+    pthread_mutex_lock(&apicalls___mutex);
+
+    if (video_device_open == true)
+    {
+        pthread_mutex_unlock(&apicalls___mutex);
+        return -1;
+    }
+
     const char *deviceformat_cstr = (*env)->GetStringUTFChars(env, deviceformat, NULL);
     if (deviceformat_cstr == NULL)
     {
+        pthread_mutex_unlock(&apicalls___mutex);
         return -1;
     }
     printf("wanted_video_in_device=%s\n", deviceformat_cstr);
     const char *inputname_cstr = (*env)->GetStringUTFChars(env, inputname, NULL);
     if (inputname_cstr == NULL)
     {
+        pthread_mutex_unlock(&apicalls___mutex);
         return -1;
     }
     printf("wanted_video_in_input=%s\n", inputname_cstr);
@@ -1686,6 +1722,7 @@ Java_com_zoffcc_applications_ffmpegav_AVActivity_ffmpegav_1open_1video_1in_1devi
         reset_video_in_values();
         (*env)->ReleaseStringUTFChars(env, deviceformat, deviceformat_cstr);
         (*env)->ReleaseStringUTFChars(env, inputname, inputname_cstr);
+        pthread_mutex_unlock(&apicalls___mutex);
         return -1;
     }
 
@@ -1701,6 +1738,7 @@ Java_com_zoffcc_applications_ffmpegav_AVActivity_ffmpegav_1open_1video_1in_1devi
             reset_video_in_values();
             (*env)->ReleaseStringUTFChars(env, deviceformat, deviceformat_cstr);
             (*env)->ReleaseStringUTFChars(env, inputname, inputname_cstr);
+            pthread_mutex_unlock(&apicalls___mutex);
             return -1;
         }
         Window root = DefaultRootWindow(display);
@@ -1765,6 +1803,7 @@ Java_com_zoffcc_applications_ffmpegav_AVActivity_ffmpegav_1open_1video_1in_1devi
             reset_video_in_values();
             (*env)->ReleaseStringUTFChars(env, deviceformat, deviceformat_cstr);
             (*env)->ReleaseStringUTFChars(env, inputname, inputname_cstr);
+            pthread_mutex_unlock(&apicalls___mutex);
             return -1;
         }
 #endif
@@ -1773,6 +1812,7 @@ Java_com_zoffcc_applications_ffmpegav_AVActivity_ffmpegav_1open_1video_1in_1devi
         reset_video_in_values();
         (*env)->ReleaseStringUTFChars(env, deviceformat, deviceformat_cstr);
         (*env)->ReleaseStringUTFChars(env, inputname, inputname_cstr);
+        pthread_mutex_unlock(&apicalls___mutex);
         return -1;
 #endif
     }
@@ -1798,6 +1838,7 @@ Java_com_zoffcc_applications_ffmpegav_AVActivity_ffmpegav_1open_1video_1in_1devi
             reset_video_in_values();
             (*env)->ReleaseStringUTFChars(env, deviceformat, deviceformat_cstr);
             (*env)->ReleaseStringUTFChars(env, inputname, inputname_cstr);
+            pthread_mutex_unlock(&apicalls___mutex);
             return -1;
         }
 #else
@@ -1805,6 +1846,7 @@ Java_com_zoffcc_applications_ffmpegav_AVActivity_ffmpegav_1open_1video_1in_1devi
         reset_video_in_values();
         (*env)->ReleaseStringUTFChars(env, deviceformat, deviceformat_cstr);
         (*env)->ReleaseStringUTFChars(env, inputname, inputname_cstr);
+        pthread_mutex_unlock(&apicalls___mutex);
         return -1;
 #endif
     }
@@ -1825,6 +1867,7 @@ Java_com_zoffcc_applications_ffmpegav_AVActivity_ffmpegav_1open_1video_1in_1devi
                 (*env)->ReleaseStringUTFChars(env, deviceformat, deviceformat_cstr);
                 (*env)->ReleaseStringUTFChars(env, inputname, inputname_cstr);
                 free(inputname_cstr_with_video_prepended);
+                pthread_mutex_unlock(&apicalls___mutex);
                 return -1;
             }
             free(inputname_cstr_with_video_prepended);
@@ -1835,12 +1878,14 @@ Java_com_zoffcc_applications_ffmpegav_AVActivity_ffmpegav_1open_1video_1in_1devi
             reset_video_in_values();
             (*env)->ReleaseStringUTFChars(env, deviceformat, deviceformat_cstr);
             (*env)->ReleaseStringUTFChars(env, inputname, inputname_cstr);
+            pthread_mutex_unlock(&apicalls___mutex);
             return -1;
         }
 #else
         reset_video_in_values();
         (*env)->ReleaseStringUTFChars(env, deviceformat, deviceformat_cstr);
         (*env)->ReleaseStringUTFChars(env, inputname, inputname_cstr);
+        pthread_mutex_unlock(&apicalls___mutex);
         return -1;
 #endif
     }
@@ -1852,6 +1897,7 @@ Java_com_zoffcc_applications_ffmpegav_AVActivity_ffmpegav_1open_1video_1in_1devi
         reset_video_in_values();
         (*env)->ReleaseStringUTFChars(env, deviceformat, deviceformat_cstr);
         (*env)->ReleaseStringUTFChars(env, inputname, inputname_cstr);
+        pthread_mutex_unlock(&apicalls___mutex);
         return -1;
     }
 
@@ -1911,11 +1957,14 @@ Java_com_zoffcc_applications_ffmpegav_AVActivity_ffmpegav_1open_1video_1in_1devi
         reset_video_in_values();
         (*env)->ReleaseStringUTFChars(env, deviceformat, deviceformat_cstr);
         (*env)->ReleaseStringUTFChars(env, inputname, inputname_cstr);
+        pthread_mutex_unlock(&apicalls___mutex);
         return -1;
     }
 
     (*env)->ReleaseStringUTFChars(env, deviceformat, deviceformat_cstr);
     (*env)->ReleaseStringUTFChars(env, inputname, inputname_cstr);
+    video_device_open = true;
+    pthread_mutex_unlock(&apicalls___mutex);
     return 0;
 }
 
@@ -1931,9 +1980,19 @@ Java_com_zoffcc_applications_ffmpegav_AVActivity_ffmpegav_1open_1audio_1in_1devi
     {
         return -1;
     }
+
+    pthread_mutex_lock(&apicalls___mutex);
+
+    if (audio_device_open == true)
+    {
+        pthread_mutex_unlock(&apicalls___mutex);
+        return -1;
+    }
+
     const char *deviceformat_cstr = (*env)->GetStringUTFChars(env, deviceformat, NULL);
     if (deviceformat_cstr == NULL)
     {
+        pthread_mutex_unlock(&apicalls___mutex);
         return -1;
     }
     printf("wanted_audio_in_device=%s\n", deviceformat_cstr);
@@ -1941,6 +2000,7 @@ Java_com_zoffcc_applications_ffmpegav_AVActivity_ffmpegav_1open_1audio_1in_1devi
     const char *inputname_cstr = (*env)->GetStringUTFChars(env, inputname, NULL);
     if (inputname_cstr == NULL)
     {
+        pthread_mutex_unlock(&apicalls___mutex);
         return -1;
     }
     printf("wanted_audio_in_input=%s\n", inputname_cstr);
@@ -1951,6 +2011,7 @@ Java_com_zoffcc_applications_ffmpegav_AVActivity_ffmpegav_1open_1audio_1in_1devi
         reset_audio_in_values();
         (*env)->ReleaseStringUTFChars(env, deviceformat, deviceformat_cstr);
         (*env)->ReleaseStringUTFChars(env, inputname, inputname_cstr);
+        pthread_mutex_unlock(&apicalls___mutex);
         return -1;
     }
 
@@ -1978,6 +2039,7 @@ Java_com_zoffcc_applications_ffmpegav_AVActivity_ffmpegav_1open_1audio_1in_1devi
                 (*env)->ReleaseStringUTFChars(env, deviceformat, deviceformat_cstr);
                 (*env)->ReleaseStringUTFChars(env, inputname, inputname_cstr);
                 free(inputname_cstr_with_audio_prepended);
+                pthread_mutex_unlock(&apicalls___mutex);
                 return -1;
             }
             free(inputname_cstr_with_audio_prepended);
@@ -1988,12 +2050,14 @@ Java_com_zoffcc_applications_ffmpegav_AVActivity_ffmpegav_1open_1audio_1in_1devi
             reset_audio_in_values();
             (*env)->ReleaseStringUTFChars(env, deviceformat, deviceformat_cstr);
             (*env)->ReleaseStringUTFChars(env, inputname, inputname_cstr);
+            pthread_mutex_unlock(&apicalls___mutex);
             return -1;
         }
 #else
         reset_audio_in_values();
         (*env)->ReleaseStringUTFChars(env, deviceformat, deviceformat_cstr);
         (*env)->ReleaseStringUTFChars(env, inputname, inputname_cstr);
+        pthread_mutex_unlock(&apicalls___mutex);
         return -1;
 #endif
     }
@@ -2005,6 +2069,7 @@ Java_com_zoffcc_applications_ffmpegav_AVActivity_ffmpegav_1open_1audio_1in_1devi
         reset_audio_in_values();
         (*env)->ReleaseStringUTFChars(env, deviceformat, deviceformat_cstr);
         (*env)->ReleaseStringUTFChars(env, inputname, inputname_cstr);
+        pthread_mutex_unlock(&apicalls___mutex);
         return -1;
     }
 
@@ -2064,16 +2129,25 @@ Java_com_zoffcc_applications_ffmpegav_AVActivity_ffmpegav_1open_1audio_1in_1devi
         reset_audio_in_values();
         (*env)->ReleaseStringUTFChars(env, deviceformat, deviceformat_cstr);
         (*env)->ReleaseStringUTFChars(env, inputname, inputname_cstr);
+        pthread_mutex_unlock(&apicalls___mutex);
         return -1;
     }
 
     (*env)->ReleaseStringUTFChars(env, deviceformat, deviceformat_cstr);
     (*env)->ReleaseStringUTFChars(env, inputname, inputname_cstr);
+    audio_device_open = true;
+    pthread_mutex_unlock(&apicalls___mutex);
     return 0;
 }
 
 JNIEXPORT jint JNICALL Java_com_zoffcc_applications_ffmpegav_AVActivity_ffmpegav_1start_1video_1in_1capture(JNIEnv *env, jobject thiz)
 {
+    pthread_mutex_lock(&apicalls___mutex);
+    if ((video_device_open == false) || (global_video_in_capture_running == true))
+    {
+        pthread_mutex_unlock(&apicalls___mutex);
+        return -1;
+    }
     global_video_in_capture_running = true;
     // start capture thread
     if (pthread_create(&ffmpeg_thread_video_in_capture, NULL, ffmpeg_thread_video_in_capture_func, NULL) != 0)
@@ -2086,13 +2160,22 @@ JNIEXPORT jint JNICALL Java_com_zoffcc_applications_ffmpegav_AVActivity_ffmpegav
         pthread_setname_np(ffmpeg_thread_video_in_capture, "t_ff_vic");
 #endif
         printf("ffmpeg Video Capture Thread successfully created\n");
+        pthread_mutex_unlock(&apicalls___mutex);
         return 0;
     }
+    pthread_mutex_unlock(&apicalls___mutex);
     return -1;
 }
 
 JNIEXPORT jint JNICALL Java_com_zoffcc_applications_ffmpegav_AVActivity_ffmpegav_1start_1audio_1in_1capture(JNIEnv *env, jobject thiz)
 {
+    pthread_mutex_lock(&apicalls___mutex);
+    if ((audio_device_open == false) || (global_audio_in_capture_running == true))
+    {
+        pthread_mutex_unlock(&apicalls___mutex);
+        return -1;
+    }
+
     global_audio_in_capture_running = true;
     // start capture thread
     if (pthread_create(&ffmpeg_thread_audio_in_capture, NULL, ffmpeg_thread_audio_in_capture_func, NULL) != 0)
@@ -2105,30 +2188,78 @@ JNIEXPORT jint JNICALL Java_com_zoffcc_applications_ffmpegav_AVActivity_ffmpegav
         pthread_setname_np(ffmpeg_thread_audio_in_capture, "t_ff_aic");
 #endif
         printf("ffmpeg Audio Capture Thread successfully created\n");
+        pthread_mutex_unlock(&apicalls___mutex);
         return 0;
     }
+    pthread_mutex_unlock(&apicalls___mutex);
     return -1;
+}
+
+
+static int stop_audio_in_capture(bool need_lock)
+{
+    printf("stop_audio_in_capture\n");
+    if (need_lock){pthread_mutex_lock(&apicalls___mutex);}
+    if ((audio_device_open == false) || (global_audio_in_capture_running == false))
+    {
+        if (need_lock){pthread_mutex_unlock(&apicalls___mutex);}
+        printf("stop_audio_in_capture:res=-1\n");
+        return -1;
+    }
+    global_audio_in_capture_running = false;
+    // wait for capture thread to finish
+    pthread_join(ffmpeg_thread_audio_in_capture, NULL);
+    if (need_lock){pthread_mutex_unlock(&apicalls___mutex);}
+    printf("stop_audio_in_capture:res=OK\n");
+    return 0;
 }
 
 JNIEXPORT jint JNICALL Java_com_zoffcc_applications_ffmpegav_AVActivity_ffmpegav_1stop_1audio_1in_1capture(JNIEnv *env, jobject thiz)
 {
-    global_audio_in_capture_running = false;
+    return stop_audio_in_capture(true);
+}
+
+static int stop_video_in_capture(bool need_lock)
+{
+    printf("stop_video_in_capture\n");
+    if (need_lock){pthread_mutex_lock(&apicalls___mutex);}
+    if ((video_device_open == false) || (global_video_in_capture_running == false))
+    {
+        if (need_lock){pthread_mutex_unlock(&apicalls___mutex);}
+        printf("stop_video_in_capture:res=-1\n");
+        return -1;
+    }
+    global_video_in_capture_running = false;
     // wait for capture thread to finish
-    pthread_join(ffmpeg_thread_audio_in_capture, NULL);
+    pthread_join(ffmpeg_thread_video_in_capture, NULL);
+    if (need_lock){pthread_mutex_unlock(&apicalls___mutex);}
+    printf("stop_video_in_capture:res=OK\n");
     return 0;
 }
 
 JNIEXPORT jint JNICALL Java_com_zoffcc_applications_ffmpegav_AVActivity_ffmpegav_1stop_1video_1in_1capture(JNIEnv *env, jobject thiz)
 {
-    global_video_in_capture_running = false;
-    // wait for capture thread to finish
-    pthread_join(ffmpeg_thread_video_in_capture, NULL);
-    return 0;
+    return stop_video_in_capture(true);
 }
 
 JNIEXPORT jint JNICALL
 Java_com_zoffcc_applications_ffmpegav_AVActivity_ffmpegav_1close_1audio_1in_1device(JNIEnv *env, jobject thiz)
 {
+    pthread_mutex_lock(&apicalls___mutex);
+
+    if (audio_device_open == false)
+    {
+        pthread_mutex_unlock(&apicalls___mutex);
+        return -1;
+    }
+
+    if (global_audio_in_capture_running == true)
+    {
+        // HINT: we need to stop capturing first
+        printf("stopping audio first\n");
+        stop_audio_in_capture(false);
+    }
+
     if (global_audio_codec_ctx != NULL) {
         avcodec_free_context(&global_audio_codec_ctx);
     }
@@ -2143,12 +2274,29 @@ Java_com_zoffcc_applications_ffmpegav_AVActivity_ffmpegav_1close_1audio_1in_1dev
     options_audio = NULL;
     audio_codec = NULL;
     audio_stream_index = -1;
+    audio_device_open = false;
+    pthread_mutex_unlock(&apicalls___mutex);
     return 0;
 }
 
 JNIEXPORT jint JNICALL
 Java_com_zoffcc_applications_ffmpegav_AVActivity_ffmpegav_1close_1video_1in_1device(JNIEnv *env, jobject thiz)
 {
+    pthread_mutex_lock(&apicalls___mutex);
+
+    if (video_device_open == false)
+    {
+        pthread_mutex_unlock(&apicalls___mutex);
+        return -1;
+    }
+
+    if (global_video_in_capture_running == true)
+    {
+        // HINT: we need to stop capturing first
+        printf("stopping video first\n");
+        stop_video_in_capture(false);
+    }
+
     if (global_video_codec_ctx != NULL) {
         avcodec_free_context(&global_video_codec_ctx);
     }
@@ -2163,6 +2311,8 @@ Java_com_zoffcc_applications_ffmpegav_AVActivity_ffmpegav_1close_1video_1in_1dev
     options_video = NULL;
     video_codec = NULL;
     video_stream_index = -1;
+    video_device_open = false;
+    pthread_mutex_unlock(&apicalls___mutex);
     return 0;
 }
 
