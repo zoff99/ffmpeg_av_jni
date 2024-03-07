@@ -39,7 +39,7 @@ export ARCH
 ## ---------------------------
 pwd
 ls -al
-rm -fv libffmpeg_av_jni*
+rm -fv libffmpeg_av_jni* ffmpeg_av_jni.dll
 ls -al
 ## ---------------------------
 
