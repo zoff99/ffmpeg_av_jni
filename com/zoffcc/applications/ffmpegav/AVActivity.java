@@ -1105,7 +1105,7 @@ public class AVActivity {
         t8.start();
         try
         {
-            Thread.sleep(100000);
+            Thread.sleep(10000);
         }
         catch(Exception e)
         {
