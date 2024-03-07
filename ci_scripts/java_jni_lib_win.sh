@@ -98,4 +98,4 @@ ls -al ffmpeg_av_jni.dll || exit 1
 pwd
 file ffmpeg_av_jni.dll
 
-java -cp . -Djava.library.path=$(pwd) com.zoffcc.applications.ffmpegav.AVActivity
+# can not run test, we are running in linux # java -cp . -Djava.library.path=$(pwd) com.zoffcc.applications.ffmpegav.AVActivity
