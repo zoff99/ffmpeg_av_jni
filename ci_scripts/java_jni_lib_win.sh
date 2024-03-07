@@ -39,7 +39,8 @@ export ARCH
 ## ---------------------------
 pwd
 ls -al
-
+rm -fv libffmpeg_av_jni*
+ls -al
 ## ---------------------------
 
 echo "JAVADIR1------------------"
@@ -97,4 +98,4 @@ ls -al ffmpeg_av_jni.dll || exit 1
 pwd
 file ffmpeg_av_jni.dll
 
-# -------------- now compile the JNI lib ----------------------
+java -cp . -Djava.library.path=$(pwd) com.zoffcc.applications.ffmpegav.AVActivity
