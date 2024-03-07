@@ -56,7 +56,8 @@ export WGET_OPTIONS
 ## ---------------------------
 pwd
 ls -al
-
+rm -fv libffmpeg_av_jni*
+ls -al
 ## ---------------------------
 
 echo "JAVADIR1------------------"
@@ -152,3 +153,4 @@ ls -al libffmpeg_av_jni.so || exit 1
 pwd
 file libffmpeg_av_jni.so
 
+java -cp . -Djava.library.path=$(pwd) com.zoffcc.applications.ffmpegav.AVActivity
