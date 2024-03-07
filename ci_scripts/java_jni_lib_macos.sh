@@ -156,5 +156,7 @@ file libffmpeg_av_jni.jnilib
 
 pwd
 find . -name libffmpeg_av_jni.jnilib
+# copy also to the mac M1 name for testing on that platform (its a bit of a hack)
+cp -av libffmpeg_av_jni.jnilib libffmpeg_av_jni_arm64.jnilib
 
 java -cp . -Djava.library.path=$(pwd) com.zoffcc.applications.ffmpegav.AVActivity
