@@ -3,7 +3,7 @@ FROM ubuntu:20.04
 RUN echo x
 RUN export DEBIAN_FRONTEND=noninteractive ; apt update && apt install -y make    yasm curl   wget    git    coreutils    autoconf    libtool    pkg-config    libsodium-dev     nano    vim
 RUN mkdir -p /workspace2/build/
-RUN cd /workspace2/build/;FFMPEG_VERSION=n6.1 ; FFMPEG_FILENAME="$FFMPEG_VERSION.tar.gz" ;rm -f "ffmpeg"*.tar.*;wget "https://github.com/FFmpeg/FFmpeg/archive/refs/tags/$FFMPEG_FILENAME" -O "ffmpeg_""$FFMPEG_FILENAME";tar -xf "ffmpeg_""$FFMPEG_FILENAME";rm -f "ffmpeg"*.tar.*
+RUN cd /workspace2/build/;FFMPEG_VERSION=n6.1.1 ; FFMPEG_FILENAME="$FFMPEG_VERSION.tar.gz" ;rm -f "ffmpeg"*.tar.*;wget "https://github.com/FFmpeg/FFmpeg/archive/refs/tags/$FFMPEG_FILENAME" -O "ffmpeg_""$FFMPEG_FILENAME";tar -xf "ffmpeg_""$FFMPEG_FILENAME";rm -f "ffmpeg"*.tar.*
 RUN export DEBIAN_FRONTEND=noninteractive ; apt install -y yasm \
           openjdk-17-jdk \
           openjdk-17-jdk-headless \
@@ -17,7 +17,7 @@ RUN ls -al /usr/x86_64-w64-mingw32/include
 RUN ls -al /usr/x86_64-w64-mingw32/lib/libdsound.a
 
 RUN cd /workspace2/build/ && mkdir -p /workspace2/build/inst/ && \
-    cd ./FFmpeg-n6.1/ && \
+    cd ./FFmpeg-n6.1.1/ && \
     ARCH="x86_64" && \
     export ARCH && \
     ./configure  \
