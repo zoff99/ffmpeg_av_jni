@@ -153,4 +153,10 @@ ls -al libffmpeg_av_jni.so || exit 1
 pwd
 file libffmpeg_av_jni.so
 
-java -cp . -Djava.library.path=$(pwd) com.zoffcc.applications.ffmpegav.AVActivity
+if [ "$1""x" == "raspix" ]; then
+  echo "*** RASPI ***"
+  echo "no java test on raspi"
+else
+  java -cp . -Djava.library.path=$(pwd) com.zoffcc.applications.ffmpegav.AVActivity
+fi
+
