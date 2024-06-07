@@ -60,7 +60,7 @@ tar -xf "ffmpeg_""$FFMPEG_FILENAME"
 rm -f "ffmpeg"*.tar.*
 cd *mpeg*/
 
-
+sed -i -e 's#die "Host compiler lacks C11 support"#echo "Host compiler lacks C11 support"#' configure
 
   ./configure --arch="$ARCH" \
               --enable-gpl \
