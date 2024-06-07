@@ -28,6 +28,7 @@
 #include "libavfilter/buffersrc.h"
 #include <libavformat/avformat.h>
 #include <libavutil/avutil.h>
+#include "libavutil/channel_layout.h"
 #include <libavutil/imgutils.h>
 #include <libavutil/time.h>
 #include <libswresample/swresample.h>
@@ -333,8 +334,9 @@ int output_width = 640;
 int output_height = 480;
 
 const int audio_frame_size_ms = 60;
-const int out_channels = 1; // keep in sync with `out_channel_layout`
-const uint64_t out_channel_layout = AV_CH_LAYOUT_MONO; // AV_CH_LAYOUT_MONO or AV_CH_LAYOUT_STEREO;
+const int out_channels = 1;
+const AVChannelLayout chlayout_mono = AV_CHANNEL_LAYOUT_MONO;
+const AVChannelLayout chlayout_stereo = AV_CHANNEL_LAYOUT_STEREO;
 const int out_bytes_per_sample = 2; // 2 byte per PCM16 sample
 const int out_samples = audio_frame_size_ms * 48; // X ms @ 48000Hz
 const int out_sample_rate = 48000; // fixed at 48000Hz
@@ -809,16 +811,10 @@ static void *ffmpeg_thread_audio_in_capture_func(void *data)
         return NULL;
     }
 
-    fprintf(stderr, "AA:audio_codec_ctx->channel_layout: %ld AV_CH_LAYOUT_STEREO: %lld default: %ld\n",
-        global_audio_codec_ctx->channel_layout, (long long)AV_CH_LAYOUT_STEREO,
-        av_get_default_channel_layout(global_audio_codec_ctx->channel_layout));
-
-    if (global_audio_codec_ctx->channel_layout == 0)
-    {
-        fprintf(stderr, "AA:audio_codec_ctx->channel_layout is zero. we assume AV_CH_LAYOUT_STEREO\n");
-        // HINT: no idea what to do here. just guess STEREO?
-        global_audio_codec_ctx->channel_layout = AV_CH_LAYOUT_STEREO;
-    }
+    fprintf(stderr, "AA:audio_codec_ctx->ch_layout numchannels: %d mask: %ld AV_CH_LAYOUT_STEREO: %lld\n",
+        global_audio_codec_ctx->ch_layout.nb_channels,
+        global_audio_codec_ctx->ch_layout.u.mask,
+        (long long)AV_CH_LAYOUT_STEREO);
 
     fprintf(stderr, "AA:audio_codec_ctx->frame_size: %d\n",
         formatContext_audio->streams[audio_stream_index]->codecpar->frame_size);
@@ -826,17 +822,18 @@ static void *ffmpeg_thread_audio_in_capture_func(void *data)
     fprintf(stderr, "AA:audio_codec_ctx->sample_rate: %d\n",
         formatContext_audio->streams[audio_stream_index]->codecpar->sample_rate);
 
-
-    SwrContext *swr_ctx = swr_alloc_set_opts(NULL,
-                                 out_channel_layout, AV_SAMPLE_FMT_S16, out_sample_rate,
-                                 global_audio_codec_ctx->channel_layout,
+    SwrContext *swr_ctx = NULL;
+    int opts2_alloc_result = swr_alloc_set_opts2(&swr_ctx,
+                                 &chlayout_mono, AV_SAMPLE_FMT_S16, out_sample_rate,
+                                 &global_audio_codec_ctx->ch_layout,
                                  formatContext_audio->streams[audio_stream_index]->codecpar->format,
                                  formatContext_audio->streams[audio_stream_index]->codecpar->sample_rate,
                                  0, NULL);
-    if (!swr_ctx) {
+
+    if ((opts2_alloc_result != 0) || (!swr_ctx)) {
         fprintf(stderr, "AA:Could not allocate resampler context\n");
-        fprintf(stderr, "AA:%d %d %d %ld %d %d\n", (int)out_channel_layout,
-                AV_SAMPLE_FMT_S16, out_sample_rate, global_audio_codec_ctx->channel_layout,
+        fprintf(stderr, "AA:%d %d %d %d %d %d\n", (int)chlayout_mono.nb_channels,
+                AV_SAMPLE_FMT_S16, out_sample_rate, (int)global_audio_codec_ctx->ch_layout.nb_channels,
                 global_audio_codec_ctx->sample_fmt, global_audio_codec_ctx->sample_rate);
         av_frame_free(&frame);
         return NULL;
@@ -844,16 +841,16 @@ static void *ffmpeg_thread_audio_in_capture_func(void *data)
 
     if (swr_init(swr_ctx) < 0) {
         fprintf(stderr, "AA:Could not initialize resampler context\n");
-        fprintf(stderr, "AA:%d %d %d %ld %d %d\n", (int)out_channel_layout,
-                AV_SAMPLE_FMT_S16, out_sample_rate, global_audio_codec_ctx->channel_layout,
+        fprintf(stderr, "AA:%d %d %d %d %d %d\n", (int)chlayout_mono.nb_channels,
+                AV_SAMPLE_FMT_S16, out_sample_rate, (int)global_audio_codec_ctx->ch_layout.nb_channels,
                 global_audio_codec_ctx->sample_fmt, global_audio_codec_ctx->sample_rate);
         av_frame_free(&frame);
         swr_free(&swr_ctx);
         return NULL;
     }
 
-    fprintf(stderr, "AA:Audio Config:%d %d %d %ld %d %d\n", (int)out_channel_layout,
-            AV_SAMPLE_FMT_S16, out_sample_rate, global_audio_codec_ctx->channel_layout,
+    fprintf(stderr, "AA:Audio Config:%d %d %d %d %d %d\n", (int)chlayout_mono.nb_channels,
+            AV_SAMPLE_FMT_S16, out_sample_rate, global_audio_codec_ctx->ch_layout.nb_channels,
             global_audio_codec_ctx->sample_fmt, global_audio_codec_ctx->sample_rate);
 
     JNIEnv *jnienv2 = NULL;
@@ -930,7 +927,7 @@ static void *ffmpeg_thread_audio_in_capture_func(void *data)
                     "sample_rate=%d:sample_fmt=%s:channel_layout=0x%"PRIx64,
                     global_audio_codec_ctx->sample_rate,
                     av_get_sample_fmt_name(global_audio_codec_ctx->sample_fmt),
-                    global_audio_codec_ctx->channel_layout
+                    global_audio_codec_ctx->ch_layout.u.mask
                     );
             fprintf(stderr, "abuffer: %s\n", args_strbuf);
             int err = avfilter_graph_create_filter(&abuffer_ctx, abuffer, NULL, args_strbuf, NULL, filter_graph);
@@ -957,7 +954,7 @@ static void *ffmpeg_thread_audio_in_capture_func(void *data)
                     "sample_fmts=%s:sample_rates=%d:channel_layouts=0x%"PRIx64,
                     av_get_sample_fmt_name(global_audio_codec_ctx->sample_fmt),
                     global_audio_codec_ctx->sample_rate,
-                    global_audio_codec_ctx->channel_layout
+                    global_audio_codec_ctx->ch_layout.u.mask
                     );
             err = avfilter_init_str(aformat_ctx, args_strbuf);
             if (err < 0) {
@@ -1042,20 +1039,6 @@ static void *ffmpeg_thread_audio_in_capture_func(void *data)
                                 break;
                             }
 
-                            /*
-                            fprintf(stderr, "frame: %d %d %d %s %s\n",
-                                    frame->nb_samples,
-                                    (int)frame->channel_layout,
-                                    frame->channels,
-                                    av_get_sample_fmt_name(frame->format),
-                                    av_get_sample_fmt_name(global_audio_codec_ctx->sample_fmt));
-
-                            fprintf(stderr, "oframe: %d %d %d %s\n",
-                                    oframe->nb_samples,
-                                    (int)oframe->channel_layout,
-                                    oframe->channels,
-                                    av_get_sample_fmt_name(oframe->format));
-                            */
                             num_samples = av_rescale_rnd(oframe->nb_samples,
                                                                 out_sample_rate,
                                                                 global_audio_codec_ctx->sample_rate,
@@ -1664,8 +1647,8 @@ static void print_codec_parameters_audio(AVCodecParameters *codecpar, const char
         printf("%sSample Format: %s\n", text_prefix, av_get_sample_fmt_name(codecpar->format));
     }
     printf("%sSample Rate: %d\n", text_prefix, codecpar->sample_rate);
-    printf("%sChannels: %d\n", text_prefix, codecpar->channels);
-    printf("%sChannel Layout: %ld\n", text_prefix, codecpar->channel_layout);
+    printf("%sChannels: %d\n", text_prefix, codecpar->ch_layout.nb_channels);
+    printf("%sChannel Layout: %ld\n", text_prefix, codecpar->ch_layout.u.mask);
     printf("%sBit Rate: %ld\n", text_prefix, codecpar->bit_rate);
     printf("%sBlock Align: %d\n", text_prefix, codecpar->block_align);
     printf("%sFrame Size: %d\n", text_prefix, codecpar->frame_size);
