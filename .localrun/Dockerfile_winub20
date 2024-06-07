@@ -1,5 +1,5 @@
 # syntax=docker/dockerfile:1
-FROM ubuntu:20.04
+FROM ubuntu:22.04
 RUN echo x
 RUN export DEBIAN_FRONTEND=noninteractive ; apt update && apt install -y make    yasm curl   wget    git    coreutils    autoconf    libtool    pkg-config    libsodium-dev     nano    vim
 RUN mkdir -p /workspace2/build/
@@ -58,6 +58,7 @@ RUN cd /workspace2/build/ && mkdir -p /workspace2/build/inst/ && \
               --disable-bsfs \
               --enable-swscale \
               --enable-swresample \
+              --enable-indev=openal \
               --enable-indev=dshow \
               --enable-indev=gdigrab \
               --enable-indev=vfwcap \
