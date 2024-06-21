@@ -893,9 +893,9 @@ static void *ffmpeg_thread_audio_in_capture_func(void *data)
         AVFilterContext *noisefilter_ctx = NULL;
         static char args_strbuf[1512];
         if (resources_dir_path) {
-            snprintf(args_strbuf, sizeof(args_strbuf), "m=%smp.rnnn", resources_dir_path);
+            snprintf(args_strbuf, sizeof(args_strbuf), "m=%slq.rnnn", resources_dir_path);
         } else {
-            snprintf(args_strbuf, sizeof(args_strbuf), "m=mp.rnnn");
+            snprintf(args_strbuf, sizeof(args_strbuf), "m=lq.rnnn");
         }
         fprintf(stderr, "arnndn filter: %s\n", args_strbuf);
 
