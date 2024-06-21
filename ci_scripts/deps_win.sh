@@ -110,6 +110,7 @@ sed -i -e 's#die "Host compiler lacks C11 support"#echo "Host compiler lacks C11
               --enable-demuxer=pcm_s16le \
               --enable-decoder=pcm_s16le \
               --enable-filter=volume \
+              --enable-filter=speechnorm \
               --enable-filter=arnndn \
               --enable-filter=afftdn \
               --enable-filter=aresample \
