@@ -121,6 +121,7 @@ export LDFLAGS=" "
               --enable-decoder=pcm_s16le \
               --enable-filter=volume \
               --enable-filter=speechnorm \
+              --enable-filter=loudnorm \
               --enable-filter=arnndn \
               --enable-filter=afftdn \
               --enable-filter=aresample || exit 1
@@ -176,6 +177,8 @@ export LDFLAGS=" "
               --enable-indev=v4l2 \
               --enable-libpulse \
               --enable-filter=volume \
+              --enable-filter=speechnorm \
+              --enable-filter=loudnorm \
               --enable-filter=arnndn \
               --enable-filter=afftdn \
               --enable-filter=aresample \

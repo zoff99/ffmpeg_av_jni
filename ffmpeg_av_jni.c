@@ -879,6 +879,16 @@ static void *ffmpeg_thread_audio_in_capture_func(void *data)
     } else {
 
         // ---------- here is the actual filter ----------
+        //
+        // HINT: get filter files from: https://github.com/GregorR/rnnoise-models
+        //
+        // bd.rnnn  Voice in a reasonable recording environment. Fans, AC, computers, etc.
+        // cb.rnnn  General use in a reasonable recording environment. Fans, AC, computers, etc.
+        // lq.rnnn  Voice in a noisy recording environment.
+        // mp.rnnn  General use in a noisy recording environment.
+        // sh.rnnn  Speech in a reasonable recording environment. Fans, AC, computers, etc.
+        //            Note that "speech" means speech, not other human sounds; laughter, coughing, etc are not included.
+        //
         AVFilter *noisefilter = avfilter_get_by_name("arnndn");
         AVFilterContext *noisefilter_ctx = NULL;
         static char args_strbuf[1512];
