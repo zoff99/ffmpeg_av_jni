@@ -955,6 +955,7 @@ static void *ffmpeg_thread_audio_in_capture_func(void *data)
             }
             // ---------- abuffer ----------
 
+#if 0
             // -------- loudnorm 1 filter --------
             AVFilter *loudnorm1filter = avfilter_get_by_name("loudnorm");
             if (!loudnorm1filter) {
@@ -990,6 +991,7 @@ static void *ffmpeg_thread_audio_in_capture_func(void *data)
                 fprintf(stderr, "ERROR: error initializing speechnorm filter\n");
             }
             // -------- speechnorm filter --------
+#endif
 
             // ---------- aformat ----------
             /* Create the aformat filter;
@@ -1034,13 +1036,10 @@ static void *ffmpeg_thread_audio_in_capture_func(void *data)
             //   abuffersink: This provides the endpoint where you can read the samples after
             //                they have passed through the filter chain.
             //
-            // input ==> abuffer_ctx -> noisefilter_ctx -> loudnorm1filter_ctx -> speechnormfilter_ctx -> loudnorm2filter_ctx -> aformat_ctx -> abuffersink_ctx ==> output
+            // input ==> abuffer_ctx -> noisefilter_ctx -> aformat_ctx -> abuffersink_ctx ==> output
             //
             if (err >= 0) err = avfilter_link(abuffer_ctx, 0, noisefilter_ctx, 0);
-            if (err >= 0) err = avfilter_link(noisefilter_ctx, 0, loudnorm1filter_ctx, 0);
-            if (err >= 0) err = avfilter_link(loudnorm1filter_ctx, 0, speechnormfilter_ctx, 0);
-            if (err >= 0) err = avfilter_link(speechnormfilter_ctx, 0, loudnorm2filter_ctx, 0);
-            if (err >= 0) err = avfilter_link(loudnorm2filter_ctx, 0, aformat_ctx, 0);
+            if (err >= 0) err = avfilter_link(noisefilter_ctx, 0, aformat_ctx, 0);
             if (err >= 0) err = avfilter_link(aformat_ctx, 0, abuffersink_ctx, 0);
             if (err < 0) {
                 fprintf(stderr, "ERROR: error connecting filters\n");
