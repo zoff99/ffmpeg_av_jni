@@ -917,6 +917,7 @@ static void *ffmpeg_thread_audio_in_capture_func(void *data)
         fprintf(stderr, "volume: %s\n", strbuf);
         */
         // -------- volume filter --------
+
         int err_filter = avfilter_graph_create_filter(&noisefilter_ctx, noisefilter, NULL, args_strbuf, NULL, filter_graph);
         if (err_filter < 0) {
             fprintf(stderr, "ERROR: error initializing noise filter\n");
@@ -945,6 +946,42 @@ static void *ffmpeg_thread_audio_in_capture_func(void *data)
                 fprintf(stderr, "ERROR: error initializing abuffer filter\n");
             }
             // ---------- abuffer ----------
+
+            // -------- loudnorm 1 filter --------
+            AVFilter *loudnorm1filter = avfilter_get_by_name("loudnorm");
+            if (!loudnorm1filter) {
+                fprintf(stderr, "ERROR: Could not find the loudnorm1 filter\n");
+            }
+            AVFilterContext *loudnorm1filter_ctx = NULL;
+            int err2 = avfilter_graph_create_filter(&loudnorm1filter_ctx, loudnorm1filter, NULL, NULL, NULL, filter_graph);
+            if (err2 < 0) {
+                fprintf(stderr, "ERROR: error initializing loudnorm1 filter\n");
+            }
+            // -------- loudnorm 1 filter --------
+
+            // -------- loudnorm 2 filter --------
+            AVFilter *loudnorm2filter = avfilter_get_by_name("loudnorm");
+            if (!loudnorm2filter) {
+                fprintf(stderr, "ERROR: Could not find the loudnorm2 filter\n");
+            }
+            AVFilterContext *loudnorm2filter_ctx = NULL;
+            int err3 = avfilter_graph_create_filter(&loudnorm2filter_ctx, loudnorm2filter, NULL, NULL, NULL, filter_graph);
+            if (err3 < 0) {
+                fprintf(stderr, "ERROR: error initializing loudnorm2 filter\n");
+            }
+            // -------- loudnorm 2 filter --------
+
+            // -------- speechnorm filter --------
+            AVFilter *speechnormfilter = avfilter_get_by_name("speechnorm");
+            if (!speechnormfilter) {
+                fprintf(stderr, "ERROR: Could not find the speechnorm filter\n");
+            }
+            AVFilterContext *speechnormfilter_ctx = NULL;
+            int err4 = avfilter_graph_create_filter(&speechnormfilter_ctx, speechnormfilter, NULL, NULL, NULL, filter_graph);
+            if (err4 < 0) {
+                fprintf(stderr, "ERROR: error initializing speechnorm filter\n");
+            }
+            // -------- speechnorm filter --------
 
             // ---------- aformat ----------
             /* Create the aformat filter;
@@ -983,10 +1020,13 @@ static void *ffmpeg_thread_audio_in_capture_func(void *data)
 
             // *************************
             //
-            // input ==> abuffer_ctx -> noisefilter_ctx -> aformat_ctx -> abuffersink_ctx ==> output
+            // input ==> abuffer_ctx -> noisefilter_ctx -> loudnorm1filter_ctx -> speechnormfilter_ctx -> loudnorm2filter_ctx -> aformat_ctx -> abuffersink_ctx ==> output
             //
             if (err >= 0) err = avfilter_link(abuffer_ctx, 0, noisefilter_ctx, 0);
-            if (err >= 0) err = avfilter_link(noisefilter_ctx, 0, aformat_ctx, 0);
+            if (err >= 0) err = avfilter_link(noisefilter_ctx, 0, loudnorm1filter_ctx, 0);
+            if (err >= 0) err = avfilter_link(loudnorm1filter_ctx, 0, speechnormfilter_ctx, 0);
+            if (err >= 0) err = avfilter_link(speechnormfilter_ctx, 0, loudnorm2filter_ctx, 0);
+            if (err >= 0) err = avfilter_link(loudnorm2filter_ctx, 0, aformat_ctx, 0);
             if (err >= 0) err = avfilter_link(aformat_ctx, 0, abuffersink_ctx, 0);
             if (err < 0) {
                 fprintf(stderr, "ERROR: error connecting filters\n");
