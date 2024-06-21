@@ -933,12 +933,20 @@ static void *ffmpeg_thread_audio_in_capture_func(void *data)
         {
             // ---------- abuffer ----------
             AVFilter *abuffer = avfilter_get_by_name("abuffer");
+            const char *channel_str_mono = "mono";
+            const char *channel_str_stereo = "stereo";
+            char *channel_str;
+            if (global_audio_codec_ctx->ch_layout.nb_channels == 1) {
+                channel_str = channel_str_mono;
+            } else {
+                channel_str = channel_str_stereo;
+            }
             memset(args_strbuf, 0, sizeof(args_strbuf));
             snprintf(args_strbuf, sizeof(args_strbuf),
-                    "sample_rate=%d:sample_fmt=%s:channel_layout=0x%"PRIx64,
+                    "sample_rate=%d:sample_fmt=%s:channel_layout=%s",
                     global_audio_codec_ctx->sample_rate,
                     av_get_sample_fmt_name(global_audio_codec_ctx->sample_fmt),
-                    global_audio_codec_ctx->ch_layout.u.mask
+                    channel_str
                     );
             fprintf(stderr, "abuffer: %s\n", args_strbuf);
             int err = avfilter_graph_create_filter(&abuffer_ctx, abuffer, NULL, args_strbuf, NULL, filter_graph);
@@ -998,10 +1006,10 @@ static void *ffmpeg_thread_audio_in_capture_func(void *data)
             * key1=value1:key2=value2.... */
             memset(args_strbuf, 0, sizeof(args_strbuf));
             snprintf(args_strbuf, sizeof(args_strbuf),
-                    "sample_fmts=%s:sample_rates=%d:channel_layouts=0x%"PRIx64,
+                    "sample_fmts=%s:sample_rates=%d:channel_layouts=%s",
                     av_get_sample_fmt_name(global_audio_codec_ctx->sample_fmt),
                     global_audio_codec_ctx->sample_rate,
-                    global_audio_codec_ctx->ch_layout.u.mask
+                    channel_str
                     );
             err = avfilter_init_str(aformat_ctx, args_strbuf);
             if (err < 0) {
@@ -1014,11 +1022,17 @@ static void *ffmpeg_thread_audio_in_capture_func(void *data)
             int err_abuffersink = avfilter_graph_create_filter(&abuffersink_ctx, abuffersink,
                     NULL, NULL, NULL, filter_graph);
             if (err_abuffersink < 0) {
-                fprintf(stderr, "ERROR: error initializing abuffer filter\n");
+                fprintf(stderr, "ERROR: error initializing abuffersink filter\n");
             }
             // ---------- abuffersink ----------
 
             // *************************
+            //
+            //   abuffer:     This provides the endpoint where you can feed the decoded samples from the input.
+            //   aformat:     This converts the samples to the samplefreq, channel layout,
+            //                  and sample format required by the output.
+            //   abuffersink: This provides the endpoint where you can read the samples after
+            //                they have passed through the filter chain.
             //
             // input ==> abuffer_ctx -> noisefilter_ctx -> loudnorm1filter_ctx -> speechnormfilter_ctx -> loudnorm2filter_ctx -> aformat_ctx -> abuffersink_ctx ==> output
             //
