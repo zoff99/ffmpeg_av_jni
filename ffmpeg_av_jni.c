@@ -899,24 +899,6 @@ static void *ffmpeg_thread_audio_in_capture_func(void *data)
         }
         fprintf(stderr, "arnndn filter: %s\n", args_strbuf);
 
-        /*
-        // -------- afftdn filter --------
-        AVFilter *noisefilter = avfilter_get_by_name("afftdn");
-        AVFilterContext *noisefilter_ctx = NULL;
-        static char strbuf[512];
-        snprintf(strbuf, sizeof(strbuf), "nt=w:om=output");
-        fprintf(stderr, "afftdn filter: %s\n", strbuf);
-        */
-        /*
-        // -------- volume filter --------
-        AVFilter *noisefilter = avfilter_get_by_name("volume");
-        AVFilterContext *noisefilter_ctx = NULL;
-        static char strbuf[512];
-        double vol = 0.20;
-        snprintf(strbuf, sizeof(strbuf), "volume=%f", vol);
-        fprintf(stderr, "volume: %s\n", strbuf);
-        */
-        // -------- volume filter --------
 
         int err_filter = avfilter_graph_create_filter(&noisefilter_ctx, noisefilter, NULL, args_strbuf, NULL, filter_graph);
         if (err_filter < 0) {
@@ -980,18 +962,41 @@ static void *ffmpeg_thread_audio_in_capture_func(void *data)
             }
             // -------- loudnorm 2 filter --------
 
+#endif
+
             // -------- speechnorm filter --------
             AVFilter *speechnormfilter = avfilter_get_by_name("speechnorm");
             if (!speechnormfilter) {
                 fprintf(stderr, "ERROR: Could not find the speechnorm filter\n");
             }
             AVFilterContext *speechnormfilter_ctx = NULL;
-            int err4 = avfilter_graph_create_filter(&speechnormfilter_ctx, speechnormfilter, NULL, NULL, NULL, filter_graph);
+            static char speechnormfilter_strbuf[512];
+            snprintf(speechnormfilter_strbuf, sizeof(speechnormfilter_strbuf), "e=20:c=20:l=1");
+            fprintf(stderr, "volume: %s\n", speechnormfilter_strbuf);
+            int err4 = avfilter_graph_create_filter(&speechnormfilter_ctx, speechnormfilter, NULL, speechnormfilter_strbuf, NULL, filter_graph);
             if (err4 < 0) {
                 fprintf(stderr, "ERROR: error initializing speechnorm filter\n");
             }
             // -------- speechnorm filter --------
-#endif
+
+            // -------- volume filter --------
+            AVFilter *volumefilter = avfilter_get_by_name("volume");
+            if (!volumefilter) {
+                fprintf(stderr, "ERROR: Could not find the volume filter\n");
+            }
+            AVFilterContext *volumefilter_ctx = NULL;
+            static char volumefilter_strbuf[512];
+            // double voln = 2.50;
+            char *vols = "10dB";
+            snprintf(volumefilter_strbuf, sizeof(volumefilter_strbuf), "volume=%s", vols);
+            fprintf(stderr, "volume: %s\n", volumefilter_strbuf);
+
+            int err5 = avfilter_graph_create_filter(&volumefilter_ctx, volumefilter, NULL, volumefilter_strbuf, NULL, filter_graph);
+            if (err5 < 0) {
+                fprintf(stderr, "ERROR: error initializing volume filter\n");
+            }
+            // -------- volume filter --------
+
 
             // ---------- aformat ----------
             /* Create the aformat filter;
@@ -1036,9 +1041,11 @@ static void *ffmpeg_thread_audio_in_capture_func(void *data)
             //   abuffersink: This provides the endpoint where you can read the samples after
             //                they have passed through the filter chain.
             //
-            // input ==> abuffer_ctx -> noisefilter_ctx -> aformat_ctx -> abuffersink_ctx ==> output
+            // input ==> abuffer_ctx -> volumefilter_ctx -> speechnormfilter_ctx -> noisefilter_ctx -> aformat_ctx -> abuffersink_ctx ==> output
             //
-            if (err >= 0) err = avfilter_link(abuffer_ctx, 0, noisefilter_ctx, 0);
+            if (err >= 0) err = avfilter_link(abuffer_ctx, 0, volumefilter_ctx, 0);
+            if (err >= 0) err = avfilter_link(volumefilter_ctx, 0, speechnormfilter_ctx, 0);
+            if (err >= 0) err = avfilter_link(speechnormfilter_ctx, 0, noisefilter_ctx, 0);
             if (err >= 0) err = avfilter_link(noisefilter_ctx, 0, aformat_ctx, 0);
             if (err >= 0) err = avfilter_link(aformat_ctx, 0, abuffersink_ctx, 0);
             if (err < 0) {
