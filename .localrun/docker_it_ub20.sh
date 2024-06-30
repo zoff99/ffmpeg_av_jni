@@ -93,6 +93,7 @@ export CFLAGS=" -fdebug-prefix-map=/workspace2/build=/ -fPIC -O3 -g -std=gnu99 -
 
 faketime "2023-10-10 08:00:00" gcc $CFLAGS \
 -Wall \
+-fsanitize=address -fno-omit-frame-pointer -fsanitize-recover=address -static-libasan \
 -Wno-unused-function \
 -Wno-discarded-qualifiers \
 -Wno-unused-const-variable \
