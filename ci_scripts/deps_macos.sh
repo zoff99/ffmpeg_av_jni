@@ -40,7 +40,7 @@ export CFLAGS="$CFLAGS -fPIC"
 type sudo
 
 # ------- deps verisions ---------
-FFMPEG_VERSION="n7.0.1"
+FFMPEG_VERSION="n7.0.2"
 # ------- deps verisions ---------
 
 # ---------- ffmpeg ---------
