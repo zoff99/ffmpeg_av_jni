@@ -15,7 +15,7 @@ RUN pacman -S --noconfirm make yasm curl wget git coreutils autoconf libtool
 RUN pacman -S --noconfirm extra/jdk17-openjdk
 
 RUN mkdir -p /workspace2/build/
-RUN cd /workspace2/build/;FFMPEG_VERSION="n7.0.1" ; FFMPEG_FILENAME="$FFMPEG_VERSION"".tar.gz" ;rm -f "ffmpeg"*.tar.*;wget "https://github.com/FFmpeg/FFmpeg/archive/refs/tags/$FFMPEG_FILENAME" -O "ffmpeg_""$FFMPEG_FILENAME";tar -xf "ffmpeg_""$FFMPEG_FILENAME";rm -f "ffmpeg"*.tar.*
+RUN cd /workspace2/build/;FFMPEG_VERSION="n7.0.2" ; FFMPEG_FILENAME="$FFMPEG_VERSION"".tar.gz" ;rm -f "ffmpeg"*.tar.*;wget "https://github.com/FFmpeg/FFmpeg/archive/refs/tags/$FFMPEG_FILENAME" -O "ffmpeg_""$FFMPEG_FILENAME";tar -xf "ffmpeg_""$FFMPEG_FILENAME";rm -f "ffmpeg"*.tar.*
 
 
 RUN cd /workspace2/build/ && mkdir /workspace2/build/inst/ && \
