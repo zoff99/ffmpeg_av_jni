@@ -1041,12 +1041,12 @@ static void *ffmpeg_thread_audio_in_capture_func(void *data)
             //   abuffersink: This provides the endpoint where you can read the samples after
             //                they have passed through the filter chain.
             //
-            // input ==> abuffer_ctx -> volumefilter_ctx -> speechnormfilter_ctx -> noisefilter_ctx -> aformat_ctx -> abuffersink_ctx ==> output
+            // input ==> abuffer_ctx -> noisefilter_ctx -> volumefilter_ctx -> speechnormfilter_ctx -> aformat_ctx -> abuffersink_ctx ==> output
             //
-            if (err >= 0) err = avfilter_link(abuffer_ctx, 0, volumefilter_ctx, 0);
+            if (err >= 0) err = avfilter_link(abuffer_ctx, 0, noisefilter_ctx, 0);
+            if (err >= 0) err = avfilter_link(noisefilter_ctx, 0, volumefilter_ctx, 0);
             if (err >= 0) err = avfilter_link(volumefilter_ctx, 0, speechnormfilter_ctx, 0);
-            if (err >= 0) err = avfilter_link(speechnormfilter_ctx, 0, noisefilter_ctx, 0);
-            if (err >= 0) err = avfilter_link(noisefilter_ctx, 0, aformat_ctx, 0);
+            if (err >= 0) err = avfilter_link(speechnormfilter_ctx, 0, aformat_ctx, 0);
             if (err >= 0) err = avfilter_link(aformat_ctx, 0, abuffersink_ctx, 0);
             if (err < 0) {
                 fprintf(stderr, "ERROR: error connecting filters\n");
