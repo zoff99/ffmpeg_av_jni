@@ -329,7 +329,10 @@ pthread_mutex_t vbuffer2___mutex;
 #define VIDEO_SEND_THREAD_COUNT_MAX 10
 int vsend_thread_count = 0;
 
-int sws_scale_algo = SWS_POINT; // SWS_POINT SWS_FAST_BILINEAR SWS_BILINEAR SWS_BICUBIC SWS_SINC SWS_LANCZOS
+int sws_scale_algo = SWS_POINT; // SWS_POINT SWS_FAST_BILINEAR SWS_BILINEAR SWS_BICUBIC SWS_SPLINE SWS_SINC
+                                // SWS_POINT is the fastest, but lowest quality.
+                                // the above comment orders them by speed, from fast (left) to slow (right).
+                                // the others are too slow to get a good higher frame rate.
 int output_width = 640;
 int output_height = 480;
 
