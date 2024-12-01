@@ -131,7 +131,7 @@ export LDFLAGS=" "
   ./configure \
               --enable-gpl \
               --prefix="$_INST_" \
-              --disable-asm \
+              --enable-asm \
               --extra-cflags="-fdebug-prefix-map=/home/runner/work/ffmpeg_av_jni/ffmpeg_av_jni=/ -static -O2 -g0 -D_FORTIFY_SOURCE=2 -fstack-protector-strong" \
               --extra-ldflags="-fdebug-prefix-map=/home/runner/work/ffmpeg_av_jni/ffmpeg_av_jni=/ -lm -fstack-protector-strong" \
               --disable-network \

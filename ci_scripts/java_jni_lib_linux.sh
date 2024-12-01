@@ -128,6 +128,7 @@ $CFLAGS_ADDON $CFLAGS_MORE \
 -I$JAVADIR1/ \
 -I$JAVADIR2/ \
 ffmpeg_av_jni.c \
+-Wl,-Bsymbolic \
 $_INST_/lib/libavcodec.a \
 $_INST_/lib/libavdevice.a \
 $_INST_/lib/libavformat.a \
