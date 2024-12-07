@@ -9,6 +9,7 @@ echo $_HOME_
 cd $_HOME_
 
 if [ "$1""x" == "buildx" ]; then
+    # --no-cache
     docker build -f Dockerfile_ub22 -t ffmpeg_av_jni_ready_ub22_001 .
     exit 0
 fi
@@ -102,6 +103,7 @@ faketime "2023-10-10 08:00:00" gcc $CFLAGS \
 -I$JAVADIR1/ \
 -I$JAVADIR2/ \
 ffmpeg_av_jni.c \
+-Wl,-Bsymbolic \
 $_INST2_/lib/libavcodec.a \
 $_INST2_/lib/libavdevice.a \
 $_INST2_/lib/libavformat.a \
@@ -132,6 +134,7 @@ gcc $CFLAGS \
 -Wno-deprecated-declarations \
 -D_FILE_OFFSET_BITS=64 -D__USE_GNU=1 \
 test.c \
+-Wl,-Bsymbolic \
 $_INST2_/lib/libavcodec.a \
 $_INST2_/lib/libavdevice.a \
 $_INST2_/lib/libavformat.a \

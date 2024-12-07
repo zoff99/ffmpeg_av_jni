@@ -17,7 +17,7 @@ RUN cd /workspace2/build/ && mkdir /workspace2/build/inst/ && \
     faketime "2023-10-10 08:00:00" ./configure  \
               --enable-gpl \
               --prefix="/workspace2/build/inst/" \
-              --disable-asm \
+              --enable-asm \
               --extra-cflags=" -fdebug-prefix-map=/workspace2/build=/ -static -O2 -g0 -D_FORTIFY_SOURCE=2 -fstack-protector-strong" \
               --extra-ldflags=" -fdebug-prefix-map=/workspace2/build=/ -lm -fstack-protector-strong" \
               --disable-network \
