@@ -65,6 +65,7 @@ sed -i -e 's#die "Host compiler lacks C11 support"#echo "Host compiler lacks C11
   ./configure --arch="$ARCH" \
               --enable-gpl \
               --prefix="$_INST_" \
+              --enable-asm \
               --target-os="mingw32" \
               --cross-prefix="$ARCH-w64-mingw32-" \
               --pkg-config="pkg-config" \
