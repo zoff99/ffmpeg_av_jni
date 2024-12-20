@@ -66,7 +66,7 @@ export LDFLAGS=" "
   ./configure  \
               --enable-gpl \
               --prefix="$_INST_" \
-              --disable-asm \
+              --enable-asm \
               --disable-network \
               --disable-everything \
               --disable-debug \
