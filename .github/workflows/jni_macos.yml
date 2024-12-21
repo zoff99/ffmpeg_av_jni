@@ -35,42 +35,15 @@ jobs:
       - name: install deps
         run:  brew install git automake yasm nasm
 
-      - name: build deps
+      - name: build 
         run:  |
           ls -al
           id
           pwd
-          ./ci_scripts/deps_macos.sh
+          gcc -framework Foundation -framework CoreFoundation -framework AVFoundation avfoundation_list_devices.m -o avfoundation_list_devices
 
-      - name: build jni lib
-        run:  |
-          ls -al
-          id
-          pwd
-          ./ci_scripts/java_jni_lib_macos.sh
 
-      - name: Upload artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: libffmpeg_av_jni.jnilib
-          path: libffmpeg_av_jni.jnilib
-      - name: Upload to nightly release
-        uses: ncipollo/release-action@v1
-        if: github.ref == 'refs/heads/master'
-        with:
-          allowUpdates: true
-          tag: nightly
-          omitBodyDuringUpdate: true
-          omitNameDuringUpdate: true
-          prerelease: true
-          replacesArtifacts: true
-          token: ${{ secrets.GITHUB_TOKEN }}
-          artifacts: "libffmpeg_av_jni.jnilib,test_macos"
 
-      - name: Upload artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: test_macos
-          path: test_macos
+
 
 
