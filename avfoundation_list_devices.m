@@ -114,7 +114,7 @@ int main(int argc, const char* argv[])
         memset(buf, 0, buf_len);
         get_device_name(1, i, buf, (buf_len - 1));
         if (buf[0]) {
-            printf("VC:%s\n", buf);
+            printf("VC:%d:%s\n", i, buf);
         }
     }
 
@@ -123,7 +123,7 @@ int main(int argc, const char* argv[])
         memset(buf, 0, buf_len);
         get_device_name(0, i, buf,(buf_len - 1));
         if (buf[0]) {
-            printf("VC:%s\n", buf);
+            printf("VA:%d:%s\n", i, buf);
         }
     }
 }
