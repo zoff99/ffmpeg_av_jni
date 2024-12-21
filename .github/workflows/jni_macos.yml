@@ -35,20 +35,19 @@ jobs:
       - name: install deps
         run:  brew install git automake yasm nasm
 
-      - name: build
+      - name: build deps
         run:  |
           ls -al
           id
           pwd
-          gcc -framework Foundation -framework CoreFoundation -framework CoreGraphics -framework AVFoundation avfoundation_list_devices.m -o avfoundation_list_devices
+          ./ci_scripts/deps_macos.sh
 
-      - name: run
+      - name: build jni lib
         run:  |
           ls -al
           id
           pwd
-          ./avfoundation_list_devices
-
+          ./ci_scripts/java_jni_lib_macos.sh
 
 
 
