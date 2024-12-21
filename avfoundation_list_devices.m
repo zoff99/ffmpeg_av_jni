@@ -1,6 +1,7 @@
 #import <AVFoundation/AVFoundation.h>
-#include <string.h>
 #import <Foundation/Foundation.h>
+#include <string.h>
+#include <stdio.h>
 
 #define GETMIN(a,b) ((a) < (b) ? (a) : (b))
 
@@ -112,11 +113,13 @@ int main(int argc, const char* argv[])
         NSLog(@"V:%d", i);
         memset(buf, 0, buf_len);
         get_device_name(1, i, buf, (buf_len - 1));
+        printf("VC:%s\n", buf);
     }
 
     for (int i=0;i<20;i++) {
         NSLog(@"A:%d", i);
         memset(buf, 0, buf_len);
         get_device_name(0, i, buf,(buf_len - 1));
+        printf("VC:%s\n", buf);
     }
 }
