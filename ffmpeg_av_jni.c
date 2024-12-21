@@ -55,9 +55,9 @@
 // ----------- version -----------
 #define VERSION_MAJOR 0
 #define VERSION_MINOR 99
-#define VERSION_PATCH 27
-static const char global_version_string[] = "0.99.27";
-static const char global_version_asan_string[] = "0.99.27-ASAN";
+#define VERSION_PATCH 28
+static const char global_version_string[] = "0.99.28";
+static const char global_version_asan_string[] = "0.99.28-ASAN";
 // ----------- version -----------
 // ----------- version -----------
 
@@ -1486,18 +1486,39 @@ Java_com_zoffcc_applications_ffmpegav_AVActivity_ffmpegav_1get_1in_1sources(JNIE
         avdevice_free_list_devices(&deviceInfoList);
 #ifdef __APPLE__
         if (strncmp(devicename_cstr, "avfoundation", strlen("avfoundation")) == 0) {
+            // HINT: on a mac you can list those like this:
+            //       ffmpeg -hide_banner -list_devices true -f avfoundation -i dummy
             if (is_video == 1) {
                 fill_descrid_array(env, result, in_source_count, "0:", NULL); // format = "[VIDEO]:[AUDIO]"
                 in_source_count++;
-                // HINT: add 3 more displays, in case that there are more displays attached
+                // HINT: add 5 more displays, in case that there are more displays attached
                 fill_descrid_array(env, result, in_source_count, "1:", NULL); // format = "[VIDEO]:[AUDIO]"
                 in_source_count++;
                 fill_descrid_array(env, result, in_source_count, "2:", NULL); // format = "[VIDEO]:[AUDIO]"
                 in_source_count++;
                 fill_descrid_array(env, result, in_source_count, "3:", NULL); // format = "[VIDEO]:[AUDIO]"
                 in_source_count++;
+                fill_descrid_array(env, result, in_source_count, "4:", NULL); // format = "[VIDEO]:[AUDIO]"
+                in_source_count++;
+                fill_descrid_array(env, result, in_source_count, "5:", NULL); // format = "[VIDEO]:[AUDIO]"
+                in_source_count++;
             } else {
                 fill_descrid_array(env, result, in_source_count, ":0", NULL); // format = "[VIDEO]:[AUDIO]"
+                in_source_count++;
+                // HINT: add 7 more audio devices, in case that there are more attached
+                fill_descrid_array(env, result, in_source_count, ":1", NULL); // format = "[VIDEO]:[AUDIO]"
+                in_source_count++;
+                fill_descrid_array(env, result, in_source_count, ":2", NULL); // format = "[VIDEO]:[AUDIO]"
+                in_source_count++;
+                fill_descrid_array(env, result, in_source_count, ":3", NULL); // format = "[VIDEO]:[AUDIO]"
+                in_source_count++;
+                fill_descrid_array(env, result, in_source_count, ":4", NULL); // format = "[VIDEO]:[AUDIO]"
+                in_source_count++;
+                fill_descrid_array(env, result, in_source_count, ":5", NULL); // format = "[VIDEO]:[AUDIO]"
+                in_source_count++;
+                fill_descrid_array(env, result, in_source_count, ":6", NULL); // format = "[VIDEO]:[AUDIO]"
+                in_source_count++;
+                fill_descrid_array(env, result, in_source_count, ":7", NULL); // format = "[VIDEO]:[AUDIO]"
                 in_source_count++;
             }
             (*env)->ReleaseStringUTFChars(env, devicename, devicename_cstr);
