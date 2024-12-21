@@ -73,7 +73,7 @@ int main(int argc, const char* argv[])
         CGDirectDisplayID screens[num_screens];
         CGGetActiveDisplayList(num_screens, screens, &num_screens);
         for (int i = 0; i < num_screens; i++) {
-            NSLog(@"[%d] Capture screen %d", ctx->num_video_devices + i, i);
+            NSLog(@"[%d] Capture screen %d", num_video_devices + i, i);
         }
     }
 #endif
