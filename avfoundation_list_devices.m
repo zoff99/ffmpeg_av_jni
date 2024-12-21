@@ -2,7 +2,7 @@
 #include <string.h>
 #import <Foundation/Foundation.h>
 
-#define MIN(a,b) ((a) < (b) ? (a) : (b))
+#define GETMIN(a,b) ((a) < (b) ? (a) : (b))
 
 static NSArray* getDevicesWithMediaType(AVMediaType mediaType) {
 #if (__MAC_OS_X_VERSION_MIN_REQUIRED >= 101500)
@@ -62,7 +62,7 @@ void get_device_name(int video, int num, char* str_buffer, int str_buffer_len)
         index            = [devices indexOfObject:device];
         if ((video == 1) && (index == num)) {
             NSLog(@"VV1:[%d] %s", index, name);
-            memcpy(str_buffer, name, MIN(str_buffer_len, strlen(name)));
+            memcpy(str_buffer, name, GETMIN(str_buffer_len, strlen(name)));
         }
     }
     for (AVCaptureDevice *device in devices_muxed) {
@@ -70,7 +70,7 @@ void get_device_name(int video, int num, char* str_buffer, int str_buffer_len)
         index            = [devices count] + [devices_muxed indexOfObject:device];
         if ((video == 1) && (index == num)) {
             NSLog(@"VV2:[%d] %s", index, name);
-            memcpy(str_buffer, name, MIN(str_buffer_len, strlen(name)));
+            memcpy(str_buffer, name, GETMIN(str_buffer_len, strlen(name)));
         }
     }
 #if (__MAC_OS_X_VERSION_MIN_REQUIRED >= 1070)
@@ -84,7 +84,7 @@ void get_device_name(int video, int num, char* str_buffer, int str_buffer_len)
                 char tmpstr[tmpstr_len];
                 memset(tmpstr, 0, tmpstr_len);
                 snprintf(tmpstr, tmpstr_len - 1, "Capture screen  %d", (num_devices + i));
-                memcpy(str_buffer, tmpstr, MIN(str_buffer_len, strlen(tmpstr)));
+                memcpy(str_buffer, tmpstr, GETMIN(str_buffer_len, strlen(tmpstr)));
             }
         }
     }
@@ -97,7 +97,7 @@ void get_device_name(int video, int num, char* str_buffer, int str_buffer_len)
         int index  = [devices indexOfObject:device];
         if ((video == 0) && (index == num)) {
             NSLog(@"AA1:[%d] %s", index, name);
-            memcpy(str_buffer, name, MIN(str_buffer_len, strlen(name)));
+            memcpy(str_buffer, name, GETMIN(str_buffer_len, strlen(name)));
         }
     }
 
