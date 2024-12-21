@@ -105,6 +105,7 @@ gcc $CFLAGS \
 -I$JAVADIR1/ \
 -I$JAVADIR2/ \
 ffmpeg_av_jni.c \
+avfoundation_list_devices.m \
 $_INST_/lib/libavcodec.a \
 $_INST_/lib/libavdevice.a \
 $_INST_/lib/libavformat.a \

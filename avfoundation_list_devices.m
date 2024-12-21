@@ -105,6 +105,7 @@ void get_device_name(int video, int num, char* str_buffer, int str_buffer_len)
 
 }
 
+/*
 int main(int argc, const char* argv[])
 {
     const int buf_len = 200;
@@ -127,3 +128,4 @@ int main(int argc, const char* argv[])
         }
     }
 }
+*/

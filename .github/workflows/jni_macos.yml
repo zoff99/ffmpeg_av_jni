@@ -32,20 +32,20 @@ jobs:
       - name: show architecture
         run:  uname -m
 
+      - name: install deps
+        run:  brew install git automake yasm nasm
+
       - name: build deps
         run:  |
           ls -al
           id
           pwd
-          gcc -framework AVFoundation -framework Foundation -framework CoreGraphics avfoundation_list_devices.m -fsanitize=address -o a
+          ./ci_scripts/deps_macos.sh
 
       - name: build jni lib
         run:  |
           ls -al
           id
           pwd
-          ./a
-
-
-
+          ./ci_scripts/java_jni_lib_macos.sh
 
