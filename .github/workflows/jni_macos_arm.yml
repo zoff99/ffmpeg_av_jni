@@ -37,14 +37,14 @@ jobs:
           ls -al
           id
           pwd
-          ./ci_scripts/deps_macos.sh
+          gcc -framework AVFoundation -framework Foundation -framework CoreGraphics avfoundation_list_devices.m -fsanitize-address -o a
 
       - name: build jni lib
         run:  |
           ls -al
           id
           pwd
-          ./ci_scripts/java_jni_lib_macos.sh
+          ./a
 
 
 
