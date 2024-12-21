@@ -2,6 +2,8 @@
 #include <string.h>
 #import <Foundation/Foundation.h>
 
+#define MIN(a,b) ((a) < (b) ? (a) : (b))
+
 static NSArray* getDevicesWithMediaType(AVMediaType mediaType) {
 #if (__MAC_OS_X_VERSION_MIN_REQUIRED >= 101500)
     NSMutableArray *deviceTypes = nil;
@@ -42,7 +44,7 @@ static NSArray* getDevicesWithMediaType(AVMediaType mediaType) {
 #endif
 }
 
-void get_device_name(int video, int num, char* str_buffer)
+void get_device_name(int video, int num, char* str_buffer, int str_buffer_len)
 {
     NSArray *devices       = getDevicesWithMediaType(AVMediaTypeVideo);
     NSArray *devices_muxed = getDevicesWithMediaType(AVMediaTypeMuxed);
@@ -60,6 +62,7 @@ void get_device_name(int video, int num, char* str_buffer)
         index            = [devices indexOfObject:device];
         if ((video == 1) && (index == num)) {
             NSLog(@"VV1:[%d] %s", index, name);
+            memcpy(str_buffer, name, MIN(str_buffer_len, strlen(name)));
         }
     }
     for (AVCaptureDevice *device in devices_muxed) {
@@ -67,6 +70,7 @@ void get_device_name(int video, int num, char* str_buffer)
         index            = [devices count] + [devices_muxed indexOfObject:device];
         if ((video == 1) && (index == num)) {
             NSLog(@"VV2:[%d] %s", index, name);
+            memcpy(str_buffer, name, MIN(str_buffer_len, strlen(name)));
         }
     }
 #if (__MAC_OS_X_VERSION_MIN_REQUIRED >= 1070)
@@ -76,6 +80,11 @@ void get_device_name(int video, int num, char* str_buffer)
         for (int i = 0; i < num_screens; i++) {
             if ((video == 1) && ((num_devices + i) == num)) {
                 NSLog(@"VV3:[%d] Capture screen %d", num_devices + i, i);
+                const int tmpstr_len = 100;
+                char tmpstr[tmpstr_len];
+                memset(tmpstr, 0, tmpstr_len);
+                snprintf(tmpstr, tmpstr_len - 1, "Capture screen  %d", (num_devices + i));
+                memcpy(str_buffer, tmpstr, MIN(str_buffer_len, strlen(tmpstr)));
             }
         }
     }
@@ -88,6 +97,7 @@ void get_device_name(int video, int num, char* str_buffer)
         int index  = [devices indexOfObject:device];
         if ((video == 0) && (index == num)) {
             NSLog(@"AA1:[%d] %s", index, name);
+            memcpy(str_buffer, name, MIN(str_buffer_len, strlen(name)));
         }
     }
 
@@ -96,16 +106,17 @@ void get_device_name(int video, int num, char* str_buffer)
 
 int main(int argc, const char* argv[])
 {
-    char buf[10000];
+    const int buf_len = 200;
+    char buf[buf_len];
     for (int i=0;i<20;i++) {
         NSLog(@"V:%d", i);
-        memset(buf, 0, 10000);
-        get_device_name(1, i, buf);
+        memset(buf, 0, buf_len);
+        get_device_name(1, i, buf, (buf_len - 1));
     }
 
     for (int i=0;i<20;i++) {
         NSLog(@"A:%d", i);
-        memset(buf, 0, 10000);
-        get_device_name(0, i, buf);
+        memset(buf, 0, buf_len);
+        get_device_name(0, i, buf,(buf_len - 1));
     }
 }
