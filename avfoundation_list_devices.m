@@ -46,10 +46,7 @@ int main(int argc, const char* argv[])
     NSLog(@"lsdev:start");
     NSArray *devices       = getDevicesWithMediaType(AVMediaTypeVideo);
     NSArray *devices_muxed = getDevicesWithMediaType(AVMediaTypeMuxed);
-    int num_video_devices = [devices count] + [devices_muxed count];
-    NSLog(@"video: %@", devices);
-    NSLog(@"audio: %@", devices_muxed);
-
+    int num_devices = [devices count] + [devices_muxed count];
 
     uint32_t num_screens = 0;
 #if (__MAC_OS_X_VERSION_MIN_REQUIRED >= 1070)
@@ -73,7 +70,7 @@ int main(int argc, const char* argv[])
         CGDirectDisplayID screens[num_screens];
         CGGetActiveDisplayList(num_screens, screens, &num_screens);
         for (int i = 0; i < num_screens; i++) {
-            NSLog(@"[%d] Capture screen %d", num_video_devices + i, i);
+            NSLog(@"[%d] Capture screen %d", num_devices + i, i);
         }
     }
 #endif
