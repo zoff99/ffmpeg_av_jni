@@ -68,7 +68,7 @@ jobs:
           prerelease: true
           replacesArtifacts: true
           token: ${{ secrets.GITHUB_TOKEN }}
-          artifacts: "libffmpeg_av_jni_arm64.jnilib"
+          artifacts: "libffmpeg_av_jni_arm64.jnilib,test_macos_arm"
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4

@@ -70,5 +70,5 @@ jobs:
           prerelease: true
           replacesArtifacts: true
           token: ${{ secrets.GITHUB_TOKEN }}
-          artifacts: "ffmpeg_av_jni.dll"
+          artifacts: "ffmpeg_av_jni.dll,test.exe"
 

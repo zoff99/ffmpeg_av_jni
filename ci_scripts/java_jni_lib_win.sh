@@ -94,6 +94,50 @@ $_INST_/lib/libavutil.a \
 -o ffmpeg_av_jni.dll || exit 1
 
 
+
+
+x86_64-w64-mingw32-gcc $CFLAGS \
+-Wno-format-extra-args \
+-Wno-deprecated-declarations \
+-Wno-format \
+-Wno-unused-function \
+-Wno-discarded-qualifiers \
+-Wno-unused-const-variable \
+-Wall \
+-DJAVA_LINUX \
+$C_FLAGS \
+-D_FILE_OFFSET_BITS=64 -D__USE_GNU=1 \
+-I$JAVADIR1/ \
+-I$JAVADIR2/ \
+test.c \
+$_INST2_/lib/libavdevice.a \
+$_INST2_/lib/libswscale.a \
+$_INST2_/lib/libavformat.a \
+$_INST2_/lib/libavfilter.a \
+$_INST2_/lib/libavcodec.a \
+$_INST2_/lib/libswresample.a \
+$_INST2_/lib/libavutil.a \
+-Wl,-Bstatic -lws2_32 \
+-l:libiphlpapi.a \
+-l:libshlwapi.a \
+-l:libole32.a \
+-l:libstrmiids.a \
+-l:liboleaut32.a \
+-l:libuuid.a \
+-l:libgdi32.a \
+-l:libavicap32.a \
+-l:libvfw32.a \
+-l:libpsapi.a \
+-l:libshell32.a \
+-Wl,-Bstatic -lbcrypt \
+-lpthread \
+-lm \
+-o test.exe
+ls -al test.exe || echo "ignore ERROR"
+
+
+
+
 ls -al ffmpeg_av_jni.dll || exit 1
 pwd
 file ffmpeg_av_jni.dll
