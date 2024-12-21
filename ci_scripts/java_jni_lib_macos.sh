@@ -145,7 +145,7 @@ $_INST_/lib/libswscale.a \
 $_INST_/lib/libswresample.a \
 -lpthread \
 -lm \
--o test_macos
+-o test_macos_arm
 
 
 ls -al libffmpeg_av_jni.jnilib || exit 1
