@@ -110,13 +110,13 @@ $C_FLAGS \
 -I$JAVADIR1/ \
 -I$JAVADIR2/ \
 test.c \
-$_INST2_/lib/libavdevice.a \
-$_INST2_/lib/libswscale.a \
-$_INST2_/lib/libavformat.a \
-$_INST2_/lib/libavfilter.a \
-$_INST2_/lib/libavcodec.a \
-$_INST2_/lib/libswresample.a \
-$_INST2_/lib/libavutil.a \
+$_INST_/lib/libavdevice.a \
+$_INST_/lib/libswscale.a \
+$_INST_/lib/libavformat.a \
+$_INST_/lib/libavfilter.a \
+$_INST_/lib/libavcodec.a \
+$_INST_/lib/libswresample.a \
+$_INST_/lib/libavutil.a \
 -Wl,-Bstatic -lws2_32 \
 -l:libiphlpapi.a \
 -l:libshlwapi.a \
