@@ -37,6 +37,8 @@
 #ifdef __APPLE__
 #include <mach/clock.h>
 #include <mach/mach.h>
+#import <AVFoundation/AVFoundation.h>
+#import <Foundation/Foundation.h>
 #endif
 
 #ifndef OS_WIN32
