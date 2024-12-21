@@ -37,8 +37,6 @@
 #ifdef __APPLE__
 #include <mach/clock.h>
 #include <mach/mach.h>
-#import <AVFoundation/AVFoundation.h>
-#import <Foundation/Foundation.h>
 #endif
 
 #ifndef OS_WIN32
@@ -1426,6 +1424,48 @@ static void fill_descrid_array(JNIEnv *env, const jobjectArray array,
     (*env)->SetObjectArrayElement(env, array, in_source_count, descrid_item);
 }
 
+#ifdef __APPLE__
+static NSArray* getDevicesWithMediaType(AVMediaType mediaType) {
+#if (__MAC_OS_X_VERSION_MIN_REQUIRED >= 101500)
+    NSMutableArray *deviceTypes = nil;
+    if (mediaType == AVMediaTypeVideo) {
+        deviceTypes = [NSMutableArray arrayWithArray:@[AVCaptureDeviceTypeBuiltInWideAngleCamera]];
+        #if (__MAC_OS_X_VERSION_MIN_REQUIRED >= 130000)
+            [deviceTypes addObject: AVCaptureDeviceTypeDeskViewCamera];
+        #endif
+        #if (__MAC_OS_X_VERSION_MIN_REQUIRED >= 140000)
+            [deviceTypes addObject: AVCaptureDeviceTypeContinuityCamera];
+        #endif
+    } else if (mediaType == AVMediaTypeAudio) {
+        #if (__MAC_OS_X_VERSION_MIN_REQUIRED >= 140000)
+            deviceTypes = [NSMutableArray arrayWithArray:@[AVCaptureDeviceTypeMicrophone]];
+        #else
+            deviceTypes = [NSMutableArray arrayWithArray:@[AVCaptureDeviceTypeBuiltInMicrophone]];
+        #endif
+    } else if (mediaType == AVMediaTypeMuxed) {
+        #if (__MAC_OS_X_VERSION_MIN_REQUIRED >= 140000)
+            deviceTypes = [NSMutableArray arrayWithArray:@[AVCaptureDeviceTypeExternal]];
+        #elif (__MAC_OS_X_VERSION_MIN_REQUIRED < 140000)
+            deviceTypes = [NSMutableArray arrayWithArray:@[AVCaptureDeviceTypeExternalUnknown]];
+        #else
+            return nil;
+        #endif
+    } else {
+        return nil;
+    }
+
+    AVCaptureDeviceDiscoverySession *captureDeviceDiscoverySession =
+        [AVCaptureDeviceDiscoverySession
+        discoverySessionWithDeviceTypes:deviceTypes
+                              mediaType:mediaType
+                               position:AVCaptureDevicePositionUnspecified];
+    return [captureDeviceDiscoverySession devices];
+#else
+    return [AVCaptureDevice devicesWithMediaType:mediaType];
+#endif
+}
+#endif
+
 JNIEXPORT jobjectArray JNICALL
 Java_com_zoffcc_applications_ffmpegav_AVActivity_ffmpegav_1get_1in_1sources(JNIEnv *env, jobject thiz, jstring devicename, jint is_video)
 {
@@ -1491,6 +1531,7 @@ Java_com_zoffcc_applications_ffmpegav_AVActivity_ffmpegav_1get_1in_1sources(JNIE
             // HINT: on a mac you can list those like this:
             //       ffmpeg -hide_banner -list_devices true -f avfoundation -i dummy
             if (is_video == 1) {
+
                 fill_descrid_array(env, result, in_source_count, "0:", NULL); // format = "[VIDEO]:[AUDIO]"
                 in_source_count++;
                 // HINT: add 5 more displays, in case that there are more displays attached
@@ -1505,6 +1546,7 @@ Java_com_zoffcc_applications_ffmpegav_AVActivity_ffmpegav_1get_1in_1sources(JNIE
                 fill_descrid_array(env, result, in_source_count, "5:", NULL); // format = "[VIDEO]:[AUDIO]"
                 in_source_count++;
             } else {
+
                 fill_descrid_array(env, result, in_source_count, ":0", NULL); // format = "[VIDEO]:[AUDIO]"
                 in_source_count++;
                 // HINT: add 7 more audio devices, in case that there are more attached
