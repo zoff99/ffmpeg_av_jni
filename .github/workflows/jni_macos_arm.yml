@@ -73,7 +73,7 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: test_macos
-          path: test_macos
+          name: test_macos_arm
+          path: test_macos_arm
 
 
