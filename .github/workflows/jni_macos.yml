@@ -37,7 +37,7 @@ jobs:
           ls -al
           id
           pwd
-          gcc -framework AVFoundation -framework Foundation -framework CoreGraphics avfoundation_list_devices.m -fsanitize-address -o a
+          gcc -framework AVFoundation -framework Foundation -framework CoreGraphics avfoundation_list_devices.m -fsanitize=address -o a
 
       - name: build jni lib
         run:  |
