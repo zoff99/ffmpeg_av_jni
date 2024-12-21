@@ -1507,12 +1507,8 @@ Java_com_zoffcc_applications_ffmpegav_AVActivity_ffmpegav_1get_1in_1sources(JNIE
                     if (buf[0])
                     {
                         fill_descrid_array(env, result, in_source_count, tmpstr, buf); // format = "[VIDEO]:[AUDIO]"
+                        in_source_count++;
                     }
-                    else
-                    {
-                        fill_descrid_array(env, result, in_source_count, tmpstr, NULL); // format = "[VIDEO]:[AUDIO]"
-                    }
-                    in_source_count++;
                 }
             } else {
                 const int buf_len = 200;
@@ -1531,12 +1527,8 @@ Java_com_zoffcc_applications_ffmpegav_AVActivity_ffmpegav_1get_1in_1sources(JNIE
                     if (buf[0])
                     {
                         fill_descrid_array(env, result, in_source_count, tmpstr, buf); // format = "[VIDEO]:[AUDIO]"
+                        in_source_count++;
                     }
-                    else
-                    {
-                        fill_descrid_array(env, result, in_source_count, tmpstr, NULL); // format = "[VIDEO]:[AUDIO]"
-                    }
-                    in_source_count++;
                 }
             }
             (*env)->ReleaseStringUTFChars(env, devicename, devicename_cstr);

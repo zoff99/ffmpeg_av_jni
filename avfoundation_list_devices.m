@@ -62,7 +62,7 @@ void get_device_name(int video, int num, char* str_buffer, int str_buffer_len)
         const char *name = [[device localizedName] UTF8String];
         index            = [devices indexOfObject:device];
         if ((video == 1) && (index == num)) {
-            NSLog(@"VV1:[%d] %s", index, name);
+            // NSLog(@"VV1:[%d] %s", index, name);
             memcpy(str_buffer, name, GETMIN(str_buffer_len, strlen(name)));
         }
     }
