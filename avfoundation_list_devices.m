@@ -70,7 +70,7 @@ void get_device_name(int video, int num, char* str_buffer, int str_buffer_len)
         const char *name = [[device localizedName] UTF8String];
         index            = [devices count] + [devices_muxed indexOfObject:device];
         if ((video == 1) && (index == num)) {
-            NSLog(@"VV2:[%d] %s", index, name);
+            // NSLog(@"VV2:[%d] %s", index, name);
             memcpy(str_buffer, name, GETMIN(str_buffer_len, strlen(name)));
         }
     }
@@ -80,11 +80,11 @@ void get_device_name(int video, int num, char* str_buffer, int str_buffer_len)
         CGGetActiveDisplayList(num_screens, screens, &num_screens);
         for (int i = 0; i < num_screens; i++) {
             if ((video == 1) && ((num_devices + i) == num)) {
-                NSLog(@"VV3:[%d] Capture screen %d", num_devices + i, i);
+                // NSLog(@"VV3:[%d] Capture screen %d", num_devices + i, i);
                 const int tmpstr_len = 100;
                 char tmpstr[tmpstr_len];
                 memset(tmpstr, 0, tmpstr_len);
-                snprintf(tmpstr, tmpstr_len - 1, "Capture screen  %d", (num_devices + i));
+                snprintf(tmpstr, tmpstr_len - 1, "Capture screen %d", (num_devices + i));
                 memcpy(str_buffer, tmpstr, GETMIN(str_buffer_len, strlen(tmpstr)));
             }
         }
@@ -97,7 +97,7 @@ void get_device_name(int video, int num, char* str_buffer, int str_buffer_len)
         const char *name = [[device localizedName] UTF8String];
         int index  = [devices indexOfObject:device];
         if ((video == 0) && (index == num)) {
-            NSLog(@"AA1:[%d] %s", index, name);
+            // NSLog(@"AA1:[%d] %s", index, name);
             memcpy(str_buffer, name, GETMIN(str_buffer_len, strlen(name)));
         }
     }
@@ -110,16 +110,20 @@ int main(int argc, const char* argv[])
     const int buf_len = 200;
     char buf[buf_len];
     for (int i=0;i<20;i++) {
-        NSLog(@"V:%d", i);
+        // NSLog(@"V:%d", i);
         memset(buf, 0, buf_len);
         get_device_name(1, i, buf, (buf_len - 1));
-        printf("VC:%s\n", buf);
+        if (buf[0]) {
+            printf("VC:%s\n", buf);
+        }
     }
 
     for (int i=0;i<20;i++) {
-        NSLog(@"A:%d", i);
+        // NSLog(@"A:%d", i);
         memset(buf, 0, buf_len);
         get_device_name(0, i, buf,(buf_len - 1));
-        printf("VC:%s\n", buf);
+        if (buf[0]) {
+            printf("VC:%s\n", buf);
+        }
     }
 }
