@@ -1,4 +1,4 @@
-name: macos JNI Lib
+name: macos arm
 
 on:
   push:
@@ -21,9 +21,9 @@ defaults:
 
 jobs:
 
-  build-macos-nightly-artifact:
+  build-arm:
     name: Nightly Artifact macOS Build
-    runs-on: macos-13
+    runs-on: macos-14
     permissions:
       contents: write
     steps:
