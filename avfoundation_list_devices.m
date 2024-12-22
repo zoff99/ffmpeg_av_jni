@@ -10,9 +10,9 @@ static NSArray* getDevicesWithMediaType(AVMediaType mediaType) {
     NSMutableArray *deviceTypes = nil;
     if (mediaType == AVMediaTypeVideo) {
         deviceTypes = [NSMutableArray arrayWithArray:@[AVCaptureDeviceTypeBuiltInWideAngleCamera]];
-        #if (__MAC_OS_X_VERSION_MIN_REQUIRED >= 130000)
-            [deviceTypes addObject: AVCaptureDeviceTypeDeskViewCamera];
-        #endif
+        //#if (__MAC_OS_X_VERSION_MIN_REQUIRED >= 130000)
+        //    [deviceTypes addObject: AVCaptureDeviceTypeDeskViewCamera];
+        //#endif
         #if (__MAC_OS_X_VERSION_MIN_REQUIRED >= 140000)
             [deviceTypes addObject: AVCaptureDeviceTypeContinuityCamera];
         #endif
