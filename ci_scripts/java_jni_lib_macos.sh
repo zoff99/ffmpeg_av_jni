@@ -85,6 +85,9 @@ cp -av "$_HOME3_"/jni.h "$_INST_/jinclude/"
 
 export CFLAGS=" -fPIC -g -O3 -std=gnu99 -I$_INST_/include/ -I$_INST_/jinclude/ -L$_INST_/lib -fstack-protector-all "
 
+# delete first
+rm -f libffmpeg_av_jni.jnilib
+
 gcc $CFLAGS \
 -Wall \
 -Wno-unused-function \
