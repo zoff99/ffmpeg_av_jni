@@ -124,6 +124,7 @@ $_INST_/lib/libswresample.a \
 
 
 gcc $CFLAGS \
+-mmacosx-version-min=12 \
 -Wall \
 -Wno-unused-function \
 -Wno-discarded-qualifiers \
