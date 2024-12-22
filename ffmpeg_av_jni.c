@@ -1497,7 +1497,7 @@ Java_com_zoffcc_applications_ffmpegav_AVActivity_ffmpegav_1get_1in_1sources(JNIE
                 const int tmpstr_len = 5;
                 char tmpstr[tmpstr_len];
 
-                for (int i=0;i<20;i++) {
+                for (int i=0;i<10;i++) {
                     memset(buf, 0, buf_len);
                     get_device_name(1, in_source_count, buf, (buf_len - 1));
 
@@ -1509,6 +1509,12 @@ Java_com_zoffcc_applications_ffmpegav_AVActivity_ffmpegav_1get_1in_1sources(JNIE
                         fill_descrid_array(env, result, in_source_count, tmpstr, buf); // format = "[VIDEO]:[AUDIO]"
                         in_source_count++;
                     }
+                    else
+                    {
+                        // HINT: even if we do not have a name, still list the device just in case
+                        fill_descrid_array(env, result, in_source_count, tmpstr, NULL); // format = "[VIDEO]:[AUDIO]"
+                        in_source_count++;
+                    }
                 }
             } else {
                 const int buf_len = 200;
@@ -1517,7 +1523,7 @@ Java_com_zoffcc_applications_ffmpegav_AVActivity_ffmpegav_1get_1in_1sources(JNIE
                 const int tmpstr_len = 5;
                 char tmpstr[tmpstr_len];
 
-                for (int i=0;i<20;i++) {
+                for (int i=0;i<10;i++) {
                     memset(buf, 0, buf_len);
                     get_device_name(0, in_source_count, buf, (buf_len - 1));
 
@@ -1527,6 +1533,12 @@ Java_com_zoffcc_applications_ffmpegav_AVActivity_ffmpegav_1get_1in_1sources(JNIE
                     if (buf[0])
                     {
                         fill_descrid_array(env, result, in_source_count, tmpstr, buf); // format = "[VIDEO]:[AUDIO]"
+                        in_source_count++;
+                    }
+                    else
+                    {
+                        // HINT: even if we do not have a name, still list the device just in case
+                        fill_descrid_array(env, result, in_source_count, tmpstr, NULL); // format = "[VIDEO]:[AUDIO]"
                         in_source_count++;
                     }
                 }
