@@ -37,6 +37,8 @@
 #ifdef __APPLE__
 #include <mach/clock.h>
 #include <mach/mach.h>
+// HINT: function defintion, keep in sync with avfoundation_list_devices.m !!
+void get_device_name(int video, int num, char* str_buffer, int str_buffer_len);
 #endif
 
 #ifndef OS_WIN32
@@ -1489,37 +1491,45 @@ Java_com_zoffcc_applications_ffmpegav_AVActivity_ffmpegav_1get_1in_1sources(JNIE
             // HINT: on a mac you can list those like this:
             //       ffmpeg -hide_banner -list_devices true -f avfoundation -i dummy
             if (is_video == 1) {
-                fill_descrid_array(env, result, in_source_count, "0:", NULL); // format = "[VIDEO]:[AUDIO]"
-                in_source_count++;
-                // HINT: add 5 more displays, in case that there are more displays attached
-                fill_descrid_array(env, result, in_source_count, "1:", NULL); // format = "[VIDEO]:[AUDIO]"
-                in_source_count++;
-                fill_descrid_array(env, result, in_source_count, "2:", NULL); // format = "[VIDEO]:[AUDIO]"
-                in_source_count++;
-                fill_descrid_array(env, result, in_source_count, "3:", NULL); // format = "[VIDEO]:[AUDIO]"
-                in_source_count++;
-                fill_descrid_array(env, result, in_source_count, "4:", NULL); // format = "[VIDEO]:[AUDIO]"
-                in_source_count++;
-                fill_descrid_array(env, result, in_source_count, "5:", NULL); // format = "[VIDEO]:[AUDIO]"
-                in_source_count++;
+                const int buf_len = 200;
+                char buf[buf_len];
+
+                const int tmpstr_len = 5;
+                char tmpstr[tmpstr_len];
+
+                for (int i=0;i<20;i++) {
+                    memset(buf, 0, buf_len);
+                    get_device_name(1, in_source_count, buf, (buf_len - 1));
+
+                    memset(tmpstr, 0, tmpstr_len);
+                    snprintf(tmpstr, tmpstr_len - 1, "%d:", i);
+
+                    if (buf[0])
+                    {
+                        fill_descrid_array(env, result, in_source_count, tmpstr, buf); // format = "[VIDEO]:[AUDIO]"
+                        in_source_count++;
+                    }
+                }
             } else {
-                fill_descrid_array(env, result, in_source_count, ":0", NULL); // format = "[VIDEO]:[AUDIO]"
-                in_source_count++;
-                // HINT: add 7 more audio devices, in case that there are more attached
-                fill_descrid_array(env, result, in_source_count, ":1", NULL); // format = "[VIDEO]:[AUDIO]"
-                in_source_count++;
-                fill_descrid_array(env, result, in_source_count, ":2", NULL); // format = "[VIDEO]:[AUDIO]"
-                in_source_count++;
-                fill_descrid_array(env, result, in_source_count, ":3", NULL); // format = "[VIDEO]:[AUDIO]"
-                in_source_count++;
-                fill_descrid_array(env, result, in_source_count, ":4", NULL); // format = "[VIDEO]:[AUDIO]"
-                in_source_count++;
-                fill_descrid_array(env, result, in_source_count, ":5", NULL); // format = "[VIDEO]:[AUDIO]"
-                in_source_count++;
-                fill_descrid_array(env, result, in_source_count, ":6", NULL); // format = "[VIDEO]:[AUDIO]"
-                in_source_count++;
-                fill_descrid_array(env, result, in_source_count, ":7", NULL); // format = "[VIDEO]:[AUDIO]"
-                in_source_count++;
+                const int buf_len = 200;
+                char buf[buf_len];
+
+                const int tmpstr_len = 5;
+                char tmpstr[tmpstr_len];
+
+                for (int i=0;i<20;i++) {
+                    memset(buf, 0, buf_len);
+                    get_device_name(0, in_source_count, buf, (buf_len - 1));
+
+                    memset(tmpstr, 0, tmpstr_len);
+                    snprintf(tmpstr, tmpstr_len - 1, ":%d", i);
+
+                    if (buf[0])
+                    {
+                        fill_descrid_array(env, result, in_source_count, tmpstr, buf); // format = "[VIDEO]:[AUDIO]"
+                        in_source_count++;
+                    }
+                }
             }
             (*env)->ReleaseStringUTFChars(env, devicename, devicename_cstr);
             pthread_mutex_unlock(&apicalls___mutex);
