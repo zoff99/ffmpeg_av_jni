@@ -94,6 +94,8 @@ gcc $CFLAGS \
 -Wno-discarded-qualifiers \
 -Wno-unused-const-variable \
 -Wno-deprecated-declarations \
+-mmacosx-version-min=12 \
+-Wunguarded-availability \
 -framework Foundation \
 -framework CoreFoundation \
 -framework CoreServices \
@@ -124,7 +126,6 @@ $_INST_/lib/libswresample.a \
 
 
 gcc $CFLAGS \
--mmacosx-version-min=12 \
 -Wall \
 -Wno-unused-function \
 -Wno-discarded-qualifiers \
