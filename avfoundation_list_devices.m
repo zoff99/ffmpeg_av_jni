@@ -6,16 +6,16 @@
 #define GETMIN(a,b) ((a) < (b) ? (a) : (b))
 
 static NSArray* getDevicesWithMediaType(AVMediaType mediaType) {
-#if 0 // (__MAC_OS_X_VERSION_MIN_REQUIRED >= 101500)
+#if (__MAC_OS_X_VERSION_MIN_REQUIRED >= 101500)
     NSMutableArray *deviceTypes = nil;
     if (mediaType == AVMediaTypeVideo) {
         deviceTypes = [NSMutableArray arrayWithArray:@[AVCaptureDeviceTypeBuiltInWideAngleCamera]];
         //#if (__MAC_OS_X_VERSION_MIN_REQUIRED >= 130000)
         //    [deviceTypes addObject: AVCaptureDeviceTypeDeskViewCamera];
         //#endif
-        //#if (__MAC_OS_X_VERSION_MIN_REQUIRED >= 140000)
-        //    [deviceTypes addObject: AVCaptureDeviceTypeContinuityCamera];
-        //#endif
+        #if (__MAC_OS_X_VERSION_MIN_REQUIRED >= 140000)
+            [deviceTypes addObject: AVCaptureDeviceTypeContinuityCamera];
+        #endif
     } else if (mediaType == AVMediaTypeAudio) {
         #if (__MAC_OS_X_VERSION_MIN_REQUIRED >= 140000)
             deviceTypes = [NSMutableArray arrayWithArray:@[AVCaptureDeviceTypeMicrophone]];
