@@ -58,9 +58,9 @@ void getDevicesPermission(int want_video);
 // ----------- version -----------
 #define VERSION_MAJOR 0
 #define VERSION_MINOR 99
-#define VERSION_PATCH 28
-static const char global_version_string[] = "0.99.28";
-static const char global_version_asan_string[] = "0.99.28-ASAN";
+#define VERSION_PATCH 29
+static const char global_version_string[] = "0.99.29";
+static const char global_version_asan_string[] = "0.99.29-ASAN";
 // ----------- version -----------
 // ----------- version -----------
 
@@ -1829,6 +1829,18 @@ Java_com_zoffcc_applications_ffmpegav_AVActivity_ffmpegav_1open_1video_1in_1devi
         return -1;
     }
 
+    // grabbing frame rate --------------------
+    if (fps > -1)
+    {
+        char fps_option_str[20];
+        CLEAR(fps_option_str);
+        snprintf(fps_option_str, 4, "%d", fps);
+        char *capture_option_fps = fps_option_str;
+        fprintf(stderr, "setting capture FPS: %s\n", capture_option_fps);
+        av_dict_set(&options_video, "framerate", capture_option_fps, 0);
+    }
+    // grabbing frame rate --------------------
+
     if (strncmp((const char *)deviceformat_cstr, "x11grab", strlen((char *)"x11grab")) == 0)
     {
 #ifdef __linux__
@@ -1866,7 +1878,14 @@ Java_com_zoffcc_applications_ffmpegav_AVActivity_ffmpegav_1open_1video_1in_1devi
         fprintf(stderr, "Display Screen corrected: %dx%d\n", screen_width, screen_height);
         char fps_str[20];
         CLEAR(fps_str);
-        snprintf(fps_str, 4, "%d", fps);
+        if (fps > -1)
+        {
+            snprintf(fps_str, 4, "%d", fps);
+        }
+        else
+        {
+            snprintf(fps_str, 4, "%d", 10);
+        }
         char *capture_fps = fps_str;
         fprintf(stderr, "Display Screen capture FPS: %s\n", capture_fps);
 
@@ -1930,11 +1949,20 @@ Java_com_zoffcc_applications_ffmpegav_AVActivity_ffmpegav_1open_1video_1in_1devi
         snprintf(camresolution_string, camresolution_string_len, "%dx%d", wanted_width, wanted_height);
         fprintf(stderr, "Wanted camera resolution_string: %s\n", camresolution_string);
 
+        if (fps > -1)
+        {
+            char fps_option_str[20];
+            CLEAR(fps_option_str);
+            snprintf(fps_option_str, 4, "%d", fps);
+            char *capture_option_fps = fps_option_str;
+            fprintf(stderr, "setting capture FPS: %s\n", capture_option_fps);
+            av_dict_set(&options, "framerate", capture_option_fps, 0);
+        }
+
         av_dict_set(&options, "video_size", camresolution_string, 0);
         if (force_mjpeg == 1) {
             av_dict_set(&options, "input_format", "mjpeg", 0);
         }
-        // av_dict_set(&options, "framerate", "15", 0);
         if (avformat_open_input(&formatContext_video, inputname_cstr, inputFormat_video, &options) != 0)
         {
             fprintf(stderr, "Could not open desktop as video input stream.\n");
