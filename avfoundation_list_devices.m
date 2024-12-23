@@ -6,6 +6,28 @@
 #define GETMIN(a,b) ((a) < (b) ? (a) : (b))
 
 static NSArray* getDevicesWithMediaType(AVMediaType mediaType) {
+
+// HINT: copyied from qtox source code
+#if __MAC_OS_X_VERSION_MIN_REQUIRED >= 101400
+    const AVAuthorizationStatus authStatus =
+        [AVCaptureDevice authorizationStatusForMediaType:AVMediaTypeVideo];
+    if (authStatus != AVAuthorizationStatusDenied && authStatus != AVAuthorizationStatusNotDetermined) {
+        printf("We already have access to the camera\n");
+    } else {
+        printf("We don't have access to the camera yet; asking user for permission\n");
+        __block BOOL isGranted = false;
+        [AVCaptureDevice requestAccessForMediaType:AVMediaTypeVideo
+                                 completionHandler:^(BOOL granted) {
+                                   isGranted = granted;
+                                 }];
+        if (isGranted) {
+            printf("We now have access to the camera\n");
+        } else {
+            printf("User did not grant us permission to access the camera\n");
+        }
+    }
+#endif
+
 #if (__MAC_OS_X_VERSION_MIN_REQUIRED >= 101500)
     NSMutableArray *deviceTypes = nil;
     if (mediaType == AVMediaTypeVideo) {
