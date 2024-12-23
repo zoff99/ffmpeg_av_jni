@@ -33,7 +33,7 @@ export PATH=$NEWPATH
 WGET_OPTIONS="--timeout=10"
 export WGET_OPTIONS
 
-if ["$1""x" == "armx"]; then
+if [ "$1""x" == "armx" ]; then
     export CXXFLAGS="$CXXFLAGS -fPIC"
     export CFLAGS="$CFLAGS -fPIC"
 else
