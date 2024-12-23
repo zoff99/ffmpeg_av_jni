@@ -6,9 +6,9 @@
 #define GETMIN(a,b) ((a) < (b) ? (a) : (b))
 
 
-static void getVideoDevicesPermission() {
+static void getVideoDevicesPermissionObjc() {
 // HINT: copyied from qtox source code
-#if __MAC_OS_X_VERSION_MIN_REQUIRED >= 101400
+#if (__MAC_OS_X_VERSION_MIN_REQUIRED >= 101400)
     const AVAuthorizationStatus authStatus =
         [AVCaptureDevice authorizationStatusForMediaType:AVMediaTypeVideo];
     if (authStatus != AVAuthorizationStatusDenied && authStatus != AVAuthorizationStatusNotDetermined) {
@@ -30,7 +30,6 @@ static void getVideoDevicesPermission() {
 }
 
 static NSArray* getDevicesWithMediaType(AVMediaType mediaType) {
-
 #if (__MAC_OS_X_VERSION_MIN_REQUIRED >= 101500)
     NSMutableArray *deviceTypes = nil;
     if (mediaType == AVMediaTypeVideo) {
@@ -68,6 +67,11 @@ static NSArray* getDevicesWithMediaType(AVMediaType mediaType) {
 #else
     return [AVCaptureDevice devicesWithMediaType:mediaType];
 #endif
+}
+
+void getDevicesPermission(int want_video)
+{
+    getVideoDevicesPermissionObjc();
 }
 
 void get_device_name(int video, int num, char* str_buffer, int str_buffer_len)

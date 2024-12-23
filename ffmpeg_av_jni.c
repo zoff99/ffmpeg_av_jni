@@ -39,7 +39,7 @@
 #include <mach/mach.h>
 // HINT: function defintion, keep in sync with avfoundation_list_devices.m !!
 void get_device_name(int video, int num, char* str_buffer, int str_buffer_len);
-void getVideoDevicesPermission();
+void getDevicesPermission(int want_video);
 #endif
 
 #ifndef OS_WIN32
@@ -1493,7 +1493,7 @@ Java_com_zoffcc_applications_ffmpegav_AVActivity_ffmpegav_1get_1in_1sources(JNIE
             //       ffmpeg -hide_banner -list_devices true -f avfoundation -i dummy
             if (is_video == 1) {
 
-                getVideoDevicesPermission();
+                getDevicesPermission(1);
 
                 const int buf_len = 200;
                 char buf[buf_len];

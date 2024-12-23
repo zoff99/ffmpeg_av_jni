@@ -33,8 +33,13 @@ export PATH=$NEWPATH
 WGET_OPTIONS="--timeout=10"
 export WGET_OPTIONS
 
-export CXXFLAGS="$CXXFLAGS -fPIC -mmacosx-version-min=12"
-export CFLAGS="$CFLAGS -fPIC -mmacosx-version-min=12"
+if ["$1""x" == "armx"]; then
+    export CXXFLAGS="$CXXFLAGS -fPIC"
+    export CFLAGS="$CFLAGS -fPIC"
+else
+    export CXXFLAGS="$CXXFLAGS -fPIC -mmacosx-version-min=12"
+    export CFLAGS="$CFLAGS -fPIC -mmacosx-version-min=12"
+fi
 # ----------- config ------------
 
 type sudo

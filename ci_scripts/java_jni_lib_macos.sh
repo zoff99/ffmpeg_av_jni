@@ -88,13 +88,19 @@ export CFLAGS=" -fPIC -g -O3 -std=gnu99 -I$_INST_/include/ -I$_INST_/jinclude/ -
 # delete first
 rm -f libffmpeg_av_jni.jnilib
 
+if ["$1""x" == "armx"]; then
+    mac_os_min_version=""
+else
+    mac_os_min_version="-mmacosx-version-min=12"
+fi
+
 gcc $CFLAGS \
 -Wall \
 -Wno-unused-function \
 -Wno-discarded-qualifiers \
 -Wno-unused-const-variable \
 -Wno-deprecated-declarations \
--mmacosx-version-min=12 \
+$mac_os_min_version \
 -Wunguarded-availability \
 -framework Foundation \
 -framework CoreFoundation \

@@ -37,14 +37,14 @@ jobs:
           ls -al
           id
           pwd
-          ./ci_scripts/deps_macos.sh
+          ./ci_scripts/deps_macos.sh arm
 
       - name: build jni lib
         run:  |
           ls -al
           id
           pwd
-          ./ci_scripts/java_jni_lib_macos.sh
+          ./ci_scripts/java_jni_lib_macos.sh arm
 
       - name: Rename artifact for nightly upload
         run: |
