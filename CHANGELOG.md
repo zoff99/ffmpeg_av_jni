@@ -1,5 +1,32 @@
 # Changelog
 
+## [v0.99.29](https://github.com/zoff99/ffmpeg_av_jni/tree/v0.99.29) (2024-12-23)
+
+[Full Changelog](https://github.com/zoff99/ffmpeg_av_jni/compare/v0.99.28...v0.99.29)
+
+## [v0.99.28](https://github.com/zoff99/ffmpeg_av_jni/tree/v0.99.28) (2024-12-21)
+
+[Full Changelog](https://github.com/zoff99/ffmpeg_av_jni/compare/v0.99.27...v0.99.28)
+
+## [v0.99.27](https://github.com/zoff99/ffmpeg_av_jni/tree/v0.99.27) (2024-12-01)
+
+[Full Changelog](https://github.com/zoff99/ffmpeg_av_jni/compare/v0.99.26...v0.99.27)
+
+**Merged pull requests:**
+
+- update ffmpeg to n7.1 [\#6](https://github.com/zoff99/ffmpeg_av_jni/pull/6) ([github-actions[bot]](https://github.com/apps/github-actions))
+- Bump peter-evans/create-pull-request from 6 to 7 [\#5](https://github.com/zoff99/ffmpeg_av_jni/pull/5) ([dependabot[bot]](https://github.com/apps/dependabot))
+- update ffmpeg to n7.0.2 [\#4](https://github.com/zoff99/ffmpeg_av_jni/pull/4) ([github-actions[bot]](https://github.com/apps/github-actions))
+
+## [v0.99.26](https://github.com/zoff99/ffmpeg_av_jni/tree/v0.99.26) (2024-06-21)
+
+[Full Changelog](https://github.com/zoff99/ffmpeg_av_jni/compare/v0.99.23...v0.99.26)
+
+**Merged pull requests:**
+
+- Bump actions/checkout from 3 to 4 [\#3](https://github.com/zoff99/ffmpeg_av_jni/pull/3) ([dependabot[bot]](https://github.com/apps/dependabot))
+- Bump actions/upload-artifact from 3 to 4 [\#2](https://github.com/zoff99/ffmpeg_av_jni/pull/2) ([dependabot[bot]](https://github.com/apps/dependabot))
+
 ## [v0.99.23](https://github.com/zoff99/ffmpeg_av_jni/tree/v0.99.23) (2024-02-08)
 
 [Full Changelog](https://github.com/zoff99/ffmpeg_av_jni/compare/023a40a72d852e51f728a2c1b1df7c5220faf364...v0.99.23)
