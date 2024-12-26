@@ -61,9 +61,9 @@ echo "JAVADIR2:""$JAVADIR2"
 # ------ set commit hash ------
 git_hash=$(git rev-parse --verify --short=8 HEAD 2>/dev/null|tr -dc '[A-Fa-f0-9]' 2>/dev/null)
 echo "XX:""$git_hash"":YY"
-cat ffmpeg_av_jni.c | grep 'FFMPEGAVJNI_GIT_COMMIT_HASH'
-sed -i -e 's;^.*FFMPEGAVJNI_GIT_COMMIT_HASH.*$;#define FFMPEGAVJNI_GIT_COMMIT_HASH "'$git_hash'";' ffmpeg_av_jni.c
-cat ffmpeg_av_jni.c | grep 'FFMPEGAVJNI_GIT_COMMIT_HASH'
+cat ffmpeg_av_jni.c | grep '#define FFMPEGAVJNI_GIT_COMMIT_HASH'
+sed -i -e 's;#define FFMPEGAVJNI_GIT_COMMIT_HASH.*$;#define FFMPEGAVJNI_GIT_COMMIT_HASH "'$git_hash'";' ffmpeg_av_jni.c
+cat ffmpeg_av_jni.c | grep '#define FFMPEGAVJNI_GIT_COMMIT_HASH'
 # ------ set git commit hash ------
 
 export CFLAGS=" -fPIC -std=gnu99 -I$_INST_/include/ -L$_INST_/lib -fstack-protector-all -D_FORTIFY_SOURCE=2 "

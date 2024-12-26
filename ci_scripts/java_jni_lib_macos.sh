@@ -86,9 +86,9 @@ cp -av "$_HOME3_"/jni.h "$_INST_/jinclude/"
 # ------ set commit hash ------
 git_hash=$(git rev-parse --verify --short=8 HEAD 2>/dev/null|tr -dc '[A-Fa-f0-9]' 2>/dev/null)
 echo "XX:""$git_hash"":YY"
-cat ffmpeg_av_jni.c | grep 'FFMPEGAVJNI_GIT_COMMIT_HASH'
-sed -i -e 's;^.*FFMPEGAVJNI_GIT_COMMIT_HASH.*$;#define FFMPEGAVJNI_GIT_COMMIT_HASH "'$git_hash'";' ffmpeg_av_jni.c
-cat ffmpeg_av_jni.c | grep 'FFMPEGAVJNI_GIT_COMMIT_HASH'
+cat ffmpeg_av_jni.c | grep '#define FFMPEGAVJNI_GIT_COMMIT_HASH'
+sed -i -e 's;#define FFMPEGAVJNI_GIT_COMMIT_HASH.*$;#define FFMPEGAVJNI_GIT_COMMIT_HASH "'$git_hash'";' ffmpeg_av_jni.c
+cat ffmpeg_av_jni.c | grep '#define FFMPEGAVJNI_GIT_COMMIT_HASH'
 # ------ set git commit hash ------
 
 export CFLAGS=" -fPIC -g -O3 -std=gnu99 -I$_INST_/include/ -I$_INST_/jinclude/ -L$_INST_/lib -fstack-protector-all "
