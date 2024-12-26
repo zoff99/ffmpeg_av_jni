@@ -171,7 +171,7 @@ if [ "$1""x" == "raspix" ]; then
 else
     if [ "$2""x" == "asanx" ]; then
         ls -al /usr/lib/x86_64-linux-gnu/libasan*
-        export ASAN_OPTIONS=halt_on_error=false
+        export ASAN_OPTIONS="detect_leaks=0,halt_on_error=true"
         LD_PRELOAD=/usr/lib/x86_64-linux-gnu/libasan.so.6.0.0 java -cp . -Djava.library.path=$(pwd) com.zoffcc.applications.ffmpegav.AVActivity
     else
         java -cp . -Djava.library.path=$(pwd) com.zoffcc.applications.ffmpegav.AVActivity
