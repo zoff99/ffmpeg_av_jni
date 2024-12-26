@@ -117,8 +117,15 @@ $(pkg-config --libs --cflags libswresample) \
 
 else
 
+    if [ "$2""x" == "asanx" ]; then
+        ASAN_FLAGS="-fsanitize=address -fno-omit-frame-pointer -fsanitize-recover=address -static-libasan"
+    else
+        ASAN_FLAGS=""
+    fi
+
 $GCC_ \
 $CFLAGS_ADDON $CFLAGS_MORE \
+$ASAN_FLAGS \
 -Wall \
 -Wno-unused-function \
 -Wno-discarded-qualifiers \
@@ -151,6 +158,10 @@ $(pkg-config --libs --cflags libswresample) \
 fi
 
 ls -al libffmpeg_av_jni.so || exit 1
+
+# check if we actually have ASAN symbols in the library file
+nm libffmpeg_av_jni.so | grep -i asan || exit 1
+
 pwd
 file libffmpeg_av_jni.so
 
@@ -158,6 +169,12 @@ if [ "$1""x" == "raspix" ]; then
   echo "*** RASPI ***"
   echo "no java test on raspi"
 else
-  java -cp . -Djava.library.path=$(pwd) com.zoffcc.applications.ffmpegav.AVActivity
+    if [ "$2""x" == "asanx" ]; then
+        ls -al /usr/lib/x86_64-linux-gnu/libasan*
+        export ASAN_OPTIONS=halt_on_error=false
+        LD_PRELOAD=/usr/lib/x86_64-linux-gnu/libasan.so.6.0.0 java -cp . -Djava.library.path=$(pwd) com.zoffcc.applications.ffmpegav.AVActivity
+    else
+        java -cp . -Djava.library.path=$(pwd) com.zoffcc.applications.ffmpegav.AVActivity
+    fi
 fi
 
