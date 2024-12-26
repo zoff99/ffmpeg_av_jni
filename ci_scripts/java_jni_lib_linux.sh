@@ -76,6 +76,15 @@ echo "JAVADIR1:""$JAVADIR1"
 echo "JAVADIR2:""$JAVADIR2"
 
 
+# ------ set commit hash ------
+git_hash=$(git rev-parse --verify --short=8 HEAD 2>/dev/null|tr -dc '[A-Fa-f0-9]' 2>/dev/null)
+echo "XX:""$git_hash"":YY"
+cat ffmpeg_av_jni.c | grep 'FFMPEGAVJNI_GIT_COMMIT_HASH'
+sed -i -e 's;^.*FFMPEGAVJNI_GIT_COMMIT_HASH.*$;#define FFMPEGAVJNI_GIT_COMMIT_HASH "'$git_hash'";' ffmpeg_av_jni.c
+cat ffmpeg_av_jni.c | grep 'FFMPEGAVJNI_GIT_COMMIT_HASH'
+# ------ set git commit hash ------
+
+
 CFLAGS_ADDON='-O2 -g -fPIC'
 CFLAGS_MORE="-fdebug-prefix-map=/home/runner/work/ffmpeg_av_jni/ffmpeg_av_jni=/ --param=ssp-buffer-size=1 -fstack-protector-all -D_FORTIFY_SOURCE=2 -std=gnu99 -I$_INST_/include/ -L$_INST_/lib"
 

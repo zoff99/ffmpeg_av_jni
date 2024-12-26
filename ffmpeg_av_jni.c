@@ -61,6 +61,8 @@ void getDevicesPermission(int want_video);
 #define VERSION_PATCH 29
 static const char global_version_string[] = "0.99.29";
 static const char global_version_asan_string[] = "0.99.29-ASAN";
+
+#define FFMPEGAVJNI_GIT_COMMIT_HASH "000000034"
 // ----------- version -----------
 // ----------- version -----------
 
@@ -1285,6 +1287,28 @@ Java_com_zoffcc_applications_ffmpegav_AVActivity_ffmpegav_1version(JNIEnv *env, 
 #else
     return (*env)->NewStringUTF(env, global_version_string);
 #endif
+}
+
+JNIEXPORT jstring JNICALL
+Java_com_zoffcc_applications_ffmpegav_AVActivity_ffmpegav_1GITHASH(JNIEnv *env, jobject thiz)
+{
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunreachable-code-return"
+
+#if defined(FFMPEGAVJNI_GIT_COMMIT_HASH)
+    if (strlen(FFMPEGAVJNI_GIT_COMMIT_HASH) < 2)
+    {
+        return (*env)->NewStringUTF(env, "00000002");
+    }
+    else
+    {
+        return (*env)->NewStringUTF(env, FFMPEGAVJNI_GIT_COMMIT_HASH);
+    }
+#else
+    return (*env)->NewStringUTF(env, "00000001");
+#endif
+
+#pragma GCC diagnostic pop
 }
 
 JNIEXPORT jstring JNICALL

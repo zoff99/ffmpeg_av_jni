@@ -12,6 +12,7 @@ public class AVActivity {
 
     private static boolean java_audio_in_device_used = false;
     public static native String ffmpegav_version();
+    public static native String ffmpegav_GITHASH();
     public static native String ffmpegav_libavutil_version();
     public static native int ffmpegav_init(String resources_dir);
     public static native ffmpegav_descrid[] ffmpegav_get_in_sources(String devicename, int is_video);
@@ -647,6 +648,7 @@ public class AVActivity {
         }
         Log.i(TAG, "libavutil version: " + ffmpegav_libavutil_version());
         Log.i(TAG, "ffmpegav version: " + ffmpegav_version());
+        Log.i(TAG, "ffmpegav commit: " + ffmpegav_GITHASH());
         // final int res = ffmpegav_init("./"); // exmaple with path must include the seperator at the end!
         final int res = ffmpegav_init(null); // exmaple with "null" -> filter data will be loaded from current directory
         Log.i(TAG, "ffmpeg init: " + res);
