@@ -168,8 +168,10 @@ fi
 
 ls -al libffmpeg_av_jni.so || exit 1
 
-# check if we actually have ASAN symbols in the library file
-nm libffmpeg_av_jni.so | grep -i asan || exit 1
+if [ "$2""x" == "asanx" ]; then
+    # check if we actually have ASAN symbols in the library file
+    nm libffmpeg_av_jni.so | grep -i asan || exit 1
+fi
 
 pwd
 file libffmpeg_av_jni.so
