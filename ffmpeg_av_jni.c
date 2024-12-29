@@ -1865,6 +1865,28 @@ Java_com_zoffcc_applications_ffmpegav_AVActivity_ffmpegav_1open_1video_1in_1devi
     }
     // grabbing frame rate --------------------
 
+
+#ifdef __APPLE__
+    if (strncmp((const char *)deviceformat_cstr, "avfoundation", strlen("avfoundation")) == 0) {
+        // on macos we try to set camera resolution only when 720p or 1080p was selected
+        // other resolutions might not work. then we choose "default" resolution
+        if (
+            ((wanted_width == 1280) && (wanted_height == 720))
+            ||
+            ((wanted_width == 1920) && (wanted_height == 1080))
+            )
+        {
+            const int camresolution_string_len = 1000;
+            char camresolution_string[camresolution_string_len];
+            memset(camresolution_string, 0, camresolution_string_len);
+            snprintf(camresolution_string, camresolution_string_len, "%dx%d", wanted_width, wanted_height);
+            fprintf(stderr, "Wanted camera resolution_string: %s\n", camresolution_string);
+
+            av_dict_set(&options_video, "video_size", camresolution_string, 0);
+        }
+    }
+#endif
+
     if (strncmp((const char *)deviceformat_cstr, "x11grab", strlen((char *)"x11grab")) == 0)
     {
 #ifdef __linux__
