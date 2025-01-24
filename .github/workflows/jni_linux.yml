@@ -36,6 +36,7 @@ jobs:
           coreutils autoconf libtool pkg-config \
           libx11-xcb-dev libpulse-dev alsa-utils libasound2-dev v4l-utils libv4l-dev v4l-conf \
           libxcb-shm0-dev libxcb-shape0-dev libxcb-xfixes0-dev \
+          libdrm-dev \
           nasm \
           yasm \
           faketime hostname
