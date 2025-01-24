@@ -9,8 +9,6 @@ RUN export DEBIAN_FRONTEND=noninteractive ; apt install -y openjdk-17-jdk-headle
 RUN export DEBIAN_FRONTEND=noninteractive ; apt install -y libxcb-shm0-dev libxcb-shape0-dev libxcb-xfixes0-dev
 RUN export DEBIAN_FRONTEND=noninteractive ; apt install -y faketime
 
-RUN export DEBIAN_FRONTEND=noninteractive ; apt install -y  libdrm-dev
-
 RUN hostname
 RUN domainname
 
@@ -69,7 +67,6 @@ RUN cd /workspace2/build/ && mkdir /workspace2/build/inst/ && \
               --enable-libxcb --enable-libxcb-shm --enable-libxcb-xfixes --enable-libxcb-shape \
               --enable-indev=pulse \
               --enable-indev=v4l2 \
-              --enable-indev=kmsgrab \
               --enable-libpulse \
               --enable-runtime-cpudetect \
               --enable-libv4l2 && \
