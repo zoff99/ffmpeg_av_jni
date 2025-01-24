@@ -175,7 +175,6 @@ export LDFLAGS=" "
               --enable-libxcb --enable-libxcb-shm --enable-libxcb-xfixes --enable-libxcb-shape \
               --enable-indev=pulse \
               --enable-indev=v4l2 \
-              --enable-indev=kmsgrab \
               --enable-libpulse \
               --enable-filter=volume \
               --enable-filter=speechnorm \
