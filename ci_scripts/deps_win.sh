@@ -82,7 +82,7 @@ sed -i -e 's#die "Host compiler lacks C11 support"#echo "Host compiler lacks C11
               --disable-iconv \
               --disable-network \
               --disable-muxers \
-              --disable-postproc \
+                \
               --disable-swscale-alpha \
               --disable-dwt \
               --disable-lsp \

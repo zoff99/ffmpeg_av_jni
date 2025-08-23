@@ -95,7 +95,7 @@ export LDFLAGS=" "
               --disable-filters \
               --disable-iconv \
               --disable-network \
-              --disable-postproc \
+                \
               --disable-swscale-alpha \
               --disable-dwt \
               --disable-lsp \
@@ -144,7 +144,7 @@ export LDFLAGS=" "
               --disable-filters \
               --disable-iconv \
               --disable-network \
-              --disable-postproc \
+                \
               --disable-swscale-alpha \
               --disable-dwt \
               --disable-lsp \

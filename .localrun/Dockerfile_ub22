@@ -30,7 +30,7 @@ RUN cd /workspace2/build/ && mkdir /workspace2/build/inst/ && \
               --disable-filters \
               --disable-iconv \
               --disable-network \
-              --disable-postproc \
+                \
               --disable-swscale-alpha \
               --disable-dwt \
               --disable-lsp \

@@ -40,7 +40,7 @@ RUN cd /workspace2/build/ && mkdir -p /workspace2/build/inst/ && \
               --disable-iconv \
               --disable-network \
               --disable-muxers \
-              --disable-postproc \
+                \
               --disable-swscale-alpha \
               --disable-dwt \
               --disable-lsp \
