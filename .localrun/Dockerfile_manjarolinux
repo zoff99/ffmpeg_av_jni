@@ -10,7 +10,7 @@ RUN pacman -S --noconfirm extra/libxcb libpulse extra/alsa-lib extra/v4l-utils e
 # vvv to compile the runtime lib
 
 RUN pacman -S --noconfirm core/gcc
-RUN pacman -S --noconfirm make yasm curl wget git coreutils autoconf libtool
+RUN pacman -S --noconfirm make yasm nasm curl wget git coreutils autoconf libtool
 
 RUN pacman -S --noconfirm extra/jdk17-openjdk
 
