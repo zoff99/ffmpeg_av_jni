@@ -3,7 +3,7 @@ FROM ubuntu:22.04
 RUN echo x
 RUN export DEBIAN_FRONTEND=noninteractive ; apt update && apt install -y make    yasm curl   wget    git    coreutils    autoconf    libtool    pkg-config    libsodium-dev     nano    vim
 RUN mkdir -p /workspace2/build/
-RUN cd /workspace2/build/;FFMPEG_VERSION="n7.1.1" ; FFMPEG_FILENAME="$FFMPEG_VERSION"".tar.gz" ;rm -f "ffmpeg"*.tar.*;wget "https://github.com/FFmpeg/FFmpeg/archive/refs/tags/$FFMPEG_FILENAME" -O "ffmpeg_""$FFMPEG_FILENAME";tar -xf "ffmpeg_""$FFMPEG_FILENAME";rm -f "ffmpeg"*.tar.*
+RUN cd /workspace2/build/;FFMPEG_VERSION="n8.0" ; FFMPEG_FILENAME="$FFMPEG_VERSION"".tar.gz" ;rm -f "ffmpeg"*.tar.*;wget "https://github.com/FFmpeg/FFmpeg/archive/refs/tags/$FFMPEG_FILENAME" -O "ffmpeg_""$FFMPEG_FILENAME";tar -xf "ffmpeg_""$FFMPEG_FILENAME";rm -f "ffmpeg"*.tar.*
 RUN export DEBIAN_FRONTEND=noninteractive ; apt install -y yasm \
           openjdk-17-jdk \
           openjdk-17-jdk-headless \
