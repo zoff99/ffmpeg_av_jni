@@ -52,7 +52,7 @@ jobs:
           cp -v libffmpeg_av_jni.jnilib libffmpeg_av_jni_arm64.jnilib
 
       - name: Upload artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: libffmpeg_av_jni_arm64.jnilib
           path: libffmpeg_av_jni_arm64.jnilib
@@ -71,7 +71,7 @@ jobs:
           artifacts: "libffmpeg_av_jni_arm64.jnilib,test_macos_arm"
 
       - name: Upload artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: test_macos_arm
           path: test_macos_arm

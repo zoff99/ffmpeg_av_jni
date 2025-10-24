@@ -50,7 +50,7 @@ jobs:
           ./ci_scripts/java_jni_lib_macos.sh
 
       - name: Upload artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: libffmpeg_av_jni.jnilib
           path: libffmpeg_av_jni.jnilib
@@ -68,7 +68,7 @@ jobs:
           artifacts: "libffmpeg_av_jni.jnilib,test_macos"
 
       - name: Upload artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: test_macos
           path: test_macos
