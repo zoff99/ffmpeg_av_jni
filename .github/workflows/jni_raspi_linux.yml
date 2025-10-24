@@ -48,7 +48,7 @@ jobs:
         run: cp -av /home/runner/work/ffmpeg_av_jni/ffmpeg_av_jni/libffmpeg_av_jni.so libffmpeg_av_jni_raspi.so
 
       - name: Upload artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: libffmpeg_av_jni_raspi.so
           path: libffmpeg_av_jni_raspi.so

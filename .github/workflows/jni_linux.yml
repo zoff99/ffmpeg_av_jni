@@ -65,7 +65,7 @@ jobs:
           ./ci_scripts/java_jni_lib_linux.sh
 
       - name: Upload artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: libffmpeg_av_jni.so
           path: libffmpeg_av_jni.so
