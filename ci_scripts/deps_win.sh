@@ -57,6 +57,8 @@ make -j5 && \
     touch ./ndisasm.1 && \
     sudo make install
 
+cat config.log
+
 type nasm
 nasm --version || exit 1
 
