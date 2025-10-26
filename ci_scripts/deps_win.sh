@@ -39,11 +39,11 @@ export CFLAGS_ADDON_MORE="--param=ssp-buffer-size=1 -fstack-protector-all"
 
 # ------- deps verisions ---------
 FFMPEG_VERSION="n8.0"
-NASM_VERSION="nasm-2.16.01"
+NASM_VERSION="nasm-2.16.03"
 # ------- deps verisions ---------
 
 
-
+nasm --version
 
 
 
