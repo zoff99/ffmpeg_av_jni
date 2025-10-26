@@ -39,12 +39,14 @@ export CFLAGS_ADDON_MORE="--param=ssp-buffer-size=1 -fstack-protector-all"
 
 # ------- deps verisions ---------
 FFMPEG_VERSION="n8.0"
+___WORKAROUND___FFMPEG_VERSION_____="n7.1.1" # for some reason ffmpeg 8.0 has issues with the asm parts
 NASM_VERSION="nasm-3.01"
 # ------- deps verisions ---------
 
 
 nasm --version || echo "NOERR"
 
+if [ 1 == 2 ]; then
 # ---------- nasm ---------
 cd "$_SRC_"
 git clone https://github.com/netwide-assembler/nasm
@@ -63,6 +65,7 @@ type nasm
 nasm --version || exit 1
 
 # ---------- nasm ---------
+fi
 
 
 # ---------- ffmpeg ---------
@@ -70,7 +73,7 @@ if [ 1 == 1 ]; then
 
 cd "$_SRC_"
 
-FFMPEG_FILENAME="$FFMPEG_VERSION.tar.gz"
+FFMPEG_FILENAME="$___WORKAROUND___FFMPEG_VERSION_____.tar.gz"
 rm -f "ffmpeg"*.tar.*
 wget $WGET_OPTIONS "https://github.com/FFmpeg/FFmpeg/archive/refs/tags/$FFMPEG_FILENAME" -O "ffmpeg_""$FFMPEG_FILENAME"
 tar -xf "ffmpeg_""$FFMPEG_FILENAME"
