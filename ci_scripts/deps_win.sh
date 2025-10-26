@@ -136,7 +136,7 @@ sed -i -e 's#die "Host compiler lacks C11 support"#echo "Host compiler lacks C11
 #              --disable-lzo \
 #              --disable-avresample \
 
-  make -j || exit 1
+  make V=1 -j || exit 1
   make install
 
 cd "$_HOME_"

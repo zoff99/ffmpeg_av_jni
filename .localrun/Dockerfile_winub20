@@ -89,7 +89,7 @@ RUN cd /workspace2/build/ && mkdir -p /workspace2/build/inst/ && \
               --enable-filter=afftdn \
               --enable-filter=aresample \
               --enable-runtime-cpudetect  && \
-    make -j$(nproc) && \
+    make V=1 -j$(nproc) && \
     make install
 
 RUN ls -al /workspace2/build/inst/lib/
