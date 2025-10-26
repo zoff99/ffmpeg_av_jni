@@ -49,12 +49,20 @@ jobs:
           cd .localrun/
           ./docker_it_win.sh
 
+      - name: show if home directory is the base directory
+        run:  |
+          pwd
+          cd ~/
+          pwd
+
       - name: copy artefact
         run:  |
           pwd
           cd .localrun/
           find . -name 'ffmpeg_av_jni.dll'
           find . -name 'test.exe'
+          cp -v ./windows_ub22/artefacts/ffmpeg_av_jni.dll ~/
+          cp -v ./windows_ub22/artefacts/test.exe ~/
 
       - name: Upload artifact
         uses: actions/upload-artifact@v5
