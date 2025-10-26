@@ -31,7 +31,7 @@ jobs:
           sudo DEBIAN_FRONTEND=noninteractive \
           apt-get install -y --no-install-recommends \
           ca-certificates \
-          yasm nasm \
+          yasm \
           make curl wget git nano vim \
           openjdk-17-jdk \
           openjdk-17-jdk-headless \

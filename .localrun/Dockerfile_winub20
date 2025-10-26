@@ -1,10 +1,10 @@
 # syntax=docker/dockerfile:1
-FROM ubuntu:22.04
+FROM ubuntu:24.04
 RUN echo x
 RUN export DEBIAN_FRONTEND=noninteractive ; apt update && apt install -y make    yasm curl   wget    git    coreutils    autoconf    libtool    pkg-config    libsodium-dev     nano    vim
 RUN mkdir -p /workspace2/build/
 RUN cd /workspace2/build/;FFMPEG_VERSION="n8.0" ; FFMPEG_FILENAME="$FFMPEG_VERSION"".tar.gz" ;rm -f "ffmpeg"*.tar.*;wget "https://github.com/FFmpeg/FFmpeg/archive/refs/tags/$FFMPEG_FILENAME" -O "ffmpeg_""$FFMPEG_FILENAME";tar -xf "ffmpeg_""$FFMPEG_FILENAME";rm -f "ffmpeg"*.tar.*
-RUN export DEBIAN_FRONTEND=noninteractive ; apt install -y yasm nasm \
+RUN export DEBIAN_FRONTEND=noninteractive ; apt install -y yasm \
           openjdk-17-jdk \
           openjdk-17-jdk-headless \
           coreutils autoconf libtool pkg-config \
@@ -15,6 +15,20 @@ RUN export DEBIAN_FRONTEND=noninteractive ; apt install -y yasm nasm \
 RUN ls -al /workspace2/build/
 RUN ls -al /usr/x86_64-w64-mingw32/include
 RUN ls -al /usr/x86_64-w64-mingw32/lib/libdsound.a
+
+RUN cd /workspace2/build/ && mkdir -p /workspace2/build/inst/
+RUN cd /workspace2/build/ && git clone https://github.com/netwide-assembler/nasm
+RUN cd /workspace2/build/ && cd nasm/ && \
+    git checkout nasm-3.01
+RUN cd /workspace2/build/ && cd nasm/ && ./autogen.sh
+RUN cd /workspace2/build/ && cd nasm/ && ./configure
+RUN cd /workspace2/build/ && cd nasm/ && make -j5 && \
+    touch ./nasm.1 && \
+    touch ./ndisasm.1 && \
+    make install
+
+RUN type nasm
+RUN nasm --version
 
 RUN cd /workspace2/build/ && mkdir -p /workspace2/build/inst/ && \
     cd ./*mpeg*/ && \

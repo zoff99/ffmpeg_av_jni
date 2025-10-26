@@ -39,13 +39,28 @@ export CFLAGS_ADDON_MORE="--param=ssp-buffer-size=1 -fstack-protector-all"
 
 # ------- deps verisions ---------
 FFMPEG_VERSION="n8.0"
-NASM_VERSION="nasm-2.16.03"
+NASM_VERSION="nasm-3.01"
 # ------- deps verisions ---------
 
 
-nasm --version
+nasm --version || echo "NOERR"
 
+# ---------- nasm ---------
+cd "$_SRC_"
+git clone https://github.com/netwide-assembler/nasm
+cd nasm/
+git checkout "$NASM_VERSION"
+./autogen.sh
+./configure
+make -j5 && \
+    touch ./nasm.1 && \
+    touch ./ndisasm.1 && \
+    sudo make install
 
+type nasm
+nasm --version || exit 1
+
+# ---------- nasm ---------
 
 
 # ---------- ffmpeg ---------
