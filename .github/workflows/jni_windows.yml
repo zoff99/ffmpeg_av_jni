@@ -61,8 +61,8 @@ jobs:
           cd .localrun/
           find . -name 'ffmpeg_av_jni.dll'
           find . -name 'test.exe'
-          cp -v ./windows_ub22/artefacts/ffmpeg_av_jni.dll ~/
-          cp -v ./windows_ub22/artefacts/test.exe ~/
+          cp -v ./windows_ub22/artefacts/ffmpeg_av_jni.dll /home/runner/work/ffmpeg_av_jni/ffmpeg_av_jni/
+          cp -v ./windows_ub22/artefacts/test.exe /home/runner/work/ffmpeg_av_jni/ffmpeg_av_jni/
 
       - name: Upload artifact
         uses: actions/upload-artifact@v5
