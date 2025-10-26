@@ -46,14 +46,23 @@ jobs:
           ls -al
           id
           pwd
-          ./ci_scripts/deps_win.sh
+          cd .localrun/
+          ./docker_it_win.sh build
 
       - name: build jni lib
         run:  |
           ls -al
           id
           pwd
-          ./ci_scripts/java_jni_lib_win.sh
+          cd .localrun/
+          ./docker_it_win.sh
+
+      - name: copy artefact
+        run:  |
+          pwd
+          cd .localrun/
+          find . -name 'ffmpeg_av_jni.dll'
+          find . -name 'test.exe'
 
       - name: Upload artifact
         uses: actions/upload-artifact@v5
