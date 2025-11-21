@@ -3,7 +3,7 @@ FROM ubuntu:22.04
 
 RUN export DEBIAN_FRONTEND=noninteractive  ; apt update && apt install -y make    yasm nasm curl   wget    git    coreutils    autoconf    libtool    pkg-config    libsodium-dev     nano    vim
 RUN mkdir -p /workspace2/build/
-RUN cd /workspace2/build/;FFMPEG_VERSION="n8.0" ; FFMPEG_FILENAME="$FFMPEG_VERSION"".tar.gz" ;rm -f "ffmpeg"*.tar.*;wget "https://github.com/FFmpeg/FFmpeg/archive/refs/tags/$FFMPEG_FILENAME" -O "ffmpeg_""$FFMPEG_FILENAME";tar -xf "ffmpeg_""$FFMPEG_FILENAME";rm -f "ffmpeg"*.tar.*
+RUN cd /workspace2/build/;FFMPEG_VERSION="n8.0.1" ; FFMPEG_FILENAME="$FFMPEG_VERSION"".tar.gz" ;rm -f "ffmpeg"*.tar.*;wget "https://github.com/FFmpeg/FFmpeg/archive/refs/tags/$FFMPEG_FILENAME" -O "ffmpeg_""$FFMPEG_FILENAME";tar -xf "ffmpeg_""$FFMPEG_FILENAME";rm -f "ffmpeg"*.tar.*
 RUN export DEBIAN_FRONTEND=noninteractive ; apt install -y libx11-xcb-dev libpulse-dev alsa-utils libasound2-dev v4l-utils libv4l-dev v4l-conf
 RUN export DEBIAN_FRONTEND=noninteractive ; apt install -y openjdk-17-jdk-headless
 RUN export DEBIAN_FRONTEND=noninteractive ; apt install -y libxcb-shm0-dev libxcb-shape0-dev libxcb-xfixes0-dev
