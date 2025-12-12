@@ -65,7 +65,7 @@ jobs:
           cp -v ./windows_ub22/artefacts/test.exe /home/runner/work/ffmpeg_av_jni/ffmpeg_av_jni/
 
       - name: Upload artifact
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: ffmpeg_av_jni.dll
           path: ffmpeg_av_jni.dll

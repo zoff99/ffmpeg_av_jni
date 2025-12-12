@@ -70,7 +70,7 @@ jobs:
           mv -v libffmpeg_av_jni.so libffmpeg_av_jni.so__ASAN
 
       - name: Upload artifact
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: libffmpeg_av_jni.so__ASAN
           path: libffmpeg_av_jni.so__ASAN
