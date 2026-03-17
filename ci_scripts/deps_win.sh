@@ -38,7 +38,7 @@ export CFLAGS_ADDON_MORE="--param=ssp-buffer-size=1 -fstack-protector-all"
 
 
 # ------- deps verisions ---------
-FFMPEG_VERSION="n8.0.1"
+FFMPEG_VERSION="n8.1"
 ___WORKAROUND___FFMPEG_VERSION_____="n8.0.1"
 NASM_VERSION="nasm-3.01"
 # ------- deps verisions ---------

@@ -45,7 +45,7 @@ fi
 type sudo
 
 # ------- deps verisions ---------
-FFMPEG_VERSION="n8.0.1"
+FFMPEG_VERSION="n8.1"
 # ------- deps verisions ---------
 
 # ---------- ffmpeg ---------
