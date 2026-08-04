@@ -59,8 +59,8 @@ void getDevicesPermission(int want_video);
 #define VERSION_MAJOR 0
 #define VERSION_MINOR 99
 #define VERSION_PATCH 31
-static const char global_version_string[] = "0.99.31";
-static const char global_version_asan_string[] = "0.99.31-ASAN";
+static const char global_version_string[] = "0.99.32";
+static const char global_version_asan_string[] = "0.99.32-ASAN";
 
 #define FFMPEGAVJNI_GIT_COMMIT_HASH "000000034"
 // ----------- version -----------
