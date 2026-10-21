@@ -1,7 +1,7 @@
 # syntax=docker/dockerfile:1
 FROM ubuntu:24.04
 RUN echo x
-RUN export DEBIAN_FRONTEND=noninteractive ; apt update && apt install -y make    yasm curl   wget    git    coreutils    autoconf    libtool    pkg-config    libsodium-dev     nano    vim
+RUN export DEBIAN_FRONTEND=noninteractive ; apt update && apt install -y make    xz-utils yasm curl   wget    git    coreutils    autoconf    libtool    pkg-config    libsodium-dev     nano    vim
 RUN mkdir -p /workspace2/build/
 RUN cd /workspace2/build/;FFMPEG_VERSION="n9.0.2" ; FFMPEG_FILENAME="$FFMPEG_VERSION"".tar.gz" ;rm -f "ffmpeg"*.tar.*;wget "https://github.com/FFmpeg/FFmpeg/archive/refs/tags/$FFMPEG_FILENAME" -O "ffmpeg_""$FFMPEG_FILENAME";tar -xf "ffmpeg_""$FFMPEG_FILENAME";rm -f "ffmpeg"*.tar.*
 RUN export DEBIAN_FRONTEND=noninteractive ; apt install -y yasm \
@@ -12,7 +12,8 @@ RUN export DEBIAN_FRONTEND=noninteractive ; apt install -y yasm \
           mingw-w64-tools pkg-config-mingw-w64-x86-64 win-iconv-mingw-w64-dev \
           mingw-w64-x86-64-dev
 
-RUN wget -qO- "https://github.com/mstorsjo/llvm-mingw/releases/download/20240619/llvm-mingw-20240619-ucrt-ubuntu-20.04-x86_64.tar.xz" | tar -xJ -C /opt/
+RUN wget "https://github.com/mstorsjo/llvm-mingw/releases/download/20240619/llvm-mingw-20240619-ucrt-ubuntu-20.04-x86_64.tar.xz" -O /workspace2/llvm.tar.xz
+RUN cd /opt/ ; tar -xJ /workspace2/llvm.tar.xz
 ENV PATH="/opt/llvm-mingw-20240619-ucrt-ubuntu-20.04-x86_64/bin:${PATH}"
 
 RUN ls -al /workspace2/build/
