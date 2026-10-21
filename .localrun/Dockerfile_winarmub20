@@ -13,7 +13,7 @@ RUN export DEBIAN_FRONTEND=noninteractive ; apt install -y yasm \
           mingw-w64-x86-64-dev
 
 RUN wget "https://github.com/mstorsjo/llvm-mingw/releases/download/20240619/llvm-mingw-20240619-ucrt-ubuntu-20.04-x86_64.tar.xz" -O /workspace2/llvm.tar.xz
-RUN cd /opt/ ; tar -xJ /workspace2/llvm.tar.xz
+RUN cd /opt/ ; tar -xJf /workspace2/llvm.tar.xz
 ENV PATH="/opt/llvm-mingw-20240619-ucrt-ubuntu-20.04-x86_64/bin:${PATH}"
 
 RUN ls -al /workspace2/build/
