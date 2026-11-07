@@ -97,12 +97,18 @@ $_INST_/lib/libavutil.a \
 -l:libshell32.a \
 -Wl,-Bstatic -lbcrypt \
 -Wl,-Bstatic -lpthread \
+-Wl,-Bstatic -lgcc \
 -shared \
 -lm \
--static-libgcc \
 -o ffmpeg_av_jni.dll || exit 1
 
 
+echo "================================"
+echo "================================"
+echo "missing linked libs:"
+x86_64-w64-mingw32-objdump -p ffmpeg_av_jni.dll | grep "DLL Name" | grep -iv -E "(ADVAPI32.dll|AVICAP32.dll|bcrypt.dll|GDI32.dll|KERNEL32.dll|msvcrt.dll|ole32.dll|OLEAUT32.dll|SHLWAPI.dll|USER32.dll)"
+echo "================================"
+echo "================================"
 
 
 x86_64-w64-mingw32-gcc $CFLAGS \
@@ -139,7 +145,8 @@ $_INST_/lib/libavutil.a \
 -l:libpsapi.a \
 -l:libshell32.a \
 -Wl,-Bstatic -lbcrypt \
--lpthread \
+-Wl,-Bstatic -lpthread \
+-Wl,-Bstatic -lgcc \
 -lm \
 -o test.exe
 ls -al test.exe || echo "ignore ERROR"
