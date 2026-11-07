@@ -96,8 +96,8 @@ $_INST_/lib/libavutil.a \
 -l:libpsapi.a \
 -l:libshell32.a \
 -Wl,-Bstatic -lbcrypt \
+-Wl,-Bstatic -lpthread \
 -shared \
--lpthread \
 -lm \
 -static-libgcc \
 -o ffmpeg_av_jni.dll || exit 1
