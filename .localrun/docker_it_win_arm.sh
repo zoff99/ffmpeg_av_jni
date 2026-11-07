@@ -126,7 +126,6 @@ $_INST2_/lib/libavutil.a \
 -l:libpsapi.a \
 -l:libshell32.a \
 -Wl,-Bstatic -lbcrypt \
--Wl,-Bstatic -lgcc \
 -shared \
 -lpthread \
 -lm \
