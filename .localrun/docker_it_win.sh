@@ -122,11 +122,18 @@ $_INST2_/lib/libavutil.a \
 -l:libpsapi.a \
 -l:libshell32.a \
 -Wl,-Bstatic -lbcrypt \
+-Wl,-Bstatic -lgcc \
 -shared \
 -lpthread \
 -lm \
 -o ffmpeg_av_jni.dll || exit 1
 
+echo "================================"
+echo "================================"
+echo "missing linked libs:"
+x86_64-w64-mingw32-objdump -p ffmpeg_av_jni.dll | grep "DLL Name" | grep -iv -E "(ADVAPI32.dll|AVICAP32.dll|bcrypt.dll|GDI32.dll|KERNEL32.dll|msvcrt.dll|ole32.dll|OLEAUT32.dll|SHLWAPI.dll|USER32.dll)"
+echo "================================"
+echo "================================"
 
 x86_64-w64-mingw32-gcc $CFLAGS \
 -Wno-format-extra-args \
@@ -162,6 +169,7 @@ $_INST2_/lib/libavutil.a \
 -l:libpsapi.a \
 -l:libshell32.a \
 -Wl,-Bstatic -lbcrypt \
+-Wl,-Bstatic -lgcc \
 -lpthread \
 -lm \
 -o test.exe
