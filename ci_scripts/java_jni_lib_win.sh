@@ -99,6 +99,7 @@ $_INST_/lib/libavutil.a \
 -shared \
 -lpthread \
 -lm \
+-static-libgcc -static-libstdc++ \
 -o ffmpeg_av_jni.dll || exit 1
 
 
